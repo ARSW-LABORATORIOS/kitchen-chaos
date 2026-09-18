@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<RoomService>();
+builder.Services.AddSingleton<OrderService>();
 
 // Cosmos DB: cliente singleton reutilizable
 builder.Services.AddSingleton(_ =>
