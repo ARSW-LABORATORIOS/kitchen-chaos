@@ -11,12 +11,14 @@ public class GameHub : Hub
     private readonly RoomService _roomService;
     private readonly PlayerProfileService _profileService;
     private readonly PreparationService _preparationService;
+    private readonly OrderService _orderService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService)
     {
         _roomService = roomService;
         _profileService = profileService;
         _preparationService = preparationService;
+        _orderService = orderService;
     }
 
     // AB#4 - Crear sala de juego
@@ -100,7 +102,7 @@ public class GameHub : Hub
             }
         );
     }
-    
+
     // AB#19 - Estaciones disponibles en la sala
     public async Task GetStations(string roomCode)
     {
@@ -167,6 +169,54 @@ public class GameHub : Hub
         }
 
         await Clients.Caller.SendAsync("IngredientUpdated", new { Id = ingredientId, State = "Cocinando" });
+    }
+
+    /// <summary>
+    /// Genera un pedido dinámico para la sala y lo envía a todos los jugadores.
+    /// AB#27
+    /// </summary>
+    /// <param name="roomCode">Código de la sala que solicita el pedido.</param>
+    public async Task GetCurrentOrder(string roomCode)
+    {
+        var order = _orderService.GetActiveOrder(roomCode) ?? _orderService.GenerateOrder(roomCode);
+
+        await Clients.Group(roomCode).SendAsync("OrderUpdated", new
+        {
+            order.Id,
+            order.DishName,
+            order.RequiredIngredients
+        });
+    }
+
+    /// <summary>
+    /// Valida el pedido entregado por el equipo.
+    /// Si es correcto, genera el siguiente pedido automáticamente.
+    /// AB#28
+    /// </summary>
+    /// <param name="roomCode">Código de la sala que entrega el pedido.</param>
+    /// <param name="deliveredIngredients">Ingredientes que el equipo entrega.</param>
+    public async Task DeliverOrder(string roomCode, List<string> deliveredIngredients)
+    {
+        var correct = _orderService.ValidateDelivery(roomCode, deliveredIngredients);
+
+        if (correct)
+        {
+            // Pedido correcto: notifica a todos y genera el siguiente automáticamente
+            await Clients.Group(roomCode).SendAsync("OrderDelivered", new { Success = true });
+
+            var next = _orderService.GenerateOrder(roomCode);
+            await Clients.Group(roomCode).SendAsync("OrderUpdated", new
+            {
+                next.Id,
+                next.DishName,
+                next.RequiredIngredients
+            });
+        }
+        else
+        {
+            // Pedido incorrecto: solo notifica al jugador que entregó
+            await Clients.Caller.SendAsync("OrderDelivered", new { Success = false });
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
