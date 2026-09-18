@@ -10,12 +10,14 @@ public class GameHub : Hub
 {
     private readonly RoomService _roomService;
     private readonly PlayerProfileService _profileService;
+    private readonly PreparationService _preparationService;
     private readonly OrderService _orderService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, OrderService orderService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService)
     {
         _roomService = roomService;
         _profileService = profileService;
+        _preparationService = preparationService;
         _orderService = orderService;
     }
 
@@ -100,7 +102,75 @@ public class GameHub : Hub
             }
         );
     }
-    
+
+    // AB#19 - Estaciones disponibles en la sala
+    public async Task GetStations(string roomCode)
+    {
+        var stations = _preparationService.GetStations(roomCode);
+
+        await Clients.Caller.SendAsync("StationsUpdated", stations.Select(s => new
+        {
+            s.Id,
+            s.IngredientName,
+            s.IsAvailable
+        }));
+    }
+
+    // AB#19 - Recoger ingrediente de una estación
+    public async Task TakeIngredient(string roomCode, string stationId)
+    {
+        var result = _preparationService.TakeIngredient(roomCode, stationId, Context.ConnectionId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync("TakeIngredientError", result.Error);
+            return;
+        }
+
+        await Clients.Caller.SendAsync("IngredientTaken", new
+        {
+            result.Ingredient!.Id,
+            result.Ingredient.Name,
+            State = result.Ingredient.State.ToString()
+        });
+
+        var stations = _preparationService.GetStations(roomCode);
+        await Clients.Group(roomCode).SendAsync("StationsUpdated", stations.Select(s => new
+        {
+            s.Id,
+            s.IngredientName,
+            s.IsAvailable
+        }));
+    }
+
+    // AB#20 - Picar un ingrediente crudo
+    public async Task ChopIngredient(string roomCode, string ingredientId)
+    {
+        var result = _preparationService.ChopIngredient(roomCode, ingredientId, Context.ConnectionId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync("ChopIngredientError", result.Error);
+            return;
+        }
+
+        await Clients.Caller.SendAsync("IngredientUpdated", new { Id = ingredientId, State = "Picado" });
+    }
+
+    // AB#21 - Cocinar un ingrediente picado (avanza solo con el tiempo)
+    public async Task CookIngredient(string roomCode, string ingredientId)
+    {
+        var result = _preparationService.CookIngredient(roomCode, ingredientId, Context.ConnectionId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync("CookIngredientError", result.Error);
+            return;
+        }
+
+        await Clients.Caller.SendAsync("IngredientUpdated", new { Id = ingredientId, State = "Cocinando" });
+    }
+
     /// <summary>
     /// Genera un pedido dinámico para la sala y lo envía a todos los jugadores.
     /// AB#27

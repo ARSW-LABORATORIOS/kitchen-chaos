@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<RoomService>();
+builder.Services.AddSingleton<PreparationService>();
 builder.Services.AddSingleton<OrderService>();
 
 // Cosmos DB: cliente singleton reutilizable
@@ -20,6 +21,8 @@ builder.Services.AddSingleton(_ =>
         new CosmosClientOptions
         {
             ConnectionMode = ConnectionMode.Gateway,
+            // El emulador Linux reporta su IP interna de Docker en vez de localhost; esto evita que el cliente la siga
+            LimitToEndpoint = true,
             SerializerOptions = new() { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase },
             // Emulador local usa certificado autofirmado
             HttpClientFactory = () => new HttpClient(new HttpClientHandler

@@ -1,0 +1,164 @@
+using System.Collections.Concurrent;
+using KitchenChaos.Server.Hubs;
+using KitchenChaos.Server.Models;
+using Microsoft.AspNetCore.SignalR;
+
+namespace KitchenChaos.Server.Services;
+
+public class TakeIngredientResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public Ingredient? Ingredient { get; set; }
+}
+
+public class IngredientActionResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+}
+
+/// <summary>
+/// Maneja las estaciones de una sala y los ingredientes que los jugadores van preparando.
+/// AB#19: recoger ingrediente de una estación.
+/// AB#20: picar ingrediente.
+/// AB#21: cocinar ingrediente (avanza solo con el tiempo, se quema si se deja demasiado).
+/// </summary>
+public class PreparationService
+{
+    private const int CookSeconds = 4;
+    private const int BurnSeconds = 8;
+
+    private static readonly string[] StationIngredients =
+        ["lechuga", "tomate", "pan", "carne", "queso", "zanahoria", "papa", "caldo"];
+
+    // Estaciones fijas por sala.
+    private readonly ConcurrentDictionary<string, List<Station>> _stationsByRoom = new();
+
+    // Ingredientes en preparación por sala (en mano de algún jugador).
+    private readonly ConcurrentDictionary<string, List<Ingredient>> _ingredientsByRoom = new();
+
+    private readonly IHubContext<GameHub> _hub;
+
+    public PreparationService(IHubContext<GameHub> hub)
+    {
+        _hub = hub;
+    }
+
+    /// <summary>AB#19 - Estaciones de la sala (se crean la primera vez que se piden).</summary>
+    public List<Station> GetStations(string roomCode) =>
+        _stationsByRoom.GetOrAdd(roomCode, _ =>
+            StationIngredients.Select(name => new Station
+            {
+                Id = Guid.NewGuid().ToString(),
+                IngredientName = name
+            }).ToList());
+
+    /// <summary>AB#19 - Recoger un ingrediente. El lock evita que dos jugadores tomen el mismo a la vez.</summary>
+    public TakeIngredientResult TakeIngredient(string roomCode, string stationId, string connectionId)
+    {
+        var station = GetStations(roomCode).FirstOrDefault(s => s.Id == stationId);
+        if (station is null)
+            return new TakeIngredientResult { Success = false, Error = "La estación no existe." };
+
+        lock (station)
+        {
+            if (!station.IsAvailable)
+                return new TakeIngredientResult { Success = false, Error = "Otro jugador ya tomó este ingrediente." };
+
+            station.IsAvailable = false;
+        }
+
+        var ingredient = new Ingredient { Name = station.IngredientName, HeldByConnectionId = connectionId };
+        var ingredients = _ingredientsByRoom.GetOrAdd(roomCode, _ => new List<Ingredient>());
+
+        lock (ingredients)
+        {
+            ingredients.Add(ingredient);
+        }
+
+        return new TakeIngredientResult { Success = true, Ingredient = ingredient };
+    }
+
+    /// <summary>AB#20 - Picar un ingrediente crudo.</summary>
+    public IngredientActionResult ChopIngredient(string roomCode, string ingredientId, string connectionId)
+    {
+        var ingredient = FindIngredient(roomCode, ingredientId, connectionId);
+        if (ingredient is null)
+            return new IngredientActionResult { Success = false, Error = "No tienes ese ingrediente." };
+
+        lock (ingredient)
+        {
+            if (ingredient.State != IngredientState.Crudo)
+                return new IngredientActionResult { Success = false, Error = "El ingrediente ya no está crudo." };
+
+            ingredient.State = IngredientState.Picado;
+        }
+
+        return new IngredientActionResult { Success = true };
+    }
+
+    /// <summary>AB#21 - Cocinar un ingrediente picado. El avance a "cocinado" y el quemado ocurren solos con el tiempo.</summary>
+    public IngredientActionResult CookIngredient(string roomCode, string ingredientId, string connectionId)
+    {
+        var ingredient = FindIngredient(roomCode, ingredientId, connectionId);
+        if (ingredient is null)
+            return new IngredientActionResult { Success = false, Error = "No tienes ese ingrediente." };
+
+        lock (ingredient)
+        {
+            if (ingredient.State != IngredientState.Picado)
+                return new IngredientActionResult { Success = false, Error = "El ingrediente debe estar picado antes de cocinarlo." };
+
+            ingredient.State = IngredientState.Cocinando;
+        }
+
+        _ = RunCookingTimerAsync(roomCode, ingredient);
+
+        return new IngredientActionResult { Success = true };
+    }
+
+    private async Task RunCookingTimerAsync(string roomCode, Ingredient ingredient)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(CookSeconds));
+
+        lock (ingredient)
+        {
+            if (ingredient.State == IngredientState.Cocinando)
+                ingredient.State = IngredientState.Cocinado;
+        }
+        await BroadcastIngredientUpdated(roomCode, ingredient);
+
+        await Task.Delay(TimeSpan.FromSeconds(BurnSeconds - CookSeconds));
+
+        lock (ingredient)
+        {
+            if (ingredient.State != IngredientState.Cocinado)
+                return; // ya lo retiraron a tiempo, no se quema
+
+            ingredient.State = IngredientState.Quemado;
+        }
+        await BroadcastIngredientUpdated(roomCode, ingredient);
+    }
+
+    private async Task BroadcastIngredientUpdated(string roomCode, Ingredient ingredient)
+    {
+        await _hub.Clients.Group(roomCode).SendAsync("IngredientUpdated", new
+        {
+            ingredient.Id,
+            ingredient.Name,
+            State = ingredient.State.ToString()
+        });
+    }
+
+    private Ingredient? FindIngredient(string roomCode, string ingredientId, string connectionId)
+    {
+        if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
+            return null;
+
+        lock (ingredients)
+        {
+            return ingredients.FirstOrDefault(i => i.Id == ingredientId && i.HeldByConnectionId == connectionId);
+        }
+    }
+}
