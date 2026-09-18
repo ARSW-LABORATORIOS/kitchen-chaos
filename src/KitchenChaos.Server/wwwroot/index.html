@@ -137,6 +137,51 @@
             font-size: 14px;
             color: #666;
         }
+
+        .order-box,
+        .stations-box,
+        .ingredients-box {
+            text-align: left;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .station-item,
+        .ingredient-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff4dc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .station-item button,
+        .ingredient-item button {
+            width: auto;
+            padding: 8px 14px;
+            margin-bottom: 0;
+            font-size: 14px;
+            background: #2a9d8f;
+            color: white;
+        }
+
+        .station-item button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .ingredient-state {
+            font-size: 13px;
+            color: #777;
+        }
+
+        #preparationError {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -206,6 +251,24 @@
 
         <p>Prepárate para cocinar con tu equipo.</p>
 
+        <div class="order-box">
+            <h3>Pedido actual</h3>
+            <p id="orderDish">Cargando pedido...</p>
+            <p id="orderIngredients"></p>
+        </div>
+
+        <div class="stations-box">
+            <h3>Estaciones</h3>
+            <div id="stationsList"></div>
+        </div>
+
+        <div class="ingredients-box">
+            <h3>Mis ingredientes</h3>
+            <div id="myIngredientsList"></div>
+        </div>
+
+        <p id="preparationError"></p>
+
     </div>
 
     <div class="instructions">
@@ -238,6 +301,152 @@
 
     let currentRoomCode = null;
     let isHost = false;
+    let myIngredients = {}; // id -> { name, state }
+
+
+    function renderStations(stations) {
+
+        const container = document.getElementById("stationsList");
+        container.innerHTML = "";
+
+        stations.forEach(function (station) {
+
+            const item = document.createElement("div");
+            item.className = "station-item";
+
+            const label = document.createElement("span");
+            label.textContent = station.ingredientName +
+                (station.isAvailable ? "" : " (tomado)");
+
+            const button = document.createElement("button");
+            button.textContent = "Tomar";
+            button.disabled = !station.isAvailable;
+
+            button.addEventListener("click", function () {
+
+                connection.invoke("TakeIngredient", currentRoomCode, station.id)
+                    .catch(function (err) { console.error(err.toString()); });
+
+            });
+
+            item.appendChild(label);
+            item.appendChild(button);
+            container.appendChild(item);
+
+        });
+
+    }
+
+
+    function renderMyIngredients() {
+
+        const container = document.getElementById("myIngredientsList");
+        container.innerHTML = "";
+
+        Object.keys(myIngredients).forEach(function (id) {
+
+            const ingredient = myIngredients[id];
+
+            const item = document.createElement("div");
+            item.className = "ingredient-item";
+
+            const label = document.createElement("span");
+            label.textContent = ingredient.name + " — ";
+
+            const stateSpan = document.createElement("span");
+            stateSpan.className = "ingredient-state";
+            stateSpan.textContent = ingredient.state;
+            label.appendChild(stateSpan);
+
+            item.appendChild(label);
+
+            if (ingredient.state === "Crudo") {
+
+                const chopButton = document.createElement("button");
+                chopButton.textContent = "Picar";
+
+                chopButton.addEventListener("click", function () {
+
+                    connection.invoke("ChopIngredient", currentRoomCode, id)
+                        .catch(function (err) { console.error(err.toString()); });
+
+                });
+
+                item.appendChild(chopButton);
+
+            } else if (ingredient.state === "Picado") {
+
+                const cookButton = document.createElement("button");
+                cookButton.textContent = "Cocinar";
+
+                cookButton.addEventListener("click", function () {
+
+                    connection.invoke("CookIngredient", currentRoomCode, id)
+                        .catch(function (err) { console.error(err.toString()); });
+
+                });
+
+                item.appendChild(cookButton);
+
+            }
+
+            container.appendChild(item);
+
+        });
+
+    }
+
+
+    // AB#19 - Estaciones de la sala
+    connection.on("StationsUpdated", function (stations) {
+        renderStations(stations);
+    });
+
+
+    // AB#19 - Confirmación de que tomé un ingrediente
+    connection.on("IngredientTaken", function (ingredient) {
+
+        myIngredients[ingredient.id] = { name: ingredient.name, state: ingredient.state };
+        renderMyIngredients();
+
+    });
+
+
+    // AB#20 / AB#21 - Cambios de estado de un ingrediente (picado, cocinando, cocinado, quemado)
+    connection.on("IngredientUpdated", function (update) {
+
+        if (myIngredients[update.id]) {
+
+            myIngredients[update.id].state = update.state;
+            renderMyIngredients();
+
+        }
+
+    });
+
+
+    connection.on("TakeIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
+    });
+
+    connection.on("ChopIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
+    });
+
+    connection.on("CookIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
+    });
+
+
+    // AB#18 - Ingredientes requeridos del pedido actual
+    connection.on("OrderUpdated", function (order) {
+
+        document.getElementById("orderDish").textContent = "Plato: " + order.dishName;
+
+        document.getElementById("orderIngredients").textContent =
+            "Ingredientes necesarios: " + order.requiredIngredients.join(", ");
+
+    });
 
 
     // Actualizar lista de jugadores en tiempo real
@@ -319,6 +528,12 @@
         document.getElementById("gameScreen")
             .querySelector("h2")
             .textContent = "Nivel " + gameInfo.level;
+
+        connection.invoke("GetStations", gameInfo.roomCode)
+            .catch(function (err) { console.error(err.toString()); });
+
+        connection.invoke("GetCurrentOrder", gameInfo.roomCode)
+            .catch(function (err) { console.error(err.toString()); });
 
     });
 
