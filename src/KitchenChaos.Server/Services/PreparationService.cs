@@ -28,6 +28,7 @@ public class PreparationService
 {
     private const int CookSeconds = 4;
     private const int BurnSeconds = 8;
+    private const int RestockSeconds = 2;
 
     private static readonly string[] StationIngredients =
         ["lechuga", "tomate", "pan", "carne", "queso", "zanahoria", "papa", "caldo"];
@@ -68,6 +69,8 @@ public class PreparationService
 
             station.IsAvailable = false;
         }
+
+        _ = RestockStationAsync(roomCode, station);
 
         var ingredient = new Ingredient { Name = station.IngredientName, HeldByConnectionId = connectionId };
         var ingredients = _ingredientsByRoom.GetOrAdd(roomCode, _ => new List<Ingredient>());
@@ -118,6 +121,60 @@ public class PreparationService
         return new IngredientActionResult { Success = true };
     }
 
+    public IngredientActionResult RemoveFromHeat(
+        string roomCode,
+        string ingredientId,
+        string connectionId)
+    {
+        var ingredient = FindIngredient(
+            roomCode,
+            ingredientId,
+            connectionId);
+
+        if (ingredient is null)
+            return new IngredientActionResult
+            {
+                Success = false,
+                Error = "No tienes ese ingrediente."
+            };
+
+        lock (ingredient)
+        {
+            if (ingredient.State != IngredientState.Cocinado)
+                return new IngredientActionResult
+                {
+                    Success = false,
+                    Error = "El ingrediente todavía no está listo para retirar."
+                };
+
+            ingredient.State = IngredientState.Listo;
+        }
+
+        return new IngredientActionResult
+        {
+            Success = true
+        };
+    }
+
+    private async Task RestockStationAsync(string roomCode, Station station)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(RestockSeconds));
+
+        lock (station)
+        {
+            station.IsAvailable = true;
+        }
+
+        var stations = GetStations(roomCode);
+
+        await _hub.Clients.Group(roomCode).SendAsync("StationsUpdated", stations.Select(s => new
+        {
+            s.Id,
+            s.IngredientName,
+            s.IsAvailable
+        }));
+    }
+
     private async Task RunCookingTimerAsync(string roomCode, Ingredient ingredient)
     {
         await Task.Delay(TimeSpan.FromSeconds(CookSeconds));
@@ -149,6 +206,54 @@ public class PreparationService
             ingredient.Name,
             State = ingredient.State.ToString()
         });
+    }
+
+    public List<Ingredient> GetPlayerIngredients(
+        string roomCode,
+        string connectionId,
+        IEnumerable<string> ingredientIds)
+    {
+        if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
+            return new List<Ingredient>();
+
+        var ids = ingredientIds.ToHashSet();
+
+        lock (ingredients)
+        {
+            return ingredients
+                .Where(i =>
+                    i.HeldByConnectionId == connectionId &&
+                    ids.Contains(i.Id))
+                .ToList();
+        }
+    }
+
+    public bool RemovePlayerIngredients(
+        string roomCode,
+        string connectionId,
+        IEnumerable<string> ingredientIds)
+    {
+        if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
+            return false;
+
+        var ids = ingredientIds.ToHashSet();
+
+        lock (ingredients)
+        {
+            var selected = ingredients
+                .Where(i =>
+                    i.HeldByConnectionId == connectionId &&
+                    ids.Contains(i.Id))
+                .ToList();
+
+            if (selected.Count != ids.Count)
+                return false;
+
+            foreach (var ingredient in selected)
+                ingredients.Remove(ingredient);
+
+            return true;
+        }
     }
 
     private Ingredient? FindIngredient(string roomCode, string ingredientId, string connectionId)

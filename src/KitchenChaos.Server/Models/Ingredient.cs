@@ -6,6 +6,7 @@ public enum IngredientState
     Picado,
     Cocinando,
     Cocinado,
+    Listo,
     Quemado
 }
 

@@ -267,6 +267,27 @@
             <div id="myIngredientsList"></div>
         </div>
 
+        <div class="ingredients-box">
+            <h3>Emplatado y entrega</h3>
+
+            <button id="plateDishButton">
+                Emplatar ingredientes seleccionados
+            </button>
+
+            <p id="plateStatus">No hay un plato preparado.</p>
+
+            <button id="deliverPlateButton" disabled>
+                Entregar plato
+            </button>
+
+            <button id="washPlateButton" disabled>
+                Lavar plato
+            </button>
+
+            <p id="scoreDisplay">Puntaje: 0</p>
+        </div>
+
+
         <p id="preparationError"></p>
 
     </div>
@@ -301,7 +322,9 @@
 
     let currentRoomCode = null;
     let isHost = false;
-    let myIngredients = {}; // id -> { name, state }
+    let myIngredients = {}; 
+    let selectedIngredientIds = new Set();
+    let currentPlateId = null;
 
 
     function renderStations(stations) {
@@ -350,6 +373,22 @@
             const item = document.createElement("div");
             item.className = "ingredient-item";
 
+            const selector = document.createElement("input");
+            selector.type = "checkbox";
+            selector.style.width = "auto";
+            selector.style.marginRight = "10px";
+            selector.checked = selectedIngredientIds.has(id);
+
+            selector.addEventListener("change", function () {
+
+                if (selector.checked) {
+                    selectedIngredientIds.add(id);
+                } else {
+                    selectedIngredientIds.delete(id);
+                }
+
+            });
+
             const label = document.createElement("span");
             label.textContent = ingredient.name + " — ";
 
@@ -358,6 +397,7 @@
             stateSpan.textContent = ingredient.state;
             label.appendChild(stateSpan);
 
+            item.appendChild(selector);
             item.appendChild(label);
 
             if (ingredient.state === "Crudo") {
@@ -368,7 +408,9 @@
                 chopButton.addEventListener("click", function () {
 
                     connection.invoke("ChopIngredient", currentRoomCode, id)
-                        .catch(function (err) { console.error(err.toString()); });
+                        .catch(function (err) {
+                            console.error(err.toString());
+                        });
 
                 });
 
@@ -382,12 +424,32 @@
                 cookButton.addEventListener("click", function () {
 
                     connection.invoke("CookIngredient", currentRoomCode, id)
-                        .catch(function (err) { console.error(err.toString()); });
+                        .catch(function (err) {
+                            console.error(err.toString());
+                        });
 
                 });
 
                 item.appendChild(cookButton);
 
+            } else if (ingredient.state === "Cocinado") {
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "Retirar";
+
+                removeButton.addEventListener("click", function () {
+
+                    connection.invoke(
+                        "RemoveFromHeat",
+                        currentRoomCode,
+                        id
+                    ).catch(function (err) {
+                        console.error(err.toString());
+                    });
+
+                });
+
+                item.appendChild(removeButton);
             }
 
             container.appendChild(item);
@@ -434,6 +496,10 @@
     });
 
     connection.on("CookIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
+    });
+
+    connection.on("RemoveFromHeatError", function (error) {
         document.getElementById("preparationError").textContent = error;
     });
 
@@ -666,6 +732,151 @@
                     console.error(err.toString());
 
                 });
+
+        });
+
+        connection.on("DishPlated", function (plate) {
+
+        currentPlateId = plate.id;
+
+        selectedIngredientIds.forEach(function (id) {
+            delete myIngredients[id];
+        });
+
+        selectedIngredientIds.clear();
+        renderMyIngredients();
+
+        document.getElementById("plateStatus").textContent =
+            "Plato listo: " + plate.dishName;
+
+        document.getElementById("deliverPlateButton").disabled = false;
+        document.getElementById("washPlateButton").disabled = true;
+
+    });
+
+    connection.on("PlateDishError", function (error) {
+
+        document.getElementById("plateStatus").textContent = error;
+
+    });
+
+    connection.on("PlateUpdated", function (plate) {
+
+        if (plate.id === currentPlateId && plate.state === "Dirty") {
+
+            document.getElementById("deliverPlateButton").disabled = true;
+            document.getElementById("washPlateButton").disabled = false;
+
+            document.getElementById("plateStatus").textContent =
+                "El plato quedó sucio.";
+
+        }
+
+    });
+
+    connection.on("OrderDelivered", function (result) {
+
+        if (result.success) {
+
+            document.getElementById("plateStatus").textContent =
+                "Pedido entregado correctamente.";
+
+        } else {
+
+            document.getElementById("plateStatus").textContent =
+                "Pedido incorrecto. Se aplicó una penalización.";
+
+        }
+
+        if (result.score !== undefined) {
+
+            document.getElementById("scoreDisplay").textContent =
+                "Puntaje: " + result.score;
+
+        }
+
+    });
+
+    connection.on("DeliverPlateError", function (error) {
+
+        document.getElementById("plateStatus").textContent = error;
+
+    });
+
+    connection.on("PlateWashed", function (plate) {
+
+        if (plate.id === currentPlateId) {
+            currentPlateId = null;
+        }
+
+        document.getElementById("washPlateButton").disabled = true;
+        document.getElementById("deliverPlateButton").disabled = true;
+
+        document.getElementById("plateStatus").textContent =
+            "Plato lavado y disponible nuevamente.";
+
+    });
+
+    connection.on("WashPlateError", function (error) {
+
+        document.getElementById("plateStatus").textContent = error;
+
+    });
+
+    document.getElementById("plateDishButton")
+        .addEventListener("click", function () {
+
+            const ingredientIds = Array.from(selectedIngredientIds);
+
+            if (ingredientIds.length === 0) {
+
+                document.getElementById("plateStatus").textContent =
+                    "Selecciona ingredientes para emplatar.";
+
+                return;
+            }
+
+            connection.invoke(
+                "PlateDish",
+                currentRoomCode,
+                ingredientIds
+            ).catch(function (err) {
+                console.error(err.toString());
+            });
+
+        });
+
+    document.getElementById("deliverPlateButton")
+        .addEventListener("click", function () {
+
+            if (currentPlateId === null) {
+                return;
+            }
+
+            connection.invoke(
+                "DeliverPlate",
+                currentRoomCode,
+                currentPlateId
+            ).catch(function (err) {
+                console.error(err.toString());
+            });
+
+        });
+
+    document.getElementById("washPlateButton")
+        .addEventListener("click", function () {
+
+            if (currentPlateId === null) {
+                return;
+            }
+
+            connection.invoke(
+                "WashPlate",
+                currentRoomCode,
+                currentPlateId
+            ).catch(function (err) {
+                console.error(err.toString());
+            });
 
         });
 

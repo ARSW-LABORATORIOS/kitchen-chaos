@@ -9,6 +9,8 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<PreparationService>();
 builder.Services.AddSingleton<OrderService>();
+builder.Services.AddSingleton<PlatingService>();
+builder.Services.AddSingleton<DeliveryService>();
 
 // Cosmos DB: cliente singleton reutilizable
 builder.Services.AddSingleton(_ =>
