@@ -51,6 +51,21 @@ public class OrderService
     /// AB#27
     /// </summary>
     /// <param name="roomCode">Código de la sala.</param>
+    
+    public Order GetOrCreateActiveOrder(string roomCode)
+    {
+        return _activeOrders.GetOrAdd(roomCode, _ =>
+        {
+            var recipe = Recipes[Random.Shared.Next(Recipes.Count)];
+
+            return new Order
+            {
+                DishName = recipe.DishName,
+                RequiredIngredients = new List<string>(recipe.Ingredients)
+            };
+        });
+    }
+
     public Order? GetActiveOrder(string roomCode) =>
         _activeOrders.TryGetValue(roomCode, out var order) ? order : null;
 

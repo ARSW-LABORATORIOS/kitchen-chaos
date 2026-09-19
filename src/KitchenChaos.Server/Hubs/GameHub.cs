@@ -12,13 +12,17 @@ public class GameHub : Hub
     private readonly PlayerProfileService _profileService;
     private readonly PreparationService _preparationService;
     private readonly OrderService _orderService;
+    private readonly PlatingService _platingService;
+    private readonly DeliveryService _deliveryService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService)
     {
         _roomService = roomService;
         _profileService = profileService;
         _preparationService = preparationService;
         _orderService = orderService;
+        _platingService = platingService;
+        _deliveryService = deliveryService;
     }
 
     // AB#4 - Crear sala de juego
@@ -176,9 +180,37 @@ public class GameHub : Hub
     /// AB#27
     /// </summary>
     /// <param name="roomCode">Código de la sala que solicita el pedido.</param>
+    
+    public async Task RemoveFromHeat(
+        string roomCode,
+        string ingredientId)
+    {
+        var result = _preparationService.RemoveFromHeat(
+            roomCode,
+            ingredientId,
+            Context.ConnectionId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync(
+                "RemoveFromHeatError",
+                result.Error);
+
+            return;
+        }
+
+        await Clients.Caller.SendAsync(
+            "IngredientUpdated",
+            new
+            {
+                Id = ingredientId,
+                State = "Listo"
+            });
+    }
+
     public async Task GetCurrentOrder(string roomCode)
     {
-        var order = _orderService.GetActiveOrder(roomCode) ?? _orderService.GenerateOrder(roomCode);
+        var order = _orderService.GetOrCreateActiveOrder(roomCode);
 
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
         {
@@ -195,6 +227,36 @@ public class GameHub : Hub
     /// </summary>
     /// <param name="roomCode">Código de la sala que entrega el pedido.</param>
     /// <param name="deliveredIngredients">Ingredientes que el equipo entrega.</param>
+    
+    public async Task PlateDish(
+        string roomCode,
+        List<string> ingredientIds)
+    {
+        var result = _platingService.PlateDish(
+            roomCode,
+            Context.ConnectionId,
+            ingredientIds);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync(
+                "PlateDishError",
+                result.Error);
+
+            return;
+        }
+
+        await Clients.Group(roomCode).SendAsync(
+            "DishPlated",
+            new
+            {
+                result.Plate!.Id,
+                result.Plate.DishName,
+                result.Plate.Ingredients,
+                State = result.Plate.State.ToString()
+            });
+    }
+
     public async Task DeliverOrder(string roomCode, List<string> deliveredIngredients)
     {
         var correct = _orderService.ValidateDelivery(roomCode, deliveredIngredients);
@@ -234,5 +296,71 @@ public class GameHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task WashPlate(string roomCode, string plateId)
+    {
+        var result = _platingService.WashPlate(roomCode, plateId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync(
+                "WashPlateError",
+                result.Error);
+
+            return;
+        }
+
+        await Clients.Group(roomCode).SendAsync(
+            "PlateWashed",
+            new
+            {
+                result.Plate!.Id,
+                State = result.Plate.State.ToString()
+            });
+    }
+
+    public async Task DeliverPlate(string roomCode, string plateId)
+    {
+        var result = _deliveryService.Deliver(roomCode, plateId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync(
+                "DeliverPlateError",
+                result.Error);
+
+            return;
+        }
+
+        await Clients.Group(roomCode).SendAsync(
+            "PlateUpdated",
+            new
+            {
+                result.Plate!.Id,
+                State = result.Plate.State.ToString()
+            });
+
+        await Clients.Group(roomCode).SendAsync(
+            "OrderDelivered",
+            new
+            {
+                Success = result.Correct,
+                Score = result.Score
+            });
+
+        if (result.Correct)
+        {
+            var next = _orderService.GenerateOrder(roomCode);
+
+            await Clients.Group(roomCode).SendAsync(
+                "OrderUpdated",
+                new
+                {
+                    next.Id,
+                    next.DishName,
+                    next.RequiredIngredients
+                });
+        }
     }
 }
