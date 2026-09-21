@@ -27,7 +27,6 @@ public class PlatingService
 
     public PlateResult PlateDish(
         string roomCode,
-        string connectionId,
         List<string> ingredientIds)
     {
         var order = _orderService.GetActiveOrder(roomCode);
@@ -41,9 +40,9 @@ public class PlatingService
             };
         }
 
-        var ingredients = _preparationService.GetPlayerIngredients(
+        // AB#76: los ingredientes son de la sala, no de un jugador especifico.
+        var ingredients = _preparationService.GetRoomIngredients(
             roomCode,
-            connectionId,
             ingredientIds);
 
         if (ingredients.Count != ingredientIds.Distinct().Count())
@@ -84,9 +83,8 @@ public class PlatingService
             };
         }
 
-        var removed = _preparationService.RemovePlayerIngredients(
+        var removed = _preparationService.RemoveRoomIngredients(
             roomCode,
-            connectionId,
             ingredientIds);
 
         if (!removed)

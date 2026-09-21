@@ -208,9 +208,12 @@ public class PreparationService
         });
     }
 
-    public List<Ingredient> GetPlayerIngredients(
+    /// <summary>
+    /// Ingredientes preparados de la sala (sin importar quien los tomo originalmente).
+    /// Cualquier jugador de la sala puede usarlos para emplatar. AB#76.
+    /// </summary>
+    public List<Ingredient> GetRoomIngredients(
         string roomCode,
-        string connectionId,
         IEnumerable<string> ingredientIds)
     {
         if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
@@ -221,16 +224,14 @@ public class PreparationService
         lock (ingredients)
         {
             return ingredients
-                .Where(i =>
-                    i.HeldByConnectionId == connectionId &&
-                    ids.Contains(i.Id))
+                .Where(i => ids.Contains(i.Id))
                 .ToList();
         }
     }
 
-    public bool RemovePlayerIngredients(
+    /// <summary>Retira ingredientes del estado compartido de la sala cuando se usan para emplatar. AB#76.</summary>
+    public bool RemoveRoomIngredients(
         string roomCode,
-        string connectionId,
         IEnumerable<string> ingredientIds)
     {
         if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
@@ -241,9 +242,7 @@ public class PreparationService
         lock (ingredients)
         {
             var selected = ingredients
-                .Where(i =>
-                    i.HeldByConnectionId == connectionId &&
-                    ids.Contains(i.Id))
+                .Where(i => ids.Contains(i.Id))
                 .ToList();
 
             if (selected.Count != ids.Count)
