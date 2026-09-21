@@ -156,6 +156,30 @@ public class PreparationService
         };
     }
 
+    /// <summary>AB#77 - Tira a la basura un ingrediente quemado y avisa a toda la sala.</summary>
+    public async Task<IngredientActionResult> DiscardIngredientAsync(string roomCode, string ingredientId, string connectionId)
+    {
+        if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
+            return new IngredientActionResult { Success = false, Error = "No tienes ese ingrediente." };
+
+        lock (ingredients)
+        {
+            var ingredient = ingredients.FirstOrDefault(i => i.Id == ingredientId && i.HeldByConnectionId == connectionId);
+
+            if (ingredient is null)
+                return new IngredientActionResult { Success = false, Error = "No tienes ese ingrediente." };
+
+            if (ingredient.State != IngredientState.Quemado)
+                return new IngredientActionResult { Success = false, Error = "Solo puedes tirar a la basura un ingrediente quemado." };
+
+            ingredients.Remove(ingredient);
+        }
+
+        await _hub.Clients.Group(roomCode).SendAsync("IngredientDiscarded", new { Id = ingredientId });
+
+        return new IngredientActionResult { Success = true };
+    }
+
     private async Task RestockStationAsync(string roomCode, Station station)
     {
         await Task.Delay(TimeSpan.FromSeconds(RestockSeconds));

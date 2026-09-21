@@ -203,6 +203,17 @@ public class GameHub : Hub
             });
     }
 
+    // AB#77 - Tirar a la basura un ingrediente quemado
+    public async Task DiscardIngredient(string roomCode, string ingredientId)
+    {
+        var result = await _preparationService.DiscardIngredientAsync(roomCode, ingredientId, Context.ConnectionId);
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync("DiscardIngredientError", result.Error);
+        }
+    }
+
     public async Task GetCurrentOrder(string roomCode)
     {
         var order = _orderService.GetOrCreateActiveOrder(roomCode);

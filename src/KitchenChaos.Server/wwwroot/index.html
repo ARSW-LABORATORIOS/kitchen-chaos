@@ -450,6 +450,25 @@
                 });
 
                 item.appendChild(removeButton);
+
+            } else if (ingredient.state === "Quemado") {
+
+                const discardButton = document.createElement("button");
+                discardButton.textContent = "Tirar a la basura";
+
+                discardButton.addEventListener("click", function () {
+
+                    connection.invoke(
+                        "DiscardIngredient",
+                        currentRoomCode,
+                        id
+                    ).catch(function (err) {
+                        console.error(err.toString());
+                    });
+
+                });
+
+                item.appendChild(discardButton);
             }
 
             container.appendChild(item);
@@ -484,6 +503,20 @@
 
         }
 
+    });
+
+
+    // AB#77 - Ingrediente quemado descartado
+    connection.on("IngredientDiscarded", function (update) {
+
+        delete myIngredients[update.id];
+        selectedIngredientIds.delete(update.id);
+        renderMyIngredients();
+
+    });
+
+    connection.on("DiscardIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
     });
 
 
