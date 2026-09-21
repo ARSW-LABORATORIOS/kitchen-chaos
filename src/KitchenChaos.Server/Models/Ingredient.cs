@@ -20,4 +20,8 @@ public class Ingredient
     public required string Name { get; set; }
     public IngredientState State { get; set; } = IngredientState.Crudo;
     public required string HeldByConnectionId { get; set; }
+
+    // AB#78 - que preparacion necesita este ingrediente en particular.
+    public bool RequiresChop { get; set; } = true;
+    public bool RequiresCook { get; set; } = true;
 }

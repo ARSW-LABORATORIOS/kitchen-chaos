@@ -135,7 +135,9 @@ public class GameHub : Hub
         {
             result.Ingredient!.Id,
             result.Ingredient.Name,
-            State = result.Ingredient.State.ToString()
+            State = result.Ingredient.State.ToString(),
+            result.Ingredient.RequiresChop,
+            result.Ingredient.RequiresCook
         });
 
         var stations = _preparationService.GetStations(roomCode);

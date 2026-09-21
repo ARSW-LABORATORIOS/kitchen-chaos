@@ -11,20 +11,46 @@ namespace KitchenChaos.Server.Services;
 public class OrderService
 {
     /// <summary>
-    /// Recetas válidas del nivel 1. Cada receta define un plato y sus ingredientes requeridos.
-    /// AB#27
+    /// Recetas configurables por nivel. Agregar un nivel nuevo es agregar recetas aqui,
+    /// no toca GameHub. AB#78.
+    /// Nivel 1: arroz con leche. Nivel 2: ensalada (combinaciones variables).
     /// </summary>
     private static readonly List<Recipe> Recipes =
     [
-        new() { DishName = "Ensalada",      Ingredients = ["lechuga", "tomate"] },
-        new() { DishName = "Hamburguesa",   Ingredients = ["pan", "carne", "lechuga"] },
-        new() { DishName = "Sopa",          Ingredients = ["zanahoria", "papa", "caldo"] },
-        new() { DishName = "Sandwich",      Ingredients = ["pan", "queso", "tomate"] },
+        new() { Level = 1, DishName = "Arroz con leche",            Ingredients = ["leche", "arroz", "leche condensada"] },
+        new() { Level = 1, DishName = "Arroz con leche con pasas",  Ingredients = ["leche", "arroz", "leche condensada", "uvas pasas"] },
+
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "lechuga"] },
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "pepino", "cebolla"] },
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["lechuga", "pepino"] },
     ];
+
+    private readonly RoomService _roomService;
 
     // Un pedido activo por sala. ConcurrentDictionary porque varias salas
     // pueden generar o consultar pedidos al mismo tiempo desde hilos distintos.
     private readonly ConcurrentDictionary<string, Order> _activeOrders = new();
+
+    public OrderService(RoomService roomService)
+    {
+        _roomService = roomService;
+    }
+
+    /// <summary>Ingredientes que usa al menos una receta del nivel indicado. AB#78.</summary>
+    public List<string> GetIngredientsForLevel(int level) =>
+        Recipes
+            .Where(r => r.Level == level)
+            .SelectMany(r => r.Ingredients)
+            .Distinct()
+            .ToList();
+
+    private Recipe PickRecipe(string roomCode)
+    {
+        var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
+        var recipesForLevel = Recipes.Where(r => r.Level == level).ToList();
+
+        return recipesForLevel[Random.Shared.Next(recipesForLevel.Count)];
+    }
 
     /// <summary>
     /// Genera un pedido aleatorio válido para la sala indicada y lo almacena como pedido activo.
@@ -35,7 +61,7 @@ public class OrderService
     /// <returns>El pedido generado.</returns>
     public Order GenerateOrder(string roomCode)
     {
-        var recipe = Recipes[Random.Shared.Next(Recipes.Count)];
+        var recipe = PickRecipe(roomCode);
         var order = new Order
         {
             DishName = recipe.DishName,
@@ -51,12 +77,12 @@ public class OrderService
     /// AB#27
     /// </summary>
     /// <param name="roomCode">Código de la sala.</param>
-    
+
     public Order GetOrCreateActiveOrder(string roomCode)
     {
         return _activeOrders.GetOrAdd(roomCode, _ =>
         {
-            var recipe = Recipes[Random.Shared.Next(Recipes.Count)];
+            var recipe = PickRecipe(roomCode);
 
             return new Order
             {

@@ -15,5 +15,8 @@ public class Room
 
     public bool HasStarted { get; set; } = false;
 
+    // AB#78 - Nivel actual de la sala, define que recetas e ingredientes aplican.
+    public int Level { get; set; } = 1;
+
     public List<Player> Players { get; } = new();
 }
