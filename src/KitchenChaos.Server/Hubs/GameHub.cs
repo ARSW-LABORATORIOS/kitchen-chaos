@@ -14,8 +14,9 @@ public class GameHub : Hub
     private readonly OrderService _orderService;
     private readonly PlatingService _platingService;
     private readonly DeliveryService _deliveryService;
+    private readonly TimerService _timerService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService)
     {
         _roomService = roomService;
         _profileService = profileService;
@@ -23,6 +24,7 @@ public class GameHub : Hub
         _orderService = orderService;
         _platingService = platingService;
         _deliveryService = deliveryService;
+        _timerService = timerService;
     }
 
     // AB#4 - Crear sala de juego
@@ -105,6 +107,17 @@ public class GameHub : Hub
                 Level = 1
             }
         );
+
+        // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
+        _timerService.StartLevel(roomCode);
+
+        var order = _orderService.GenerateOrder(roomCode);
+        await Clients.Group(roomCode).SendAsync("OrderUpdated", new
+        {
+            order.Id,
+            order.DishName,
+            order.RequiredIngredients
+        });
     }
 
     // AB#19 - Estaciones disponibles en la sala
@@ -341,12 +354,16 @@ public class GameHub : Hub
                 State = result.Plate.State.ToString()
             });
 
+        // AB#79: suma +100 y reinicia temporizador de pedido si la entrega fue correcta
+        if (result.Correct)
+            _timerService.OnOrderDelivered(roomCode);
+
         await Clients.Group(roomCode).SendAsync(
             "OrderDelivered",
             new
             {
                 Success = result.Correct,
-                Score = result.Score
+                Score   = _timerService.GetScore(roomCode)
             });
 
         if (result.Correct)

@@ -11,6 +11,7 @@ builder.Services.AddSingleton<PreparationService>();
 builder.Services.AddSingleton<OrderService>();
 builder.Services.AddSingleton<PlatingService>();
 builder.Services.AddSingleton<DeliveryService>();
+builder.Services.AddSingleton<TimerService>();
 
 // Cosmos DB: cliente singleton reutilizable
 builder.Services.AddSingleton(_ =>
