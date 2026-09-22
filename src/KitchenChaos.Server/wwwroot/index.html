@@ -400,7 +400,7 @@
             item.appendChild(selector);
             item.appendChild(label);
 
-            if (ingredient.state === "Crudo") {
+            if (ingredient.state === "Crudo" && ingredient.requiresChop) {
 
                 const chopButton = document.createElement("button");
                 chopButton.textContent = "Picar";
@@ -415,6 +415,23 @@
                 });
 
                 item.appendChild(chopButton);
+
+            } else if (ingredient.state === "Crudo" && !ingredient.requiresChop && ingredient.requiresCook) {
+
+                // AB#78 - ingredientes como leche o arroz se cocinan directo, sin picarse antes
+                const cookDirectButton = document.createElement("button");
+                cookDirectButton.textContent = "Cocinar";
+
+                cookDirectButton.addEventListener("click", function () {
+
+                    connection.invoke("CookIngredient", currentRoomCode, id)
+                        .catch(function (err) {
+                            console.error(err.toString());
+                        });
+
+                });
+
+                item.appendChild(cookDirectButton);
 
             } else if (ingredient.state === "Picado") {
 
@@ -450,6 +467,25 @@
                 });
 
                 item.appendChild(removeButton);
+
+            } else if (ingredient.state === "Quemado") {
+
+                const discardButton = document.createElement("button");
+                discardButton.textContent = "Tirar a la basura";
+
+                discardButton.addEventListener("click", function () {
+
+                    connection.invoke(
+                        "DiscardIngredient",
+                        currentRoomCode,
+                        id
+                    ).catch(function (err) {
+                        console.error(err.toString());
+                    });
+
+                });
+
+                item.appendChild(discardButton);
             }
 
             container.appendChild(item);
@@ -468,7 +504,12 @@
     // AB#19 - Confirmación de que tomé un ingrediente
     connection.on("IngredientTaken", function (ingredient) {
 
-        myIngredients[ingredient.id] = { name: ingredient.name, state: ingredient.state };
+        myIngredients[ingredient.id] = {
+            name: ingredient.name,
+            state: ingredient.state,
+            requiresChop: ingredient.requiresChop,
+            requiresCook: ingredient.requiresCook
+        };
         renderMyIngredients();
 
     });
@@ -484,6 +525,20 @@
 
         }
 
+    });
+
+
+    // AB#77 - Ingrediente quemado descartado
+    connection.on("IngredientDiscarded", function (update) {
+
+        delete myIngredients[update.id];
+        selectedIngredientIds.delete(update.id);
+        renderMyIngredients();
+
+    });
+
+    connection.on("DiscardIngredientError", function (error) {
+        document.getElementById("preparationError").textContent = error;
     });
 
 
