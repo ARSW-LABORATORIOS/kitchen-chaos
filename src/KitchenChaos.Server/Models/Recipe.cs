@@ -11,4 +11,7 @@ public class Recipe
 
     /// <summary>Lista de ingredientes necesarios para completar el plato.</summary>
     public List<string> Ingredients { get; set; } = new();
+
+    /// <summary>Nivel al que pertenece esta receta. AB#78.</summary>
+    public int Level { get; set; } = 1;
 }
