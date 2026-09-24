@@ -1,0 +1,119 @@
+.game-board-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.game-board {
+    position: relative;
+    width: min(1280px, 100%);
+    aspect-ratio: 1280 / 722;
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.game-board-image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    inset: 0;
+    user-select: none;
+    pointer-events: none;
+}
+
+.station-hotspot {
+    position: absolute;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    z-index: 5;
+}
+
+.station-hotspot:hover {
+    outline: 3px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.station-label {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.station-hotspot:hover .station-label {
+    opacity: 1;
+}
+
+.game-hud {
+    width: min(1280px, 100%);
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.hud-section {
+    flex: 1;
+    text-align: center;
+}
+.station-1 {
+    left: 24.5%;
+    top: 15%;
+    width: 7%;
+    height: 22%;
+}
+
+.station-2 {
+    left: 31.5%;
+    top: 15%;
+    width: 7%;
+    height: 22%;
+}
+
+.station-3 {
+    left: 38.5%;
+    top: 15%;
+    width: 7%;
+    height: 22%;
+}
+
+.station-4 {
+    left: 45.5%;
+    top: 15%;
+    width: 7%;
+    height: 22%;
+}
+
+.station-hotspot:disabled {
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.25);
+    outline: none;
+}
+
+.cook-station {
+    left: 64%;
+    top: 20%;
+    width: 16%;
+    height: 23%;
+}
+
+.plate-station {
+    left: 54.5%;
+    top: 26.5%;
+    width: 11%;
+    height: 14%;
+}

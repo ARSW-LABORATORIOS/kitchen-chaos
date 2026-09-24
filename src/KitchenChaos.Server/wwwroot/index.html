@@ -7,6 +7,8 @@
 
     <title>Kitchen Chaos</title>
 
+    <link rel="stylesheet" href="css/game.css">
+
     <style>
         * {
             box-sizing: border-box;
@@ -251,6 +253,35 @@
 
         <p>Prepárate para cocinar con tu equipo.</p>
 
+        <div class="game-board-wrapper">
+            <div class="game-board">
+                <img src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
+                    <span class="station-label">Leche</span>
+                </button>
+
+                <button class="station-hotspot ingredient-station station-2" data-ingredient="arroz">
+                    <span class="station-label">Arroz</span>
+                </button>
+
+                <button class="station-hotspot ingredient-station station-3" data-ingredient="leche condensada">
+                    <span class="station-label">Leche condensada</span>
+                </button>
+
+                <button class="station-hotspot ingredient-station station-4" data-ingredient="uvas pasas">
+                    <span class="station-label">Uvas pasas</span>
+                </button>
+
+                <button class="station-hotspot cook-station">
+                    <span class="station-label">Cocinar</span>
+                </button>
+
+                <button class="station-hotspot plate-station">
+                    <span class="station-label">Emplatar</span>
+                </button>
+            </div>
+        </div>
+
         <div class="order-box">
             <h3>Pedido actual</h3>
             <p id="orderDish">Cargando pedido...</p>
@@ -326,14 +357,51 @@
     let selectedIngredientIds = new Set();
     let currentPlateId = null;
 
+    function useCookStation() {
+        const ingredientIds = Array.from(selectedIngredientIds);
+
+        if (ingredientIds.length !== 1) {
+            document.getElementById("preparationError").textContent =
+                "Selecciona un solo ingrediente para usar la estufa.";
+            return;
+        }
+
+        const ingredientId = ingredientIds[0];
+        const ingredient = myIngredients[ingredientId];
+
+        if (!ingredient) {
+            return;
+        }
+
+        if (ingredient.state === "Cocinado") {
+            connection.invoke("RemoveFromHeat", currentRoomCode, ingredientId)
+                .catch(function (err) {
+                    console.error(err.toString());
+                });
+            return;
+        }
+
+        if (ingredient.state === "Cocinando") {
+            document.getElementById("preparationError").textContent =
+                "El ingrediente todavía se está cocinando.";
+            return;
+        }
+
+        connection.invoke("CookIngredient", currentRoomCode, ingredientId)
+            .catch(function (err) {
+                console.error(err.toString());
+            });
+    }
+
+    document.querySelector(".cook-station")
+        .addEventListener("click", useCookStation);
+
 
     function renderStations(stations) {
-
         const container = document.getElementById("stationsList");
         container.innerHTML = "";
 
         stations.forEach(function (station) {
-
             const item = document.createElement("div");
             item.className = "station-item";
 
@@ -346,18 +414,40 @@
             button.disabled = !station.isAvailable;
 
             button.addEventListener("click", function () {
-
                 connection.invoke("TakeIngredient", currentRoomCode, station.id)
-                    .catch(function (err) { console.error(err.toString()); });
-
+                    .catch(function (err) {
+                        console.error(err.toString());
+                    });
             });
 
             item.appendChild(label);
             item.appendChild(button);
             container.appendChild(item);
-
         });
 
+        document.querySelectorAll(".ingredient-station").forEach(function (hotspot) {
+            const ingredientName = hotspot.dataset.ingredient;
+
+            const station = stations.find(function (item) {
+                return item.ingredientName.toLowerCase() === ingredientName.toLowerCase();
+            });
+
+            if (!station) {
+                hotspot.style.display = "none";
+                hotspot.onclick = null;
+                return;
+            }
+
+            hotspot.style.display = "block";
+            hotspot.disabled = !station.isAvailable;
+
+            hotspot.onclick = function () {
+                connection.invoke("TakeIngredient", currentRoomCode, station.id)
+                    .catch(function (err) {
+                        console.error(err.toString());
+                    });
+            };
+        });
     }
 
 
@@ -900,6 +990,26 @@
             });
 
         });
+    function usePlateStation() {
+        const ingredientIds = Array.from(selectedIngredientIds);
+
+        if (ingredientIds.length === 0) {
+            document.getElementById("plateStatus").textContent =
+                "Selecciona ingredientes para emplatar.";
+            return;
+        }
+
+        connection.invoke(
+            "PlateDish",
+            currentRoomCode,
+            ingredientIds
+        ).catch(function (err) {
+            console.error(err.toString());
+        });
+    }
+
+    document.querySelector(".plate-station")
+        .addEventListener("click", usePlateStation);
 
     document.getElementById("deliverPlateButton")
         .addEventListener("click", function () {
