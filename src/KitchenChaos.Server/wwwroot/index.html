@@ -7,6 +7,8 @@
 
     <title>Kitchen Chaos</title>
 
+    <link rel="stylesheet" href="css/game.css">
+
     <style>
         * {
             box-sizing: border-box;
@@ -182,712 +184,985 @@
             color: red;
             margin-top: 10px;
         }
+
+        .level-timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e85d04;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .order-timer-wrap {
+            margin-top: 10px;
+        }
+
+        .order-timer-label {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .order-timer-bar-bg {
+            width: 100%;
+            height: 14px;
+            background: #eee;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .order-timer-bar {
+            height: 100%;
+            width: 100%;
+            border-radius: 7px;
+            background: #2a9d8f;
+            transition: width 0.9s linear, background 0.5s;
+        }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <h1>Kitchen Chaos</h1>
+        <h1>Kitchen Chaos</h1>
 
-    <p class="subtitle">
-        Cocina, coopera y supera el caos con tu equipo.
-    </p>
-
-    <div class="menu">
-
-        <h2>Menú principal</h2>
-
-        <input
-            type="text"
-            id="playerNameInput"
-            placeholder="Tu nombre"
-        />
-
-        <button id="createRoomButton">
-            Crear sala
-        </button>
-
-        <input
-            type="text"
-            id="roomCodeInput"
-            placeholder="Código de la sala"
-        />
-
-        <button id="joinRoomButton">
-            Unirse a sala
-        </button>
-
-        <p id="roomErrorDisplay"></p>
-
-    </div>
-
-    <div class="waiting-room">
-
-        <h2>Sala de espera</h2>
-
-        <p id="roomCodeDisplay">
-            Todavía no estás en una sala.
+        <p class="subtitle">
+            Cocina, coopera y supera el caos con tu equipo.
         </p>
 
-        <h3>Jugadores conectados</h3>
+        <div class="menu">
 
-        <ul id="playersList"></ul>
+            <h2>Menú principal</h2>
 
-        <button id="startGameButton" style="display: none;" disabled>
-            Iniciar partida
-        </button>
+            <input type="text" id="playerNameInput" placeholder="Tu nombre" />
 
-        <p id="startGameMessage"></p>
+            <button id="createRoomButton">
+                Crear sala
+            </button>
+
+            <input type="text" id="roomCodeInput" placeholder="Código de la sala" />
+
+            <button id="joinRoomButton">
+                Unirse a sala
+            </button>
+
+            <p id="roomErrorDisplay"></p>
+
+        </div>
+
+        <div class="waiting-room">
+
+            <h2>Sala de espera</h2>
+
+            <p id="roomCodeDisplay">
+                Todavía no estás en una sala.
+            </p>
+
+            <h3>Jugadores conectados</h3>
+
+            <ul id="playersList"></ul>
+
+            <button id="startGameButton" style="display: none;" disabled>
+                Iniciar partida
+            </button>
+
+            <p id="startGameMessage"></p>
+
+        </div>
+
+        <div id="gameScreen" class="menu" style="display: none;">
+
+            <div class="game-hud-sticky">
+
+                <div class="game-hud">
+
+                    <div class="hud-section">
+                        <span class="hud-label">Nivel</span>
+                        <h2>Nivel 1</h2>
+                    </div>
+
+                    <div class="hud-section">
+                        <span class="hud-label">Tiempo</span>
+                        <div class="level-timer" id="levelTimerDisplay">5:00</div>
+                    </div>
+
+                    <div class="hud-section">
+                        <span class="hud-label">Puntaje</span>
+                        <div id="scoreDisplay">Puntaje: 0</div>
+                    </div>
+
+                </div>
+
+                <div class="hud-order">
+
+                    <div class="hud-order-info">
+                        <strong>Pedido actual</strong>
+                        <span id="orderDish">Cargando pedido...</span>
+                        <span id="orderIngredients"></span>
+                    </div>
+
+                    <div class="hud-order-timer">
+                        <span>Tiempo: <span id="orderTimerSeconds">45</span>s</span>
+
+                        <div class="order-timer-bar-bg">
+                            <div class="order-timer-bar" id="orderTimerBar"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="game-board-wrapper">
+                <div class="game-board">
+                    <img src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                    <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
+                        <span class="station-label">Leche</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-2" data-ingredient="arroz">
+                        <span class="station-label">Arroz</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-3" data-ingredient="leche condensada">
+                        <span class="station-label">Leche condensada</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-4" data-ingredient="uvas pasas">
+                        <span class="station-label">Uvas pasas</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station">
+                        <span class="station-label">Cocinar</span>
+                    </button>
+
+                    <button class="station-hotspot plate-station">
+                        <span class="station-label">Emplatar</span>
+                    </button>
+
+                    <button class="station-hotspot delivery-station">
+                        <span class="station-label">Entregar</span>
+                    </button>
+
+                    <button class="station-hotspot wash-station">
+                        <span class="station-label">Lavar</span>
+                    </button>
+
+                    <button class="station-hotspot trash-station">
+                        <span class="station-label">Basura</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stations-box">
+                <h3>Estaciones</h3>
+                <div id="stationsList"></div>
+            </div>
+
+            <div class="ingredients-box">
+                <h3>Mis ingredientes</h3>
+                <div id="myIngredientsList"></div>
+            </div>
+
+            <div class="plate-box">
+                <h3>Mi plato</h3>
+
+                <div id="plateVisual" class="plate-visual plate-clean">
+                    <div class="plate-circle">
+                        <span id="plateVisualText">Limpio</span>
+                    </div>
+                </div>
+
+                <p id="plateStatus">No hay un plato preparado.</p>
+
+                <div class="legacy-plate-controls">
+                    <button id="plateDishButton">
+                        Emplatar ingredientes seleccionados
+                    </button>
+
+                    <button id="deliverPlateButton" disabled>
+                        Entregar plato
+                    </button>
+
+                    <button id="washPlateButton" disabled>
+                        Lavar plato
+                    </button>
+                </div>
+            </div>
+
+
+            <p id="preparationError"></p>
+
+        </div>
+
+        <div class="instructions">
+
+            <h2>¿Cómo jugar?</h2>
+
+            <ul>
+                <li>Crea una sala o únete usando un código.</li>
+                <li>Juega junto a otros cocineros.</li>
+                <li>Coordina las tareas de la cocina con tu equipo.</li>
+                <li>Prepara y entrega los pedidos antes de que termine el tiempo.</li>
+            </ul>
+
+        </div>
+
+        <p id="connectionStatus">
+            Conectando con el servidor...
+        </p>
 
     </div>
 
-    <div id="gameScreen" class="menu" style="display: none;">
 
-        <h2>Nivel 1</h2>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 
-        <p>¡La partida ha comenzado!</p>
+    <script>
 
-        <p>Prepárate para cocinar con tu equipo.</p>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/gamehub")
+            .build();
 
-        <div class="order-box">
-            <h3>Pedido actual</h3>
-            <p id="orderDish">Cargando pedido...</p>
-            <p id="orderIngredients"></p>
-        </div>
+        let currentRoomCode = null;
+        let isHost = false;
+        let myIngredients = {};
+        let selectedIngredientIds = new Set();
+        let currentPlateId = null;
 
-        <div class="stations-box">
-            <h3>Estaciones</h3>
-            <div id="stationsList"></div>
-        </div>
+        document.querySelector(".game-board").addEventListener(
+            "click",
+            () => document.getElementById("preparationError").textContent = "",
+            true
+        );
 
-        <div class="ingredients-box">
-            <h3>Mis ingredientes</h3>
-            <div id="myIngredientsList"></div>
-        </div>
+        function useCookStation() {
+            const ingredientIds = Array.from(selectedIngredientIds);
 
-        <div class="ingredients-box">
-            <h3>Emplatado y entrega</h3>
-
-            <button id="plateDishButton">
-                Emplatar ingredientes seleccionados
-            </button>
-
-            <p id="plateStatus">No hay un plato preparado.</p>
-
-            <button id="deliverPlateButton" disabled>
-                Entregar plato
-            </button>
-
-            <button id="washPlateButton" disabled>
-                Lavar plato
-            </button>
-
-            <p id="scoreDisplay">Puntaje: 0</p>
-        </div>
-
-
-        <p id="preparationError"></p>
-
-    </div>
-
-    <div class="instructions">
-
-        <h2>¿Cómo jugar?</h2>
-
-        <ul>
-            <li>Crea una sala o únete usando un código.</li>
-            <li>Juega junto a otros cocineros.</li>
-            <li>Coordina las tareas de la cocina con tu equipo.</li>
-            <li>Prepara y entrega los pedidos antes de que termine el tiempo.</li>
-        </ul>
-
-    </div>
-
-    <p id="connectionStatus">
-        Conectando con el servidor...
-    </p>
-
-</div>
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-
-<script>
-
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/gamehub")
-        .build();
-
-    let currentRoomCode = null;
-    let isHost = false;
-    let myIngredients = {}; 
-    let selectedIngredientIds = new Set();
-    let currentPlateId = null;
-
-
-    function renderStations(stations) {
-
-        const container = document.getElementById("stationsList");
-        container.innerHTML = "";
-
-        stations.forEach(function (station) {
-
-            const item = document.createElement("div");
-            item.className = "station-item";
-
-            const label = document.createElement("span");
-            label.textContent = station.ingredientName +
-                (station.isAvailable ? "" : " (tomado)");
-
-            const button = document.createElement("button");
-            button.textContent = "Tomar";
-            button.disabled = !station.isAvailable;
-
-            button.addEventListener("click", function () {
-
-                connection.invoke("TakeIngredient", currentRoomCode, station.id)
-                    .catch(function (err) { console.error(err.toString()); });
-
-            });
-
-            item.appendChild(label);
-            item.appendChild(button);
-            container.appendChild(item);
-
-        });
-
-    }
-
-
-    function renderMyIngredients() {
-
-        const container = document.getElementById("myIngredientsList");
-        container.innerHTML = "";
-
-        Object.keys(myIngredients).forEach(function (id) {
-
-            const ingredient = myIngredients[id];
-
-            const item = document.createElement("div");
-            item.className = "ingredient-item";
-
-            const selector = document.createElement("input");
-            selector.type = "checkbox";
-            selector.style.width = "auto";
-            selector.style.marginRight = "10px";
-            selector.checked = selectedIngredientIds.has(id);
-
-            selector.addEventListener("change", function () {
-
-                if (selector.checked) {
-                    selectedIngredientIds.add(id);
-                } else {
-                    selectedIngredientIds.delete(id);
-                }
-
-            });
-
-            const label = document.createElement("span");
-            label.textContent = ingredient.name + " — ";
-
-            const stateSpan = document.createElement("span");
-            stateSpan.className = "ingredient-state";
-            stateSpan.textContent = ingredient.state;
-            label.appendChild(stateSpan);
-
-            item.appendChild(selector);
-            item.appendChild(label);
-
-            if (ingredient.state === "Crudo" && ingredient.requiresChop) {
-
-                const chopButton = document.createElement("button");
-                chopButton.textContent = "Picar";
-
-                chopButton.addEventListener("click", function () {
-
-                    connection.invoke("ChopIngredient", currentRoomCode, id)
-                        .catch(function (err) {
-                            console.error(err.toString());
-                        });
-
-                });
-
-                item.appendChild(chopButton);
-
-            } else if (ingredient.state === "Crudo" && !ingredient.requiresChop && ingredient.requiresCook) {
-
-                // AB#78 - ingredientes como leche o arroz se cocinan directo, sin picarse antes
-                const cookDirectButton = document.createElement("button");
-                cookDirectButton.textContent = "Cocinar";
-
-                cookDirectButton.addEventListener("click", function () {
-
-                    connection.invoke("CookIngredient", currentRoomCode, id)
-                        .catch(function (err) {
-                            console.error(err.toString());
-                        });
-
-                });
-
-                item.appendChild(cookDirectButton);
-
-            } else if (ingredient.state === "Picado") {
-
-                const cookButton = document.createElement("button");
-                cookButton.textContent = "Cocinar";
-
-                cookButton.addEventListener("click", function () {
-
-                    connection.invoke("CookIngredient", currentRoomCode, id)
-                        .catch(function (err) {
-                            console.error(err.toString());
-                        });
-
-                });
-
-                item.appendChild(cookButton);
-
-            } else if (ingredient.state === "Cocinado") {
-
-                const removeButton = document.createElement("button");
-                removeButton.textContent = "Retirar";
-
-                removeButton.addEventListener("click", function () {
-
-                    connection.invoke(
-                        "RemoveFromHeat",
-                        currentRoomCode,
-                        id
-                    ).catch(function (err) {
-                        console.error(err.toString());
-                    });
-
-                });
-
-                item.appendChild(removeButton);
-
-            } else if (ingredient.state === "Quemado") {
-
-                const discardButton = document.createElement("button");
-                discardButton.textContent = "Tirar a la basura";
-
-                discardButton.addEventListener("click", function () {
-
-                    connection.invoke(
-                        "DiscardIngredient",
-                        currentRoomCode,
-                        id
-                    ).catch(function (err) {
-                        console.error(err.toString());
-                    });
-
-                });
-
-                item.appendChild(discardButton);
+            if (ingredientIds.length !== 1) {
+                document.getElementById("preparationError").textContent =
+                    "Selecciona un solo ingrediente para usar la estufa.";
+                return;
             }
 
-            container.appendChild(item);
+            const ingredientId = ingredientIds[0];
+            const ingredient = myIngredients[ingredientId];
 
-        });
+            if (!ingredient) {
+                return;
+            }
 
-    }
+            if (ingredient.state === "Cocinado") {
+                connection.invoke("RemoveFromHeat", currentRoomCode, ingredientId)
+                    .catch(function (err) {
+                        console.error(err.toString());
+                    });
+                return;
+            }
+
+            if (ingredient.state === "Cocinando") {
+                document.getElementById("preparationError").textContent =
+                    "El ingrediente todavía se está cocinando.";
+                return;
+            }
+
+            connection.invoke("CookIngredient", currentRoomCode, ingredientId)
+                .catch(function (err) {
+                    console.error(err.toString());
+                });
+        }
+
+        document.querySelector(".cook-station")
+            .addEventListener("click", useCookStation);
+
+        function updatePlateVisual(state) {
+            const plateVisual = document.getElementById("plateVisual");
+            const plateText = document.getElementById("plateVisualText");
+
+            plateVisual.classList.remove(
+                "plate-clean",
+                "plate-food",
+                "plate-dirty"
+            );
+
+            if (state === "food") {
+                plateVisual.classList.add("plate-food");
+                plateText.textContent = "Con comida";
+            } else if (state === "dirty") {
+                plateVisual.classList.add("plate-dirty");
+                plateText.textContent = "Sucio";
+            } else {
+                plateVisual.classList.add("plate-clean");
+                plateText.textContent = "Limpio";
+            }
+        }
+
+        function renderStations(stations) {
+            const container = document.getElementById("stationsList");
+            container.innerHTML = "";
+
+            stations.forEach(function (station) {
+                const item = document.createElement("div");
+                item.className = "station-item";
+
+                const label = document.createElement("span");
+                label.textContent = station.ingredientName +
+                    (station.isAvailable ? "" : " (tomado)");
+
+                const button = document.createElement("button");
+                button.textContent = "Tomar";
+                button.disabled = !station.isAvailable;
+
+                button.addEventListener("click", function () {
+                    connection.invoke("TakeIngredient", currentRoomCode, station.id)
+                        .catch(function (err) {
+                            console.error(err.toString());
+                        });
+                });
+
+                item.appendChild(label);
+                item.appendChild(button);
+                container.appendChild(item);
+            });
+
+            document.querySelectorAll(".ingredient-station").forEach(function (hotspot) {
+                const ingredientName = hotspot.dataset.ingredient;
+
+                const station = stations.find(function (item) {
+                    return item.ingredientName.toLowerCase() === ingredientName.toLowerCase();
+                });
+
+                if (!station) {
+                    hotspot.style.display = "none";
+                    hotspot.onclick = null;
+                    return;
+                }
+
+                hotspot.style.display = "block";
+                hotspot.disabled = !station.isAvailable;
+
+                hotspot.onclick = function () {
+                    connection.invoke("TakeIngredient", currentRoomCode, station.id)
+                        .catch(function (err) {
+                            console.error(err.toString());
+                        });
+                };
+            });
+        }
 
 
-    // AB#19 - Estaciones de la sala
-    connection.on("StationsUpdated", function (stations) {
-        renderStations(stations);
-    });
+        function renderMyIngredients() {
 
+            const container = document.getElementById("myIngredientsList");
+            container.innerHTML = "";
 
-    // AB#19 - Confirmación de que tomé un ingrediente
-    connection.on("IngredientTaken", function (ingredient) {
+            Object.keys(myIngredients).forEach(function (id) {
 
-        myIngredients[ingredient.id] = {
-            name: ingredient.name,
-            state: ingredient.state,
-            requiresChop: ingredient.requiresChop,
-            requiresCook: ingredient.requiresCook
-        };
-        renderMyIngredients();
+                const ingredient = myIngredients[id];
 
-    });
+                const item = document.createElement("div");
 
+                const stateClasses = {
+                    "Crudo": "ingredient-raw",
+                    "Picado": "ingredient-chopped",
+                    "Cocinando": "ingredient-cooking",
+                    "Cocinado": "ingredient-cooked",
+                    "Listo": "ingredient-ready",
+                    "Quemado": "ingredient-burned"
+                };
 
-    // AB#20 / AB#21 - Cambios de estado de un ingrediente (picado, cocinando, cocinado, quemado)
-    connection.on("IngredientUpdated", function (update) {
+                item.className =
+                    "ingredient-item " + (stateClasses[ingredient.state] || "");
 
-        if (myIngredients[update.id]) {
+                const selector = document.createElement("input");
+                selector.type = "checkbox";
+                selector.style.width = "auto";
+                selector.style.marginRight = "10px";
+                selector.checked = selectedIngredientIds.has(id);
 
-            myIngredients[update.id].state = update.state;
-            renderMyIngredients();
+                selector.addEventListener("change", function () {
+
+                    if (selector.checked) {
+                        selectedIngredientIds.add(id);
+                    } else {
+                        selectedIngredientIds.delete(id);
+                    }
+
+                });
+
+                const label = document.createElement("span");
+                label.textContent = ingredient.name + " — ";
+
+                const stateSpan = document.createElement("span");
+                stateSpan.className = "ingredient-state";
+                stateSpan.textContent = ingredient.state;
+                label.appendChild(stateSpan);
+
+                item.appendChild(selector);
+                item.appendChild(label);
+
+                if (ingredient.state === "Crudo" && ingredient.requiresChop) {
+
+                    const chopButton = document.createElement("button");
+                    chopButton.textContent = "Picar";
+
+                    chopButton.addEventListener("click", function () {
+
+                        connection.invoke("ChopIngredient", currentRoomCode, id)
+                            .catch(function (err) {
+                                console.error(err.toString());
+                            });
+
+                    });
+
+                    item.appendChild(chopButton);
+
+                } else if (ingredient.state === "Crudo" && !ingredient.requiresChop && ingredient.requiresCook) {
+
+                    // AB#78 - ingredientes como leche o arroz se cocinan directo, sin picarse antes
+                    const cookDirectButton = document.createElement("button");
+                    cookDirectButton.textContent = "Cocinar";
+
+                    cookDirectButton.addEventListener("click", function () {
+
+                        connection.invoke("CookIngredient", currentRoomCode, id)
+                            .catch(function (err) {
+                                console.error(err.toString());
+                            });
+
+                    });
+
+                    item.appendChild(cookDirectButton);
+
+                } else if (ingredient.state === "Picado") {
+
+                    const cookButton = document.createElement("button");
+                    cookButton.textContent = "Cocinar";
+
+                    cookButton.addEventListener("click", function () {
+
+                        connection.invoke("CookIngredient", currentRoomCode, id)
+                            .catch(function (err) {
+                                console.error(err.toString());
+                            });
+
+                    });
+
+                    item.appendChild(cookButton);
+
+                } else if (ingredient.state === "Cocinado") {
+
+                    const removeButton = document.createElement("button");
+                    removeButton.textContent = "Retirar";
+
+                    removeButton.addEventListener("click", function () {
+
+                        connection.invoke(
+                            "RemoveFromHeat",
+                            currentRoomCode,
+                            id
+                        ).catch(function (err) {
+                            console.error(err.toString());
+                        });
+
+                    });
+
+                    item.appendChild(removeButton);
+
+                } else if (ingredient.state === "Quemado") {
+
+                    const discardButton = document.createElement("button");
+                    discardButton.textContent = "Tirar a la basura";
+
+                    discardButton.addEventListener("click", function () {
+
+                        connection.invoke(
+                            "DiscardIngredient",
+                            currentRoomCode,
+                            id
+                        ).catch(function (err) {
+                            console.error(err.toString());
+                        });
+
+                    });
+
+                    item.appendChild(discardButton);
+                }
+
+                container.appendChild(item);
+
+            });
 
         }
 
-    });
+
+        // AB#19 - Estaciones de la sala
+        connection.on("StationsUpdated", function (stations) {
+            renderStations(stations);
+        });
 
 
-    // AB#77 - Ingrediente quemado descartado
-    connection.on("IngredientDiscarded", function (update) {
+        // AB#19 - Confirmación de que tomé un ingrediente
+        connection.on("IngredientTaken", function (ingredient) {
 
-        delete myIngredients[update.id];
-        selectedIngredientIds.delete(update.id);
-        renderMyIngredients();
-
-    });
-
-    connection.on("DiscardIngredientError", function (error) {
-        document.getElementById("preparationError").textContent = error;
-    });
-
-
-    connection.on("TakeIngredientError", function (error) {
-        document.getElementById("preparationError").textContent = error;
-    });
-
-    connection.on("ChopIngredientError", function (error) {
-        document.getElementById("preparationError").textContent = error;
-    });
-
-    connection.on("CookIngredientError", function (error) {
-        document.getElementById("preparationError").textContent = error;
-    });
-
-    connection.on("RemoveFromHeatError", function (error) {
-        document.getElementById("preparationError").textContent = error;
-    });
-
-
-    // AB#18 - Ingredientes requeridos del pedido actual
-    connection.on("OrderUpdated", function (order) {
-
-        document.getElementById("orderDish").textContent = "Plato: " + order.dishName;
-
-        document.getElementById("orderIngredients").textContent =
-            "Ingredientes necesarios: " + order.requiredIngredients.join(", ");
-
-    });
-
-
-    // Actualizar lista de jugadores en tiempo real
-    connection.on("RoomPlayersUpdated", function (playerNames) {
-
-        document.getElementById("roomErrorDisplay").textContent = "";
-
-        const list = document.getElementById("playersList");
-        const startButton = document.getElementById("startGameButton");
-
-        list.innerHTML = "";
-
-        playerNames.forEach(function (name) {
-
-            const li = document.createElement("li");
-            li.textContent = name;
-
-            list.appendChild(li);
+            myIngredients[ingredient.id] = {
+                name: ingredient.name,
+                state: ingredient.state,
+                requiresChop: ingredient.requiresChop,
+                requiresCook: ingredient.requiresCook
+            };
+            renderMyIngredients();
 
         });
 
-        // Solo el host ve el botón de iniciar
-        if (isHost) {
 
-            startButton.style.display = "block";
+        // AB#20 / AB#21 - Cambios de estado de un ingrediente (picado, cocinando, cocinado, quemado)
+        connection.on("IngredientUpdated", function (update) {
 
-            // Se necesitan mínimo 2 jugadores
-            startButton.disabled =
-                playerNames.length < 2 || playerNames.length > 4;
+            if (myIngredients[update.id]) {
 
-            if (playerNames.length < 2) {
+                myIngredients[update.id].state = update.state;
+                renderMyIngredients();
 
-                document.getElementById("startGameMessage").textContent =
-                    "Esperando al menos otro jugador...";
+            }
+
+        });
+
+
+        // AB#77 - Ingrediente quemado descartado
+        connection.on("IngredientDiscarded", function (update) {
+
+            delete myIngredients[update.id];
+            selectedIngredientIds.delete(update.id);
+            renderMyIngredients();
+
+        });
+
+        connection.on("DiscardIngredientError", function (error) {
+            document.getElementById("preparationError").textContent = error;
+        });
+
+
+        connection.on("TakeIngredientError", function (error) {
+            document.getElementById("preparationError").textContent = error;
+        });
+
+        connection.on("ChopIngredientError", function (error) {
+            document.getElementById("preparationError").textContent = error;
+        });
+
+        connection.on("CookIngredientError", function (error) {
+            document.getElementById("preparationError").textContent = error;
+        });
+
+        connection.on("RemoveFromHeatError", function (error) {
+            document.getElementById("preparationError").textContent = error;
+        });
+
+
+        // AB#18 - Ingredientes requeridos del pedido actual
+        connection.on("OrderUpdated", function (order) {
+
+            document.getElementById("orderDish").textContent = "Plato: " + order.dishName;
+
+            document.getElementById("orderIngredients").textContent =
+                "Ingredientes necesarios: " + order.requiredIngredients.join(", ");
+
+        });
+
+
+        // Actualizar lista de jugadores en tiempo real
+        connection.on("RoomPlayersUpdated", function (playerNames) {
+
+            document.getElementById("roomErrorDisplay").textContent = "";
+
+            const list = document.getElementById("playersList");
+            const startButton = document.getElementById("startGameButton");
+
+            list.innerHTML = "";
+
+            playerNames.forEach(function (name) {
+
+                const li = document.createElement("li");
+                li.textContent = name;
+
+                list.appendChild(li);
+
+            });
+
+            // Solo el host ve el botón de iniciar
+            if (isHost) {
+
+                startButton.style.display = "block";
+
+                // Se necesitan mínimo 2 jugadores
+                startButton.disabled =
+                    playerNames.length < 2 || playerNames.length > 4;
+
+                if (playerNames.length < 2) {
+
+                    document.getElementById("startGameMessage").textContent =
+                        "Esperando al menos otro jugador...";
+
+                } else {
+
+                    document.getElementById("startGameMessage").textContent =
+                        "La partida está lista para iniciar.";
+
+                }
 
             } else {
 
-                document.getElementById("startGameMessage").textContent =
-                    "La partida está lista para iniciar.";
+                startButton.style.display = "none";
 
             }
-
-        } else {
-
-            startButton.style.display = "none";
-
-        }
-
-    });
-
-
-    // Error al intentar unirse
-    connection.on("JoinRoomError", function (error) {
-
-        document.getElementById("roomErrorDisplay").textContent = error;
-
-    });
-
-
-    // Error al intentar iniciar
-    connection.on("StartGameError", function (error) {
-
-        document.getElementById("startGameMessage").textContent = error;
-
-    });
-
-
-    // Todos reciben este evento cuando el host inicia
-    connection.on("GameStarted", function (gameInfo) {
-
-        document.querySelector(".menu").style.display = "none";
-
-        document.querySelector(".waiting-room").style.display = "none";
-
-        document.querySelector(".instructions").style.display = "none";
-
-        document.getElementById("gameScreen").style.display = "block";
-
-        document.getElementById("gameScreen")
-            .querySelector("h2")
-            .textContent = "Nivel " + gameInfo.level;
-
-        connection.invoke("GetStations", gameInfo.roomCode)
-            .catch(function (err) { console.error(err.toString()); });
-
-        connection.invoke("GetCurrentOrder", gameInfo.roomCode)
-            .catch(function (err) { console.error(err.toString()); });
-
-    });
-
-
-    // Iniciar conexión con SignalR
-    connection.start()
-        .then(function () {
-
-            console.log("Conectado al GameHub");
-
-            document.getElementById("connectionStatus")
-                .textContent = "Servidor conectado";
-
-        })
-        .catch(function (err) {
-
-            console.error(err.toString());
-
-            document.getElementById("connectionStatus")
-                .textContent = "No se pudo conectar con el servidor";
 
         });
 
 
-    // Crear sala
-    document.getElementById("createRoomButton")
-        .addEventListener("click", function () {
+        // Error al intentar unirse
+        connection.on("JoinRoomError", function (error) {
 
-            const playerName =
-                document.getElementById("playerNameInput").value.trim();
+            document.getElementById("roomErrorDisplay").textContent = error;
 
-            if (playerName === "") {
+        });
 
-                document.getElementById("roomErrorDisplay")
-                    .textContent = "Ingresa tu nombre.";
 
-                return;
-            }
+        // Error al intentar iniciar
+        connection.on("StartGameError", function (error) {
 
-            document.getElementById("roomErrorDisplay").textContent = "";
+            document.getElementById("startGameMessage").textContent = error;
 
-            connection.invoke("CreateRoom", playerName)
-                .then(function (roomCode) {
+        });
 
-                    // El creador es el host
-                    currentRoomCode = roomCode;
-                    isHost = true;
 
-                    document.getElementById("roomCodeDisplay")
-                        .textContent = "Código de tu sala: " + roomCode;
+        // Todos reciben este evento cuando el host inicia
+        connection.on("GameStarted", function (gameInfo) {
 
-                    document.getElementById("roomCodeInput")
-                        .value = roomCode;
+            document.querySelector(".menu").style.display = "none";
 
-                })
-                .catch(function (err) {
+            document.querySelector(".waiting-room").style.display = "none";
 
-                    console.error(err.toString());
+            document.querySelector(".instructions").style.display = "none";
+
+            document.getElementById("gameScreen").style.display = "block";
+
+            document.getElementById("gameScreen")
+                .querySelector("h2")
+                .textContent = "Nivel " + gameInfo.level;
+
+            connection.invoke("GetStations", gameInfo.roomCode)
+                .catch(function (err) { console.error(err.toString()); });
+
+            connection.invoke("GetCurrentOrder", gameInfo.roomCode)
+                .catch(function (err) { console.error(err.toString()); });
+
+        });
+
+
+        // Iniciar conexión con SignalR
+        connection.start()
+            .then(function () {
+
+                console.log("Conectado al GameHub");
+
+                document.getElementById("connectionStatus")
+                    .textContent = "Servidor conectado";
+
+            })
+            .catch(function (err) {
+
+                console.error(err.toString());
+
+                document.getElementById("connectionStatus")
+                    .textContent = "No se pudo conectar con el servidor";
+
+            });
+
+
+        // Crear sala
+        document.getElementById("createRoomButton")
+            .addEventListener("click", function () {
+
+                const playerName =
+                    document.getElementById("playerNameInput").value.trim();
+
+                if (playerName === "") {
 
                     document.getElementById("roomErrorDisplay")
-                        .textContent = "No se pudo crear la sala.";
+                        .textContent = "Ingresa tu nombre.";
 
-                });
+                    return;
+                }
 
-        });
+                document.getElementById("roomErrorDisplay").textContent = "";
+
+                connection.invoke("CreateRoom", playerName)
+                    .then(function (roomCode) {
+
+                        // El creador es el host
+                        currentRoomCode = roomCode;
+                        isHost = true;
+
+                        document.getElementById("roomCodeDisplay")
+                            .textContent = "Código de tu sala: " + roomCode;
+
+                        document.getElementById("roomCodeInput")
+                            .value = roomCode;
+
+                    })
+                    .catch(function (err) {
+
+                        console.error(err.toString());
+
+                        document.getElementById("roomErrorDisplay")
+                            .textContent = "No se pudo crear la sala.";
+
+                    });
+
+            });
 
 
-    // Unirse a sala
-    document.getElementById("joinRoomButton")
-        .addEventListener("click", function () {
+        // Unirse a sala
+        document.getElementById("joinRoomButton")
+            .addEventListener("click", function () {
 
-            const playerName =
-                document.getElementById("playerNameInput").value.trim();
+                const playerName =
+                    document.getElementById("playerNameInput").value.trim();
 
-            const roomCode =
-                document.getElementById("roomCodeInput").value.trim();
+                const roomCode =
+                    document.getElementById("roomCodeInput").value.trim();
 
-            if (playerName === "") {
-
-                document.getElementById("roomErrorDisplay")
-                    .textContent = "Ingresa tu nombre.";
-
-                return;
-            }
-
-            if (roomCode === "") {
-
-                document.getElementById("roomErrorDisplay")
-                    .textContent = "Ingresa el código de la sala.";
-
-                return;
-            }
-
-            document.getElementById("roomErrorDisplay").textContent = "";
-
-            connection.invoke("JoinRoom", roomCode, playerName)
-                .then(function () {
-
-                    // El que se une NO es host
-                    currentRoomCode = roomCode;
-                    isHost = false;
-
-                    document.getElementById("roomCodeDisplay")
-                        .textContent = "Sala: " + roomCode;
-
-                })
-                .catch(function (err) {
-
-                    console.error(err.toString());
+                if (playerName === "") {
 
                     document.getElementById("roomErrorDisplay")
-                        .textContent = "No se pudo unir a la sala.";
+                        .textContent = "Ingresa tu nombre.";
 
-                });
+                    return;
+                }
 
-        });
+                if (roomCode === "") {
+
+                    document.getElementById("roomErrorDisplay")
+                        .textContent = "Ingresa el código de la sala.";
+
+                    return;
+                }
+
+                document.getElementById("roomErrorDisplay").textContent = "";
+
+                connection.invoke("JoinRoom", roomCode, playerName)
+                    .then(function () {
+
+                        // El que se une NO es host
+                        currentRoomCode = roomCode;
+                        isHost = false;
+
+                        document.getElementById("roomCodeDisplay")
+                            .textContent = "Sala: " + roomCode;
+
+                    })
+                    .catch(function (err) {
+
+                        console.error(err.toString());
+
+                        document.getElementById("roomErrorDisplay")
+                            .textContent = "No se pudo unir a la sala.";
+
+                    });
+
+            });
 
 
-    // Botón del host para iniciar la partida
-    document.getElementById("startGameButton")
-        .addEventListener("click", function () {
+        // Botón del host para iniciar la partida
+        document.getElementById("startGameButton")
+            .addEventListener("click", function () {
 
-            if (currentRoomCode === null) {
-                return;
-            }
+                if (currentRoomCode === null) {
+                    return;
+                }
 
-            connection.invoke("StartGame", currentRoomCode)
-                .catch(function (err) {
+                connection.invoke("StartGame", currentRoomCode)
+                    .catch(function (err) {
 
-                    console.error(err.toString());
+                        console.error(err.toString());
 
-                });
+                    });
 
-        });
+            });
 
         connection.on("DishPlated", function (plate) {
 
-        currentPlateId = plate.id;
+            currentPlateId = plate.id;
 
-        selectedIngredientIds.forEach(function (id) {
-            delete myIngredients[id];
+            updatePlateVisual("food");
+
+            selectedIngredientIds.forEach(function (id) {
+                delete myIngredients[id];
+            });
+
+            selectedIngredientIds.clear();
+            renderMyIngredients();
+
+            document.getElementById("plateStatus").textContent =
+                "Plato listo: " + plate.dishName;
+
+            document.getElementById("deliverPlateButton").disabled = false;
+            document.getElementById("washPlateButton").disabled = true;
+
         });
 
-        selectedIngredientIds.clear();
-        renderMyIngredients();
+        connection.on("PlateDishError", function (error) {
 
-        document.getElementById("plateStatus").textContent =
-            "Plato listo: " + plate.dishName;
+            document.getElementById("plateStatus").textContent = error;
 
-        document.getElementById("deliverPlateButton").disabled = false;
-        document.getElementById("washPlateButton").disabled = true;
+        });
 
-    });
+        connection.on("PlateUpdated", function (plate) {
 
-    connection.on("PlateDishError", function (error) {
+            if (plate.id === currentPlateId && plate.state === "Dirty") {
 
-        document.getElementById("plateStatus").textContent = error;
+                updatePlateVisual("dirty");
 
-    });
+                document.getElementById("deliverPlateButton").disabled = true;
+                document.getElementById("washPlateButton").disabled = false;
 
-    connection.on("PlateUpdated", function (plate) {
+                document.getElementById("plateStatus").textContent =
+                    "El plato quedó sucio.";
 
-        if (plate.id === currentPlateId && plate.state === "Dirty") {
+            }
 
-            document.getElementById("deliverPlateButton").disabled = true;
-            document.getElementById("washPlateButton").disabled = false;
+        });
 
-            document.getElementById("plateStatus").textContent =
-                "El plato quedó sucio.";
+        connection.on("LevelTimerTick", function (data) {
 
-        }
+            const total = 300;
+            const s = data.secondsRemaining;
+            const min = Math.floor(s / 60);
+            const sec = s % 60;
+            document.getElementById("levelTimerDisplay").textContent =
+                min + ":" + (sec < 10 ? "0" : "") + sec;
 
-    });
+        });
 
-    connection.on("OrderDelivered", function (result) {
+        connection.on("OrderTimerTick", function (data) {
 
-        if (result.success) {
+            const total = 45;
+            const s = data.secondsRemaining;
+            const pct = (s / total) * 100;
 
-            document.getElementById("plateStatus").textContent =
-                "Pedido entregado correctamente.";
+            document.getElementById("orderTimerSeconds").textContent = s;
 
-        } else {
+            const bar = document.getElementById("orderTimerBar");
+            bar.style.width = pct + "%";
 
-            document.getElementById("plateStatus").textContent =
-                "Pedido incorrecto. Se aplicó una penalización.";
+            if (pct > 50) {
+                bar.style.background = "#2a9d8f";
+            } else if (pct > 20) {
+                bar.style.background = "#f48c06";
+            } else {
+                bar.style.background = "#e63946";
+            }
 
-        }
+        });
 
-        if (result.score !== undefined) {
+        connection.on("OrderExpired", function (data) {
 
+            document.getElementById("orderTimerSeconds").textContent = "0";
+            document.getElementById("orderTimerBar").style.width = "0%";
             document.getElementById("scoreDisplay").textContent =
-                "Puntaje: " + result.score;
+                "Puntaje: " + data.score;
 
-        }
+        });
 
-    });
+        connection.on("LevelEnded", function (data) {
 
-    connection.on("DeliverPlateError", function (error) {
+            document.getElementById("levelTimerDisplay").textContent = "0:00";
+            document.getElementById("scoreDisplay").textContent =
+                "Puntaje final: " + data.finalScore;
 
-        document.getElementById("plateStatus").textContent = error;
+        });
 
-    });
+        connection.on("OrderDelivered", function (result) {
 
-    connection.on("PlateWashed", function (plate) {
+            if (result.success) {
 
-        if (plate.id === currentPlateId) {
-            currentPlateId = null;
-        }
+                document.getElementById("plateStatus").textContent =
+                    "Pedido entregado correctamente.";
 
-        document.getElementById("washPlateButton").disabled = true;
-        document.getElementById("deliverPlateButton").disabled = true;
+            } else {
 
-        document.getElementById("plateStatus").textContent =
-            "Plato lavado y disponible nuevamente.";
+                document.getElementById("plateStatus").textContent =
+                    "Pedido incorrecto. Se aplicó una penalización.";
 
-    });
+            }
 
-    connection.on("WashPlateError", function (error) {
+            if (result.score !== undefined) {
 
-        document.getElementById("plateStatus").textContent = error;
+                document.getElementById("scoreDisplay").textContent =
+                    "Puntaje: " + result.score;
 
-    });
+            }
 
-    document.getElementById("plateDishButton")
-        .addEventListener("click", function () {
+        });
 
+        connection.on("DeliverPlateError", function (error) {
+
+            document.getElementById("plateStatus").textContent = error;
+
+        });
+
+        connection.on("PlateWashed", function (plate) {
+
+            if (plate.id === currentPlateId) {
+                currentPlateId = null;
+            }
+
+            updatePlateVisual("clean");
+
+            document.getElementById("washPlateButton").disabled = true;
+            document.getElementById("deliverPlateButton").disabled = true;
+
+            document.getElementById("plateStatus").textContent =
+                "Plato lavado y disponible nuevamente.";
+
+        });
+
+        connection.on("WashPlateError", function (error) {
+
+            document.getElementById("plateStatus").textContent = error;
+
+        });
+
+        document.getElementById("plateDishButton")
+            .addEventListener("click", function () {
+
+                const ingredientIds = Array.from(selectedIngredientIds);
+
+                if (ingredientIds.length === 0) {
+
+                    document.getElementById("plateStatus").textContent =
+                        "Selecciona ingredientes para emplatar.";
+
+                    return;
+                }
+
+                connection.invoke(
+                    "PlateDish",
+                    currentRoomCode,
+                    ingredientIds
+                ).catch(function (err) {
+                    console.error(err.toString());
+                });
+
+            });
+        function usePlateStation() {
             const ingredientIds = Array.from(selectedIngredientIds);
 
             if (ingredientIds.length === 0) {
-
                 document.getElementById("plateStatus").textContent =
                     "Selecciona ingredientes para emplatar.";
-
                 return;
             }
 
@@ -898,13 +1173,15 @@
             ).catch(function (err) {
                 console.error(err.toString());
             });
+        }
 
-        });
+        document.querySelector(".plate-station")
+            .addEventListener("click", usePlateStation);
 
-    document.getElementById("deliverPlateButton")
-        .addEventListener("click", function () {
-
+        function useDeliveryStation() {
             if (currentPlateId === null) {
+                document.getElementById("plateStatus").textContent =
+                    "No tienes un plato preparado para entregar.";
                 return;
             }
 
@@ -915,13 +1192,15 @@
             ).catch(function (err) {
                 console.error(err.toString());
             });
+        }
 
-        });
+        document.querySelector(".delivery-station")
+            .addEventListener("click", useDeliveryStation);
 
-    document.getElementById("washPlateButton")
-        .addEventListener("click", function () {
-
+        function useWashStation() {
             if (currentPlateId === null) {
+                document.getElementById("plateStatus").textContent =
+                    "No tienes un plato para lavar.";
                 return;
             }
 
@@ -932,10 +1211,81 @@
             ).catch(function (err) {
                 console.error(err.toString());
             });
+        }
 
-        });
+        document.querySelector(".wash-station")
+            .addEventListener("click", useWashStation);
 
-</script>
+        function useTrashStation() {
+            const ingredientIds = Array.from(selectedIngredientIds);
+
+            if (ingredientIds.length !== 1) {
+                document.getElementById("preparationError").textContent =
+                    "Selecciona un ingrediente quemado para botarlo.";
+                return;
+            }
+
+            const ingredientId = ingredientIds[0];
+            const ingredient = myIngredients[ingredientId];
+
+            if (!ingredient) {
+                return;
+            }
+
+            if (ingredient.state !== "Quemado") {
+                document.getElementById("preparationError").textContent =
+                    "Solo puedes botar ingredientes quemados.";
+                return;
+            }
+
+            connection.invoke(
+                "DiscardIngredient",
+                currentRoomCode,
+                ingredientId
+            ).catch(function (err) {
+                console.error(err.toString());
+            });
+        }
+
+        document.querySelector(".trash-station")
+            .addEventListener("click", useTrashStation);
+
+        document.getElementById("deliverPlateButton")
+            .addEventListener("click", function () {
+
+                if (currentPlateId === null) {
+                    return;
+                }
+
+                connection.invoke(
+                    "DeliverPlate",
+                    currentRoomCode,
+                    currentPlateId
+                ).catch(function (err) {
+                    console.error(err.toString());
+                });
+
+            });
+
+        document.getElementById("washPlateButton")
+            .addEventListener("click", function () {
+
+                if (currentPlateId === null) {
+                    return;
+                }
+
+                connection.invoke(
+                    "WashPlate",
+                    currentRoomCode,
+                    currentPlateId
+                ).catch(function (err) {
+                    console.error(err.toString());
+                });
+
+            });
+
+    </script>
 
 </body>
+
 </html>

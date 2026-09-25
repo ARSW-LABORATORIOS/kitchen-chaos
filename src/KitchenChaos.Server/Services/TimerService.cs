@@ -155,7 +155,7 @@ public class TimerService
         lock (state)
         {
             if (state.LevelEnded) return;
-            state.Score = Math.Max(0, state.Score - OrderExpiredPenalty);
+            state.Score -= OrderExpiredPenalty;
             ResetOrderTimer(roomCode, state);
         }
 

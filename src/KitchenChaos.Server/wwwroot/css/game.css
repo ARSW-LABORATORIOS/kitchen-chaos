@@ -1,0 +1,344 @@
+.game-board-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.game-board {
+    position: relative;
+    width: min(1280px, 100%);
+    aspect-ratio: 1280 / 722;
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.game-board-image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    inset: 0;
+    user-select: none;
+    pointer-events: none;
+}
+
+.station-hotspot {
+    position: absolute;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    z-index: 5;
+}
+
+.station-hotspot:hover {
+    outline: 3px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.station-label {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.station-hotspot:hover .station-label {
+    opacity: 1;
+}
+
+.game-hud {
+    width: min(1280px, 100%);
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.hud-section {
+    flex: 1;
+    background: #fff4dc;
+    border: 2px solid #f48c06;
+    border-radius: 12px;
+    padding: 10px 15px;
+    text-align: center;
+}
+
+.hud-label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.hud-section h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.hud-section .level-timer {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+#scoreDisplay {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2a9d8f;
+}
+
+.hud-order {
+    width: min(1280px, 100%);
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid #2a9d8f;
+    border-radius: 12px;
+    text-align: left;
+}
+
+.hud-order-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hud-order-info strong {
+    color: #e85d04;
+    font-size: 18px;
+}
+
+#orderDish {
+    font-weight: bold;
+    color: #333;
+}
+
+#orderIngredients {
+    font-size: 13px;
+    color: #666;
+}
+
+.hud-order-timer {
+    width: 35%;
+    min-width: 150px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.hud-order-timer .order-timer-bar-bg {
+    margin-top: 6px;
+}
+
+.station-1 {
+    left: 24.5%;
+    top: 15%;
+    width: 6%;
+    height: 22%;
+}
+
+.station-2 {
+    left: 32%;
+    top: 15%;
+    width: 6%;
+    height: 22%;
+}
+
+.station-3 {
+    left: 40%;
+    top: 15%;
+    width: 6%;
+    height: 22%;
+}
+
+.station-4 {
+    left: 47.5%;
+    top: 15%;
+    width: 6%;
+    height: 22%;
+}
+
+.station-hotspot:disabled {
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.25);
+    outline: none;
+}
+
+.cook-station {
+    left: 66%;
+    top: 24%;
+    width: 12%;
+    height: 4%;
+}
+
+.plate-station {
+    left: 54.5%;
+    top: 26.5%;
+    width: 11%;
+    height: 14%;
+}
+
+.delivery-station {
+    left: 14%;
+    top: 62%;
+    width: 16%;
+    height: 22%;
+}
+
+.wash-station {
+    left: 80%;
+    top: 54%;
+    width: 4%;
+    height: 6%;
+}
+
+.trash-station {
+    left: 16.8%;
+    top: 49%;
+    width: 1%;
+    height: 1%;
+}
+
+.stations-box {
+    display: none;
+}
+
+
+#myIngredientsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+#myIngredientsList .ingredient-item {
+    flex: 1 1 180px;
+    min-height: 70px;
+    margin: 0;
+    padding: 12px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    transition: background 0.3s, border-color 0.3s, transform 0.2s;
+}
+
+#myIngredientsList .ingredient-item:hover {
+    transform: translateY(-2px);
+}
+
+.ingredient-raw {
+    background: #eee2c6 !important;
+    border-color: #b89b72 !important;
+}
+
+.ingredient-chopped {
+    background: #fff3b0 !important;
+    border-color: #e9c46a !important;
+}
+
+.ingredient-cooking {
+    background: #ffd6a5 !important;
+    border-color: #f48c06 !important;
+}
+
+.ingredient-cooked {
+    background: #cdeccf !important;
+    border-color: #2a9d8f !important;
+}
+
+.ingredient-burned {
+    background: #f5b7b1 !important;
+    border-color: #c1121f !important;
+}
+
+.ingredient-state {
+    font-weight: bold;
+    color: #333;
+}
+
+.ingredient-ready {
+    background: #d8f3dc !important;
+    border-color: #40916c !important;
+}
+
+.plate-box {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.plate-box h3 {
+    margin-bottom: 12px;
+}
+
+.plate-visual {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.plate-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 8px solid #d9d9d9;
+    background: #f8f8f8;
+    box-shadow: inset 0 0 0 3px #eeeeee;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.plate-clean .plate-circle {
+    background: #f8f8f8;
+    border-color: #d9d9d9;
+}
+
+.plate-food .plate-circle {
+    background: #ffe8a3;
+    border-color: #f4a261;
+}
+
+.plate-dirty .plate-circle {
+    background: #b08968;
+    border-color: #7f5539;
+    color: white;
+}
+
+.legacy-plate-controls {
+    display: none;
+}
+
+#plateStatus {
+    text-align: center;
+    color: #555;
+}
+
+.game-hud-sticky {
+    position: sticky;
+    top: 10px;
+    z-index: 30;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 8px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
