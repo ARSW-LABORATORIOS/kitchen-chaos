@@ -282,13 +282,42 @@
 
     <div id="gameScreen" class="menu" style="display: none;">
 
-        <div class="level-timer" id="levelTimerDisplay">5:00</div>
+        <div class="game-hud">
 
-        <h2>Nivel 1</h2>
+            <div class="hud-section">
+                <span class="hud-label">Nivel</span>
+                <h2>Nivel 1</h2>
+            </div>
 
-        <p>¡La partida ha comenzado!</p>
+            <div class="hud-section">
+                <span class="hud-label">Tiempo</span>
+                <div class="level-timer" id="levelTimerDisplay">5:00</div>
+            </div>
 
-        <p>Prepárate para cocinar con tu equipo.</p>
+            <div class="hud-section">
+                <span class="hud-label">Puntaje</span>
+                <div id="scoreDisplay">Puntaje: 0</div>
+            </div>
+
+        </div>
+
+        <div class="hud-order">
+
+            <div class="hud-order-info">
+                <strong>Pedido actual</strong>
+                <span id="orderDish">Cargando pedido...</span>
+                <span id="orderIngredients"></span>
+            </div>
+
+            <div class="hud-order-timer">
+                <span>Tiempo: <span id="orderTimerSeconds">45</span>s</span>
+
+                <div class="order-timer-bar-bg">
+                    <div class="order-timer-bar" id="orderTimerBar"></div>
+                </div>
+            </div>
+
+        </div>
 
         <div class="game-board-wrapper">
             <div class="game-board">
@@ -331,18 +360,6 @@
             </div>
         </div>
 
-        <div class="order-box">
-            <h3>Pedido actual</h3>
-            <p id="orderDish">Cargando pedido...</p>
-            <p id="orderIngredients"></p>
-            <div class="order-timer-wrap">
-                <div class="order-timer-label">Tiempo del pedido: <span id="orderTimerSeconds">45</span>s</div>
-                <div class="order-timer-bar-bg">
-                    <div class="order-timer-bar" id="orderTimerBar"></div>
-                </div>
-            </div>
-        </div>
-
         <div class="stations-box">
             <h3>Estaciones</h3>
             <div id="stationsList"></div>
@@ -353,24 +370,30 @@
             <div id="myIngredientsList"></div>
         </div>
 
-        <div class="ingredients-box">
-            <h3>Emplatado y entrega</h3>
+        <div class="plate-box">
+            <h3>Mi plato</h3>
 
-            <button id="plateDishButton">
-                Emplatar ingredientes seleccionados
-            </button>
+            <div id="plateVisual" class="plate-visual plate-clean">
+                <div class="plate-circle">
+                    <span id="plateVisualText">Limpio</span>
+                </div>
+            </div>
 
             <p id="plateStatus">No hay un plato preparado.</p>
 
-            <button id="deliverPlateButton" disabled>
-                Entregar plato
-            </button>
+            <div class="legacy-plate-controls">
+                <button id="plateDishButton">
+                    Emplatar ingredientes seleccionados
+                </button>
 
-            <button id="washPlateButton" disabled>
-                Lavar plato
-            </button>
+                <button id="deliverPlateButton" disabled>
+                    Entregar plato
+                </button>
 
-            <p id="scoreDisplay">Puntaje: 0</p>
+                <button id="washPlateButton" disabled>
+                    Lavar plato
+                </button>
+            </div>
         </div>
 
 
@@ -412,6 +435,12 @@
     let selectedIngredientIds = new Set();
     let currentPlateId = null;
 
+    document.querySelector(".game-board").addEventListener(
+        "click",
+        () => document.getElementById("preparationError").textContent = "",
+        true
+    );
+
     function useCookStation() {
         const ingredientIds = Array.from(selectedIngredientIds);
 
@@ -451,6 +480,27 @@
     document.querySelector(".cook-station")
         .addEventListener("click", useCookStation);
 
+    function updatePlateVisual(state) {
+        const plateVisual = document.getElementById("plateVisual");
+        const plateText = document.getElementById("plateVisualText");
+
+        plateVisual.classList.remove(
+            "plate-clean",
+            "plate-food",
+            "plate-dirty"
+        );
+
+        if (state === "food") {
+            plateVisual.classList.add("plate-food");
+            plateText.textContent = "Con comida";
+        } else if (state === "dirty") {
+            plateVisual.classList.add("plate-dirty");
+            plateText.textContent = "Sucio";
+        } else {
+            plateVisual.classList.add("plate-clean");
+            plateText.textContent = "Limpio";
+        }
+    }
 
     function renderStations(stations) {
         const container = document.getElementById("stationsList");
@@ -516,7 +566,18 @@
             const ingredient = myIngredients[id];
 
             const item = document.createElement("div");
-            item.className = "ingredient-item";
+
+            const stateClasses = {
+                "Crudo": "ingredient-raw",
+                "Picado": "ingredient-chopped",
+                "Cocinando": "ingredient-cooking",
+                "Cocinado": "ingredient-cooked",
+                "Listo": "ingredient-ready",
+                "Quemado": "ingredient-burned"
+            };
+
+            item.className =
+                "ingredient-item " + (stateClasses[ingredient.state] || "");
 
             const selector = document.createElement("input");
             selector.type = "checkbox";
@@ -939,6 +1000,8 @@
 
         currentPlateId = plate.id;
 
+        updatePlateVisual("food");
+
         selectedIngredientIds.forEach(function (id) {
             delete myIngredients[id];
         });
@@ -963,6 +1026,8 @@
     connection.on("PlateUpdated", function (plate) {
 
         if (plate.id === currentPlateId && plate.state === "Dirty") {
+
+            updatePlateVisual("dirty");
 
             document.getElementById("deliverPlateButton").disabled = true;
             document.getElementById("washPlateButton").disabled = false;
@@ -1057,6 +1122,8 @@
         if (plate.id === currentPlateId) {
             currentPlateId = null;
         }
+
+        updatePlateVisual("clean");
 
         document.getElementById("washPlateButton").disabled = true;
         document.getElementById("deliverPlateButton").disabled = true;

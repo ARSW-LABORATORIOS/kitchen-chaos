@@ -62,14 +62,92 @@
     margin: 0 auto 12px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 15px;
+    align-items: stretch;
+    gap: 12px;
 }
 
 .hud-section {
     flex: 1;
+    background: #fff4dc;
+    border: 2px solid #f48c06;
+    border-radius: 12px;
+    padding: 10px 15px;
     text-align: center;
 }
+
+.hud-label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.hud-section h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.hud-section .level-timer {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+#scoreDisplay {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2a9d8f;
+}
+
+.hud-order {
+    width: min(1280px, 100%);
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid #2a9d8f;
+    border-radius: 12px;
+    text-align: left;
+}
+
+.hud-order-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hud-order-info strong {
+    color: #e85d04;
+    font-size: 18px;
+}
+
+#orderDish {
+    font-weight: bold;
+    color: #333;
+}
+
+#orderIngredients {
+    font-size: 13px;
+    color: #666;
+}
+
+.hud-order-timer {
+    width: 35%;
+    min-width: 150px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.hud-order-timer .order-timer-bar-bg {
+    margin-top: 6px;
+}
+
 .station-1 {
     left: 24.5%;
     top: 15%;
@@ -137,4 +215,120 @@
     top: 49%;
     width: 1%;
     height: 1%;
+}
+
+.stations-box {
+    display: none;
+}
+
+
+#myIngredientsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+#myIngredientsList .ingredient-item {
+    flex: 1 1 180px;
+    min-height: 70px;
+    margin: 0;
+    padding: 12px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    transition: background 0.3s, border-color 0.3s, transform 0.2s;
+}
+
+#myIngredientsList .ingredient-item:hover {
+    transform: translateY(-2px);
+}
+
+.ingredient-raw {
+    background: #eee2c6 !important;
+    border-color: #b89b72 !important;
+}
+
+.ingredient-chopped {
+    background: #fff3b0 !important;
+    border-color: #e9c46a !important;
+}
+
+.ingredient-cooking {
+    background: #ffd6a5 !important;
+    border-color: #f48c06 !important;
+}
+
+.ingredient-cooked {
+    background: #cdeccf !important;
+    border-color: #2a9d8f !important;
+}
+
+.ingredient-burned {
+    background: #f5b7b1 !important;
+    border-color: #c1121f !important;
+}
+
+.ingredient-state {
+    font-weight: bold;
+    color: #333;
+}
+
+.ingredient-ready {
+    background: #d8f3dc !important;
+    border-color: #40916c !important;
+}
+
+.plate-box {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.plate-box h3 {
+    margin-bottom: 12px;
+}
+
+.plate-visual {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.plate-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 8px solid #d9d9d9;
+    background: #f8f8f8;
+    box-shadow: inset 0 0 0 3px #eeeeee;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.plate-clean .plate-circle {
+    background: #f8f8f8;
+    border-color: #d9d9d9;
+}
+
+.plate-food .plate-circle {
+    background: #ffe8a3;
+    border-color: #f4a261;
+}
+
+.plate-dirty .plate-circle {
+    background: #b08968;
+    border-color: #7f5539;
+    color: white;
+}
+
+.legacy-plate-controls {
+    display: none;
+}
+
+#plateStatus {
+    text-align: center;
+    color: #555;
 }
