@@ -332,3 +332,13 @@
     text-align: center;
     color: #555;
 }
+
+.game-hud-sticky {
+    position: sticky;
+    top: 10px;
+    z-index: 30;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 8px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
