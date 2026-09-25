@@ -73,28 +73,28 @@
 .station-1 {
     left: 24.5%;
     top: 15%;
-    width: 7%;
+    width: 6%;
     height: 22%;
 }
 
 .station-2 {
-    left: 31.5%;
+    left: 32%;
     top: 15%;
-    width: 7%;
+    width: 6%;
     height: 22%;
 }
 
 .station-3 {
-    left: 38.5%;
+    left: 40%;
     top: 15%;
-    width: 7%;
+    width: 6%;
     height: 22%;
 }
 
 .station-4 {
-    left: 45.5%;
+    left: 47.5%;
     top: 15%;
-    width: 7%;
+    width: 6%;
     height: 22%;
 }
 
@@ -105,10 +105,10 @@
 }
 
 .cook-station {
-    left: 64%;
-    top: 20%;
-    width: 16%;
-    height: 23%;
+    left: 66%;
+    top: 24%;
+    width: 12%;
+    height: 4%;
 }
 
 .plate-station {
@@ -116,4 +116,25 @@
     top: 26.5%;
     width: 11%;
     height: 14%;
+}
+
+.delivery-station {
+    left: 14%;
+    top: 62%;
+    width: 16%;
+    height: 22%;
+}
+
+.wash-station {
+    left: 80%;
+    top: 54%;
+    width: 4%;
+    height: 6%;
+}
+
+.trash-station {
+    left: 16.8%;
+    top: 49%;
+    width: 1%;
+    height: 1%;
 }

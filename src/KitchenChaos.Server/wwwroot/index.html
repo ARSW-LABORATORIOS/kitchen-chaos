@@ -316,6 +316,18 @@
                 <button class="station-hotspot plate-station">
                     <span class="station-label">Emplatar</span>
                 </button>
+
+                <button class="station-hotspot delivery-station">
+                    <span class="station-label">Entregar</span>
+                </button>
+
+                <button class="station-hotspot wash-station">
+                    <span class="station-label">Lavar</span>
+                </button>
+
+                <button class="station-hotspot trash-station">
+                    <span class="station-label">Basura</span>
+                </button>
             </div>
         </div>
 
@@ -1102,6 +1114,78 @@
 
     document.querySelector(".plate-station")
         .addEventListener("click", usePlateStation);
+
+    function useDeliveryStation() {
+        if (currentPlateId === null) {
+            document.getElementById("plateStatus").textContent =
+                "No tienes un plato preparado para entregar.";
+            return;
+        }
+
+        connection.invoke(
+            "DeliverPlate",
+            currentRoomCode,
+            currentPlateId
+        ).catch(function (err) {
+            console.error(err.toString());
+        });
+    }
+
+    document.querySelector(".delivery-station")
+        .addEventListener("click", useDeliveryStation);
+    
+    function useWashStation() {
+        if (currentPlateId === null) {
+            document.getElementById("plateStatus").textContent =
+                "No tienes un plato para lavar.";
+            return;
+        }
+
+        connection.invoke(
+            "WashPlate",
+            currentRoomCode,
+            currentPlateId
+        ).catch(function (err) {
+            console.error(err.toString());
+        });
+    }
+
+    document.querySelector(".wash-station")
+        .addEventListener("click", useWashStation);
+
+    function useTrashStation() {
+        const ingredientIds = Array.from(selectedIngredientIds);
+
+        if (ingredientIds.length !== 1) {
+            document.getElementById("preparationError").textContent =
+                "Selecciona un ingrediente quemado para botarlo.";
+            return;
+        }
+
+        const ingredientId = ingredientIds[0];
+        const ingredient = myIngredients[ingredientId];
+
+        if (!ingredient) {
+            return;
+        }
+
+        if (ingredient.state !== "Quemado") {
+            document.getElementById("preparationError").textContent =
+                "Solo puedes botar ingredientes quemados.";
+            return;
+        }
+
+        connection.invoke(
+            "DiscardIngredient",
+            currentRoomCode,
+            ingredientId
+        ).catch(function (err) {
+            console.error(err.toString());
+        });
+    }
+
+    document.querySelector(".trash-station")
+        .addEventListener("click", useTrashStation);
 
     document.getElementById("deliverPlateButton")
         .addEventListener("click", function () {
