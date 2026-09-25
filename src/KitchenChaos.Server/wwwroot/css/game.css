@@ -3,13 +3,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 8px 0;
     box-sizing: border-box;
 }
 
 .game-board {
     position: relative;
-    width: min(1280px, 100%);
+    width: min(100%, calc(50vh * 1280 / 722));
+    max-width: 1300px;
+    margin: 0 auto;
     aspect-ratio: 1280 / 722;
     overflow: hidden;
     border-radius: 18px;
@@ -29,13 +31,32 @@
     position: absolute;
     cursor: pointer;
     border: none;
+    border-radius: 6px;
     background: transparent;
     z-index: 5;
+    animation: stationPulse 2.8s ease-in-out infinite;
 }
 
 .station-hotspot:hover {
     outline: 3px solid rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.15);
+    animation: none;
+}
+
+.station-hotspot:disabled {
+    animation: none;
+}
+
+@keyframes stationPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+
+    50% {
+        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.22);
+    }
 }
 
 .station-label {
@@ -58,7 +79,7 @@
 }
 
 .game-hud {
-    width: min(1280px, 100%);
+    width: 100%;
     margin: 0 auto 12px;
     display: flex;
     justify-content: space-between;
@@ -68,8 +89,8 @@
 
 .hud-section {
     flex: 1;
-    background: #fff4dc;
-    border: 2px solid #f48c06;
+    background: rgba(255, 255, 255, 0.35);
+    border: 1.5px solid rgba(244, 140, 6, 0.55);
     border-radius: 12px;
     padding: 10px 15px;
     text-align: center;
@@ -103,14 +124,14 @@
 }
 
 .hud-order {
-    width: min(1280px, 100%);
+    width: 100%;
     margin: 0 auto 12px;
     display: flex;
     align-items: center;
     gap: 20px;
     padding: 12px 16px;
-    background: white;
-    border: 2px solid #2a9d8f;
+    background: rgba(255, 255, 255, 0.35);
+    border: 1.5px solid rgba(42, 157, 143, 0.55);
     border-radius: 12px;
     text-align: left;
 }
@@ -243,6 +264,36 @@
     transform: translateY(-2px);
 }
 
+.ingredient-pop-in {
+    animation: ingredientPopIn 0.25s ease-out;
+}
+
+@keyframes ingredientPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.88) translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.ingredient-flash {
+    animation: ingredientFlash 0.5s ease-out;
+}
+
+@keyframes ingredientFlash {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 140, 6, 0.45);
+    }
+
+    100% {
+        box-shadow: 0 0 0 9px rgba(244, 140, 6, 0);
+    }
+}
+
 .ingredient-raw {
     background: #eee2c6 !important;
     border-color: #b89b72 !important;
@@ -337,8 +388,13 @@
     position: sticky;
     top: 10px;
     z-index: 30;
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 250, 236, 0.32);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
     padding: 8px;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-radius: 18px;
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
