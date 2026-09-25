@@ -184,6 +184,41 @@
             color: red;
             margin-top: 10px;
         }
+
+        .level-timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e85d04;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .order-timer-wrap {
+            margin-top: 10px;
+        }
+
+        .order-timer-label {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .order-timer-bar-bg {
+            width: 100%;
+            height: 14px;
+            background: #eee;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .order-timer-bar {
+            height: 100%;
+            width: 100%;
+            border-radius: 7px;
+            background: #2a9d8f;
+            transition: width 0.9s linear, background 0.5s;
+        }
     </style>
 </head>
 
@@ -247,6 +282,8 @@
 
     <div id="gameScreen" class="menu" style="display: none;">
 
+        <div class="level-timer" id="levelTimerDisplay">5:00</div>
+
         <h2>Nivel 1</h2>
 
         <p>¡La partida ha comenzado!</p>
@@ -286,6 +323,12 @@
             <h3>Pedido actual</h3>
             <p id="orderDish">Cargando pedido...</p>
             <p id="orderIngredients"></p>
+            <div class="order-timer-wrap">
+                <div class="order-timer-label">Tiempo del pedido: <span id="orderTimerSeconds">45</span>s</div>
+                <div class="order-timer-bar-bg">
+                    <div class="order-timer-bar" id="orderTimerBar"></div>
+                </div>
+            </div>
         </div>
 
         <div class="stations-box">
@@ -916,6 +959,55 @@
                 "El plato quedó sucio.";
 
         }
+
+    });
+
+    connection.on("LevelTimerTick", function (data) {
+
+        const total = 300;
+        const s = data.secondsRemaining;
+        const min = Math.floor(s / 60);
+        const sec = s % 60;
+        document.getElementById("levelTimerDisplay").textContent =
+            min + ":" + (sec < 10 ? "0" : "") + sec;
+
+    });
+
+    connection.on("OrderTimerTick", function (data) {
+
+        const total = 45;
+        const s = data.secondsRemaining;
+        const pct = (s / total) * 100;
+
+        document.getElementById("orderTimerSeconds").textContent = s;
+
+        const bar = document.getElementById("orderTimerBar");
+        bar.style.width = pct + "%";
+
+        if (pct > 50) {
+            bar.style.background = "#2a9d8f";
+        } else if (pct > 20) {
+            bar.style.background = "#f48c06";
+        } else {
+            bar.style.background = "#e63946";
+        }
+
+    });
+
+    connection.on("OrderExpired", function (data) {
+
+        document.getElementById("orderTimerSeconds").textContent = "0";
+        document.getElementById("orderTimerBar").style.width = "0%";
+        document.getElementById("scoreDisplay").textContent =
+            "Puntaje: " + data.score;
+
+    });
+
+    connection.on("LevelEnded", function (data) {
+
+        document.getElementById("levelTimerDisplay").textContent = "0:00";
+        document.getElementById("scoreDisplay").textContent =
+            "Puntaje final: " + data.finalScore;
 
     });
 
