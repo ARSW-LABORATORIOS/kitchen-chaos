@@ -687,45 +687,44 @@
         // cada una marcada como pared (1) o piso (0). Mucho más preciso que rectángulos
         // sueltos para muebles de forma irregular, y es el mismo formato que va a usar
         // la herramienta de pintar paredes para Vera (pintar celdas, no arrastrar cajas).
-        const GRID_COLS = 25;
-        const GRID_ROWS = 15;
+        // AB#81 - Cuadrícula lógica: 24 columnas x 14 filas, igual que el mapa niv1.png.
+        // Zona caminable definida celda por celda según el contorno del mapa:
+        //   Y=5: X=6..17  Y=6: X=6..17  Y=7: X=6..17  Y=8: X=6..18  Y=9: X=7..18
+        // Todo lo demás es pared (1). Para ajustar, edita WALKABLE_CELLS.
+        const GRID_COLS = 24;
+        const GRID_ROWS = 14;
 
-        // Zonas de pared del Nivel 1 ajustadas al mapa niv1.png.
-        // El área caminable es el pasillo central (cols 3-18, filas 5-12 aprox).
-        const LEVEL_WALL_ZONES = {
+        const WALKABLE_CELLS = {
             1: [
-                { left: 0,  top: 0,  width: 100, height: 32 }, // franja superior: estaciones de ingredientes + estufa
-                { left: 0,  top: 0,  width: 14,  height: 100 }, // columna izquierda: estante y mesón
-                { left: 82, top: 30, width: 18,  height: 55 },  // columna derecha: lavaplatos y mesón
-                { left: 0,  top: 85, width: 100, height: 15 },  // franja inferior: banca de fondo
-                { left: 32, top: 46, width: 34,  height: 12 }   // bancas centrales
+                // [fila, colDesde, colHasta]  (ambos extremos incluidos)
+                [5,  6, 17],
+                [6,  6, 17],
+                [7,  6, 17],
+                [8,  6, 18],
+                [9,  7, 18]
             ]
         };
 
-        function buildWallGrid(zones) {
+        function buildWallGrid(walkable) {
+            // Empieza todo bloqueado, luego abre solo las celdas caminables
             const grid = [];
             for (let row = 0; row < GRID_ROWS; row++) {
-                const cellTop = (row / GRID_ROWS) * 100;
-                const cellBottom = ((row + 1) / GRID_ROWS) * 100;
-                const rowCells = [];
-                for (let col = 0; col < GRID_COLS; col++) {
-                    const cellLeft = (col / GRID_COLS) * 100;
-                    const cellRight = ((col + 1) / GRID_COLS) * 100;
-                    const cx = (cellLeft + cellRight) / 2;
-                    const cy = (cellTop + cellBottom) / 2;
-                    const isWall = zones.some(function (z) {
-                        return cx >= z.left && cx < z.left + z.width &&
-                            cy >= z.top && cy < z.top + z.height;
-                    });
-                    rowCells.push(isWall ? 1 : 0);
-                }
-                grid.push(rowCells);
+                grid.push(new Array(GRID_COLS).fill(1));
             }
+            walkable.forEach(function (entry) {
+                const row = entry[0];
+                const colFrom = entry[1];
+                const colTo = entry[2];
+                if (!grid[row]) return;
+                for (let col = colFrom; col <= colTo; col++) {
+                    grid[row][col] = 0;
+                }
+            });
             return grid;
         }
 
         const WALLS_BY_LEVEL = {
-            1: buildWallGrid(LEVEL_WALL_ZONES[1])
+            1: buildWallGrid(WALKABLE_CELLS[1])
         };
 
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
@@ -1399,7 +1398,8 @@
             // AB#81: posición inicial en el piso abierto del mapa, y arranca limpio
             // (por si se reinicia una partida en la misma sesión del navegador)
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
-            myPosition = { x: 50, y: 65 };
+            // Spawn en celda caminable Y=7, X=12 (centro de la zona libre)
+            myPosition = { x: (12 / 24) * 100, y: (7 / 14) * 100 };
             myFacingLeft = false;
             otherPlayers = {};
 
