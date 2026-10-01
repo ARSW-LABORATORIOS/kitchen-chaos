@@ -697,20 +697,31 @@
         const WALKABLE_CELLS = {
             1: [
                 // [fila, colDesde, colHasta]  (ambos extremos incluidos)
+                // Pasillo superior (encima de la mesa)
                 [5,  6, 17],
-                [6,  6, 17],
-                [7,  6, 17],
-                [8,  6, 18],
+                // Pasillo izquierdo y derecho de la mesa
+                [6,  6,  6], [6, 16, 17],
+                [7,  6,  6], [7, 16, 17],
+                [8,  6,  6], [8, 16, 18],
+                // Pasillo inferior (debajo de la mesa)
                 [9,  7, 18]
             ]
         };
 
-        function buildWallGrid(walkable) {
-            // Empieza todo bloqueado, luego abre solo las celdas caminables
+        // Obstáculos dentro del área caminable — mesa central X=7..15, Y=6..8
+        // Agregar aquí cualquier objeto sólido adicional con [filaDesde, filaHasta, colDesde, colHasta]
+        const OBSTACLES_BY_LEVEL = {
+            1: [
+                [6, 8, 7, 15]  // mesa central
+            ]
+        };
+
+        function buildWallGrid(walkable, obstacles) {
             const grid = [];
             for (let row = 0; row < GRID_ROWS; row++) {
                 grid.push(new Array(GRID_COLS).fill(1));
             }
+            // Abrir celdas caminables
             walkable.forEach(function (entry) {
                 const row = entry[0];
                 const colFrom = entry[1];
@@ -720,11 +731,24 @@
                     grid[row][col] = 0;
                 }
             });
+            // Bloquear obstáculos (tienen prioridad sobre el piso)
+            obstacles.forEach(function (entry) {
+                const rowFrom = entry[0];
+                const rowTo   = entry[1];
+                const colFrom = entry[2];
+                const colTo   = entry[3];
+                for (let row = rowFrom; row <= rowTo; row++) {
+                    if (!grid[row]) continue;
+                    for (let col = colFrom; col <= colTo; col++) {
+                        grid[row][col] = 1;
+                    }
+                }
+            });
             return grid;
         }
 
         const WALLS_BY_LEVEL = {
-            1: buildWallGrid(WALKABLE_CELLS[1])
+            1: buildWallGrid(WALKABLE_CELLS[1], OBSTACLES_BY_LEVEL[1])
         };
 
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
@@ -1398,8 +1422,8 @@
             // AB#81: posición inicial en el piso abierto del mapa, y arranca limpio
             // (por si se reinicia una partida en la misma sesión del navegador)
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
-            // Spawn en celda caminable Y=7, X=12 (centro de la zona libre)
-            myPosition = { x: (12 / 24) * 100, y: (7 / 14) * 100 };
+            // Spawn en celda caminable Y=5, X=12 (pasillo superior, encima de la mesa)
+            myPosition = { x: (12 / 24) * 100, y: (5 / 14) * 100 };
             myFacingLeft = false;
             otherPlayers = {};
 
