@@ -694,25 +694,22 @@
         const GRID_COLS = 24;
         const GRID_ROWS = 14;
 
+        // Zona caminable: [fila, colDesde, colHasta] — zona ROJA del mapa
         const WALKABLE_CELLS = {
             1: [
-                // [fila, colDesde, colHasta]  (ambos extremos incluidos)
-                // Pasillo superior (encima de la mesa)
-                [5,  6, 17],
-                // Pasillo izquierdo y derecho de la mesa
-                [6,  6,  6], [6, 16, 17],
-                [7,  6,  6], [7, 16, 17],
-                [8,  6,  6], [8, 16, 18],
-                // Pasillo inferior (debajo de la mesa)
-                [9,  7, 18]
+                [6,  6, 17],
+                [7,  6, 18],
+                [8,  6, 18],
+                [9,  7, 18],
+                [10, 8, 17]
             ]
         };
 
-        // Obstáculos dentro del área caminable — mesa central X=7..15, Y=6..8
-        // Agregar aquí cualquier objeto sólido adicional con [filaDesde, filaHasta, colDesde, colHasta]
+        // Obstáculos dentro del área caminable — zona NEGRA (mesa central X=8..16, Y=7)
+        // [filaDesde, filaHasta, colDesde, colHasta]
         const OBSTACLES_BY_LEVEL = {
             1: [
-                [6, 8, 7, 15]  // mesa central
+                [7, 7, 8, 16]  // mesa central horizontal
             ]
         };
 
@@ -721,27 +718,17 @@
             for (let row = 0; row < GRID_ROWS; row++) {
                 grid.push(new Array(GRID_COLS).fill(1));
             }
-            // Abrir celdas caminables
             walkable.forEach(function (entry) {
-                const row = entry[0];
-                const colFrom = entry[1];
-                const colTo = entry[2];
+                const row = entry[0], colFrom = entry[1], colTo = entry[2];
                 if (!grid[row]) return;
-                for (let col = colFrom; col <= colTo; col++) {
-                    grid[row][col] = 0;
-                }
+                for (let col = colFrom; col <= colTo; col++) grid[row][col] = 0;
             });
-            // Bloquear obstáculos (tienen prioridad sobre el piso)
+            // Obstáculos tienen prioridad: sobreescriben el piso con pared
             obstacles.forEach(function (entry) {
-                const rowFrom = entry[0];
-                const rowTo   = entry[1];
-                const colFrom = entry[2];
-                const colTo   = entry[3];
+                const rowFrom = entry[0], rowTo = entry[1], colFrom = entry[2], colTo = entry[3];
                 for (let row = rowFrom; row <= rowTo; row++) {
                     if (!grid[row]) continue;
-                    for (let col = colFrom; col <= colTo; col++) {
-                        grid[row][col] = 1;
-                    }
+                    for (let col = colFrom; col <= colTo; col++) grid[row][col] = 1;
                 }
             });
             return grid;
@@ -751,8 +738,8 @@
             1: buildWallGrid(WALKABLE_CELLS[1], OBSTACLES_BY_LEVEL[1])
         };
 
-        const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
-        const PLAYER_HALF_SIZE = 2; // % aproximado del jugador, para el chequeo de colisión
+        const PLAYER_SPEED = 28;
+        const PLAYER_HALF_SIZE = 0.8; // hitbox pequeño para no bloquear pasillos de 1 celda (4.16% cada una)
 
         let myPosition = { x: 32, y: 70 };
         let myFacingLeft = false;
@@ -1422,8 +1409,8 @@
             // AB#81: posición inicial en el piso abierto del mapa, y arranca limpio
             // (por si se reinicia una partida en la misma sesión del navegador)
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
-            // Spawn en celda caminable Y=5, X=12 (pasillo superior, encima de la mesa)
-            myPosition = { x: (12 / 24) * 100, y: (5 / 14) * 100 };
+            // Spawn en Y=8, X=10 — pasillo inferior libre, fuera de la mesa
+            myPosition = { x: (10 / 24) * 100, y: (8 / 14) * 100 };
             myFacingLeft = false;
             otherPlayers = {};
 
