@@ -17,6 +17,17 @@
     border-radius: 18px;
 }
 
+/* AB#81 - personaje del jugador sobre el tablero */
+.player-sprite {
+    position: absolute;
+    width: 7%;
+    height: auto;
+    z-index: 8;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+    transition: left 0.08s linear, top 0.08s linear;
+}
+
 .game-board-image {
     position: absolute;
     width: 100%;

@@ -218,6 +218,20 @@ public class GameHub : Hub
             });
     }
 
+    /// <summary>
+    /// Retransmite la posición del jugador a los demás de la sala. AB#81.
+    /// Puramente visual: no valida colisiones en el servidor, cada cliente ya las calculó localmente.
+    /// </summary>
+    public async Task MovePlayer(string roomCode, double x, double y)
+    {
+        await Clients.OthersInGroup(roomCode).SendAsync("PlayerMoved", new
+        {
+            ConnectionId = Context.ConnectionId,
+            X = x,
+            Y = y
+        });
+    }
+
     // AB#77 - Tirar a la basura un ingrediente quemado
     public async Task DiscardIngredient(string roomCode, string ingredientId)
     {
