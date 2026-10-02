@@ -687,29 +687,26 @@
         // cada una marcada como pared (1) o piso (0). Mucho más preciso que rectángulos
         // sueltos para muebles de forma irregular, y es el mismo formato que va a usar
         // la herramienta de pintar paredes para Vera (pintar celdas, no arrastrar cajas).
-        // AB#81 - Cuadrícula lógica: 24 columnas x 14 filas, igual que el mapa niv1.png.
-        // Zona caminable definida celda por celda según el contorno del mapa:
-        //   Y=5: X=6..17  Y=6: X=6..17  Y=7: X=6..17  Y=8: X=6..18  Y=9: X=7..18
-        // Todo lo demás es pared (1). Para ajustar, edita WALKABLE_CELLS.
         const GRID_COLS = 24;
         const GRID_ROWS = 14;
 
-        // Zona caminable: [fila, colDesde, colHasta] — zona ROJA del mapa
+        // VERDE = caminable. NEGRO = obstáculo (prioridad sobre el piso).
+        // Formato WALKABLE_CELLS: [fila, colDesde, colHasta]
+        // Formato OBSTACLES_BY_LEVEL: [filaDesde, filaHasta, colDesde, colHasta]
         const WALKABLE_CELLS = {
             1: [
-                [6,  6, 17],
-                [7,  6, 18],
-                [8,  6, 18],
-                [9,  7, 18],
-                [10, 8, 17]
+                [5,  6, 18],  // franja superior
+                [6,  6, 18],  // lado izquierdo + derecho de la mesa
+                [7,  6, 18],  // lado izquierdo + derecho de la mesa
+                [8,  6, 18],  // lado izquierdo + derecho de la mesa
+                [9,  6, 18],  // franja inferior
+                [10, 6, 18]   // franja inferior extra
             ]
         };
 
-        // Obstáculos dentro del área caminable — zona NEGRA (mesa central X=8..16, Y=7)
-        // [filaDesde, filaHasta, colDesde, colHasta]
         const OBSTACLES_BY_LEVEL = {
             1: [
-                [7, 7, 8, 16]  // mesa central horizontal
+                [6, 8, 8, 16]  // mesa central X=8..16, Y=6..8
             ]
         };
 
@@ -718,17 +715,14 @@
             for (let row = 0; row < GRID_ROWS; row++) {
                 grid.push(new Array(GRID_COLS).fill(1));
             }
-            walkable.forEach(function (entry) {
-                const row = entry[0], colFrom = entry[1], colTo = entry[2];
-                if (!grid[row]) return;
-                for (let col = colFrom; col <= colTo; col++) grid[row][col] = 0;
+            walkable.forEach(function (e) {
+                if (!grid[e[0]]) return;
+                for (let col = e[1]; col <= e[2]; col++) grid[e[0]][col] = 0;
             });
-            // Obstáculos tienen prioridad: sobreescriben el piso con pared
-            obstacles.forEach(function (entry) {
-                const rowFrom = entry[0], rowTo = entry[1], colFrom = entry[2], colTo = entry[3];
-                for (let row = rowFrom; row <= rowTo; row++) {
+            obstacles.forEach(function (e) {
+                for (let row = e[0]; row <= e[1]; row++) {
                     if (!grid[row]) continue;
-                    for (let col = colFrom; col <= colTo; col++) grid[row][col] = 1;
+                    for (let col = e[2]; col <= e[3]; col++) grid[row][col] = 1;
                 }
             });
             return grid;
@@ -739,8 +733,11 @@
         };
 
         const PLAYER_SPEED = 28;
-        const PLAYER_HALF_W = 0.5; // mitad del hitbox horizontal (% del tablero)
-        const PLAYER_HALF_H = 0.3; // mitad del hitbox vertical (% del tablero)
+        // Hitbox: debe ser menor que la mitad de una celda
+        // Celda X: 100/24 = 4.16% → mitad = 2.08% → usar 1.5%
+        // Celda Y: 100/14 = 7.14% → mitad = 3.57% → usar 2.5%
+        const PLAYER_HALF_W = 1.5;
+        const PLAYER_HALF_H = 2.5;
 
         let myPosition = { x: 32, y: 70 };
         let myFacingLeft = false;
@@ -1408,8 +1405,8 @@
             // AB#81: posición inicial en el piso abierto del mapa, y arranca limpio
             // (por si se reinicia una partida en la misma sesión del navegador)
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
-            // Spawn en centro exacto de celda Y=8, X=10
-            myPosition = { x: ((10 + 0.5) / 24) * 100, y: ((8 + 0.5) / 14) * 100 };
+            // Spawn Y=9, X=10 — pasillo inferior libre
+            myPosition = { x: ((10 + 0.5) / 24) * 100, y: ((9 + 0.5) / 14) * 100 };
             myFacingLeft = false;
             otherPlayers = {};
 
