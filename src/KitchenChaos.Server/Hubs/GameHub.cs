@@ -28,21 +28,21 @@ public class GameHub : Hub
     }
 
     // AB#4 - Crear sala de juego
-    public async Task<string> CreateRoom(string playerName)
+    public async Task<string> CreateRoom(string playerName, string avatarId)
     {
-        var room = _roomService.CreateRoom(Context.ConnectionId, playerName);
+        var room = _roomService.CreateRoom(Context.ConnectionId, playerName, avatarId);
         await Groups.AddToGroupAsync(Context.ConnectionId, room.Code);
 
-        var playerNames = room.Players.Select(p => p.Name).ToList();
-        await Clients.Group(room.Code).SendAsync("RoomPlayersUpdated", playerNames);
+        var players = room.Players.Select(p => new { p.Name, p.AvatarId, p.ConnectionId }).ToList();
+        await Clients.Group(room.Code).SendAsync("RoomPlayersUpdated", players);
 
         return room.Code;
     }
 
     // AB#5 - Unirse a sala con código
-    public async Task JoinRoom(string roomCode, string playerName)
+    public async Task JoinRoom(string roomCode, string playerName, string avatarId)
     {
-        var result = _roomService.JoinRoom(roomCode, Context.ConnectionId, playerName);
+        var result = _roomService.JoinRoom(roomCode, Context.ConnectionId, playerName, avatarId);
 
         if (!result.Success)
         {
@@ -52,8 +52,8 @@ public class GameHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
-        var playerNames = result.Room!.Players.Select(p => p.Name).ToList();
-        await Clients.Group(roomCode).SendAsync("RoomPlayersUpdated", playerNames);
+        var players = result.Room!.Players.Select(p => new { p.Name, p.AvatarId, p.ConnectionId }).ToList();
+        await Clients.Group(roomCode).SendAsync("RoomPlayersUpdated", players);
     }
 
     /// <summary>
@@ -150,7 +150,8 @@ public class GameHub : Hub
             result.Ingredient.Name,
             State = result.Ingredient.State.ToString(),
             result.Ingredient.RequiresChop,
-            result.Ingredient.RequiresCook
+            result.Ingredient.RequiresCook,
+            CookMethod = result.Ingredient.CookMethod.ToString()
         });
 
         var stations = _preparationService.GetStations(roomCode);
@@ -218,6 +219,20 @@ public class GameHub : Hub
             });
     }
 
+    /// <summary>
+    /// Retransmite la posición del jugador a los demás de la sala. AB#81.
+    /// Puramente visual: no valida colisiones en el servidor, cada cliente ya las calculó localmente.
+    /// </summary>
+    public async Task MovePlayer(string roomCode, double x, double y)
+    {
+        await Clients.OthersInGroup(roomCode).SendAsync("PlayerMoved", new
+        {
+            ConnectionId = Context.ConnectionId,
+            X = x,
+            Y = y
+        });
+    }
+
     // AB#77 - Tirar a la basura un ingrediente quemado
     public async Task DiscardIngredient(string roomCode, string ingredientId)
     {
@@ -274,14 +289,22 @@ public class GameHub : Hub
     {
         var room = _roomService.RemovePlayer(Context.ConnectionId);
 
-        if (room != null && room.Players.Count > 0)
+        if (room != null)
         {
-            var playerNames = room.Players
-                .Select(p => p.Name)
-                .ToList();
-
+            // AB#81 - avisa a los demás para que borren el sprite/posición de quien se fue;
+            // si no, su última posición queda como un obstáculo fantasma para siempre.
             await Clients.Group(room.Code)
-                .SendAsync("RoomPlayersUpdated", playerNames);
+                .SendAsync("PlayerLeft", new { ConnectionId = Context.ConnectionId });
+
+            if (room.Players.Count > 0)
+            {
+                var playerNames = room.Players
+                    .Select(p => p.Name)
+                    .ToList();
+
+                await Clients.Group(room.Code)
+                    .SendAsync("RoomPlayersUpdated", playerNames);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);

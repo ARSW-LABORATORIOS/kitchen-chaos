@@ -271,6 +271,43 @@
             font-size: 12px;
         }
 
+        .avatar-picker-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b4a2a;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .avatar-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .avatar-option {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2.5px solid transparent;
+            object-fit: contain;
+            padding: 4px;
+            cursor: pointer;
+            transition: transform 0.12s, border-color 0.12s, background 0.12s;
+        }
+
+        .avatar-option:hover {
+            transform: translateY(-2px);
+        }
+
+        .avatar-option.selected {
+            border-color: var(--copper);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
         .instructions {
             text-align: left;
         }
@@ -286,6 +323,30 @@
 
         .instructions li {
             margin-bottom: 10px;
+        }
+
+        .instructions h3 {
+            margin-top: 18px;
+            margin-bottom: 10px;
+            color: var(--copper);
+            font-family: var(--font-title);
+        }
+
+        .controls-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .key-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            background: #2a1a0f;
+            color: #fff;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin: 0 2px;
         }
 
         #connectionStatus {
@@ -414,6 +475,9 @@
                 </svg>
                 <input type="text" id="playerNameInput" placeholder="Tu nombre" />
             </div>
+
+            <p class="avatar-picker-label">Elige tu personaje</p>
+            <div id="avatarPicker" class="avatar-picker"></div>
 
             <button id="createRoomButton">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -643,6 +707,13 @@
                 <li>Prepara y entrega los pedidos antes de que termine el tiempo.</li>
             </ul>
 
+            <h3>Controles</h3>
+
+            <ul class="controls-list">
+                <li><span class="key-badge">↑ ↓ ← →</span> o <span class="key-badge">W A S D</span> — moverte por la cocina</li>
+                <li><span class="key-badge">Espacio</span> — agarrar / usar lo que tengas más cerca (ingrediente, estación, plato)</li>
+            </ul>
+
         </div>
 
         <p id="connectionStatus">
@@ -662,24 +733,388 @@
 
         let currentRoomCode = null;
         let isHost = false;
+        let myPlayerName = null;
+        let myPlayerIndex = 0; // AB#81: posición en la lista de jugadores, usada para el punto de spawn
         let myIngredients = {};
 
-        // AB#80: avatar asignado por posición en la lista de jugadores (puramente visual, sin cambios en el backend)
-        const CHARACTER_AVATARS = [
-            "images/characters/vaca.webp",
-            "images/characters/nutria.webp",
-            "images/characters/pinguino.webp",
-            "images/characters/gato.webp",
-            "images/characters/panda.webp",
-            "images/characters/perro.webp",
-            "images/characters/aguila.webp",
-            "images/characters/dragon.webp"
-        ];
+        // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el menú
+        // y el servidor lo reparte a todos, para que nadie vea un avatar distinto al elegido.
+        const AVATAR_IDS = ["vaca", "nutria", "pinguino", "gato", "panda", "perro", "aguila", "dragon"];
+
+        function avatarPathForId(avatarId) {
+            return "images/characters/" + (avatarId || "vaca") + ".webp";
+        }
+
+        let mySelectedAvatarId = AVATAR_IDS[0];
+
+        // connectionId -> avatarId, se llena con lo que manda RoomPlayersUpdated
+        let connectionIdToAvatar = {};
+
+        function buildAvatarPicker() {
+            const picker = document.getElementById("avatarPicker");
+            if (!picker) return;
+            picker.innerHTML = "";
+
+            AVATAR_IDS.forEach(function (avatarId) {
+                const img = document.createElement("img");
+                img.className = "avatar-option" + (avatarId === mySelectedAvatarId ? " selected" : "");
+                img.src = avatarPathForId(avatarId);
+                img.alt = avatarId;
+
+                img.addEventListener("click", function () {
+                    mySelectedAvatarId = avatarId;
+                    picker.querySelectorAll(".avatar-option").forEach(function (el) {
+                        el.classList.remove("selected");
+                    });
+                    img.classList.add("selected");
+                });
+
+                picker.appendChild(img);
+            });
+        }
+
+        buildAvatarPicker();
 
         function showWaitingRoom() {
             document.querySelector(".menu").style.display = "none";
             document.querySelector(".waiting-room").style.display = "block";
         }
+
+        // ===================== AB#81 - Movimiento, colisión y personajes =====================
+
+        // AB#81 - Colisión por matriz: el tablero se parte en una cuadrícula de celdas,
+        // cada una marcada como pared (1) o piso (0). Coordenadas de Nivel 1 calcadas
+        // a mano sobre niv1.png con una cuadrícula de referencia (24 columnas x 14 filas).
+        // Mismo formato que va a usar la herramienta de pintar paredes para Vera.
+        const GRID_COLS = 24;
+        const GRID_ROWS = 14;
+
+        // Formato: [fila, colDesde, colHasta] para piso caminable,
+        // [filaDesde, filaHasta, colDesde, colHasta] para obstáculos (tienen prioridad sobre el piso).
+        const WALKABLE_CELLS = {
+            1: [
+                [5, 4, 19],
+                [6, 4, 19],
+                [7, 4, 19],
+                [8, 4, 19]
+            ]
+        };
+
+        const OBSTACLES_BY_LEVEL = {
+            1: [
+                [6, 7, 6, 17]  // las 3 bancas del centro
+            ]
+        };
+
+        function buildWallGrid(walkable, obstacles) {
+            const grid = [];
+            for (let row = 0; row < GRID_ROWS; row++) {
+                grid.push(new Array(GRID_COLS).fill(1));
+            }
+            walkable.forEach(function (e) {
+                if (!grid[e[0]]) return;
+                for (let col = e[1]; col <= e[2]; col++) grid[e[0]][col] = 0;
+            });
+            obstacles.forEach(function (e) {
+                for (let row = e[0]; row <= e[1]; row++) {
+                    if (!grid[row]) continue;
+                    for (let col = e[2]; col <= e[3]; col++) grid[row][col] = 1;
+                }
+            });
+            return grid;
+        }
+
+        const WALLS_BY_LEVEL = {
+            1: buildWallGrid(WALKABLE_CELLS[1], OBSTACLES_BY_LEVEL[1])
+        };
+
+        const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
+
+        // Hitbox menor a media celda para que nunca quede más grande que el hueco entre
+        // paredes (si no, el jugador puede quedar "encerrado" sin poder moverse).
+        // Celda X: 100/24 = 4.16% -> mitad = 2.08% -> se usa 1.5%
+        // Celda Y: 100/14 = 7.14% -> mitad = 3.57% -> se usa 2.5%
+        const PLAYER_HALF_W = 1.5;
+        const PLAYER_HALF_H = 2.5;
+
+        // AB#81 - 4 puntos de partida repartidos por el piso libre (no sobre la banca
+        // central). Si todos los jugadores spawnearan en el mismo punto, quedarían
+        // trabados entre sí desde el inicio sin poder moverse ninguno.
+        const SPAWN_POINTS_BY_LEVEL = {
+            1: [
+                { x: 27, y: 39 },
+                { x: 60, y: 39 },
+                { x: 27, y: 61 },
+                { x: 60, y: 61 }
+            ]
+        };
+
+        function pickSpawnPoint(level, playerIndex) {
+            const points = SPAWN_POINTS_BY_LEVEL[level] || SPAWN_POINTS_BY_LEVEL[1];
+            const index = playerIndex % points.length;
+            return { x: points[index].x, y: points[index].y };
+        }
+
+        let myPosition = { x: 27, y: 39 };
+        let myFacingLeft = false;
+        let pressedKeys = {};
+        let currentLevelWalls = WALLS_BY_LEVEL[1];
+        let otherPlayers = {}; // connectionId -> { x, y }
+        let lastMoveSentAt = 0;
+        let lastFrameTime = null;
+        let wasMovingLastFrame = false;
+
+        const MOVEMENT_KEYS = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"];
+
+        function isTypingInField() {
+            const tag = document.activeElement ? document.activeElement.tagName : "";
+            return tag === "INPUT" || tag === "TEXTAREA";
+        }
+
+        // AB#81 - Espacio = agarrar/usar lo que esté más cerca, al estilo Overcooked.
+        // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
+        // exactamente la misma lógica que ya existe, no se duplica nada).
+        const GRAB_REACH = 9; // % del tablero, qué tan cerca hay que estar para poder agarrar
+
+        function grabNearestStation() {
+            const board = document.querySelector(".game-board");
+            if (!board) return;
+
+            const boardRect = board.getBoundingClientRect();
+            const hotspots = board.querySelectorAll(".station-hotspot:not(:disabled)");
+
+            let nearest = null;
+            let nearestDist = Infinity;
+
+            hotspots.forEach(function (hotspot) {
+                const r = hotspot.getBoundingClientRect();
+                const centerXPercent = ((r.left + r.width / 2 - boardRect.left) / boardRect.width) * 100;
+                const centerYPercent = ((r.top + r.height / 2 - boardRect.top) / boardRect.height) * 100;
+
+                const dx = centerXPercent - myPosition.x;
+                const dy = centerYPercent - myPosition.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearest = hotspot;
+                }
+            });
+
+            if (nearest && nearestDist <= GRAB_REACH) {
+                nearest.click();
+            }
+        }
+
+        window.addEventListener("keydown", function (e) {
+            const key = e.key.toLowerCase();
+            pressedKeys[key] = true;
+
+            // Evita que las flechas/WASD hagan scroll de la página mientras se juega,
+            // pero nunca cuando se está escribiendo en un input (nombre, código de sala).
+            if (MOVEMENT_KEYS.includes(key) && !isTypingInField()) {
+                e.preventDefault();
+            }
+
+            if (key === " " && !isTypingInField()) {
+                e.preventDefault();
+                // e.repeat evita que mantener la tecla presionada dispare "agarrar" en cadena
+                if (!e.repeat && document.getElementById("gameScreen").style.display === "block") {
+                    grabNearestStation();
+                }
+            }
+        });
+
+        window.addEventListener("keyup", function (e) {
+            pressedKeys[e.key.toLowerCase()] = false;
+        });
+
+        function isWallCell(x, y) {
+            if (x < 0 || x >= 100 || y < 0 || y >= 100) return true;
+
+            const col = Math.floor((x / 100) * GRID_COLS);
+            const row = Math.floor((y / 100) * GRID_ROWS);
+
+            return !!(currentLevelWalls[row] && currentLevelWalls[row][col] === 1);
+        }
+
+        function wouldCollide(x, y) {
+            // Revisa las 4 esquinas de la caja del jugador, no solo el centro,
+            // para que no se cuele por una esquina de una celda de pared.
+            return (
+                isWallCell(x - PLAYER_HALF_W, y - PLAYER_HALF_H) ||
+                isWallCell(x + PLAYER_HALF_W, y - PLAYER_HALF_H) ||
+                isWallCell(x - PLAYER_HALF_W, y + PLAYER_HALF_H) ||
+                isWallCell(x + PLAYER_HALF_W, y + PLAYER_HALF_H)
+            );
+        }
+
+        // AB#81 - Colisión entre jugadores: a cada otro jugador se le trata como un
+        // obstáculo más, con el mismo hitbox que usa el jugador local. Se compara contra
+        // la última posición conocida de cada uno (la que llegó por SignalR), que es todo
+        // lo que un cliente puede saber de los demás sin que el servidor valide movimiento.
+        function wouldCollideWithPlayers(x, y) {
+            const box = {
+                left: x - PLAYER_HALF_W,
+                right: x + PLAYER_HALF_W,
+                top: y - PLAYER_HALF_H,
+                bottom: y + PLAYER_HALF_H
+            };
+
+            return Object.keys(otherPlayers).some(function (id) {
+                const p = otherPlayers[id];
+                const otherBox = {
+                    left: p.x - PLAYER_HALF_W,
+                    right: p.x + PLAYER_HALF_W,
+                    top: p.y - PLAYER_HALF_H,
+                    bottom: p.y + PLAYER_HALF_H
+                };
+
+                return box.left < otherBox.right && box.right > otherBox.left &&
+                    box.top < otherBox.bottom && box.bottom > otherBox.top;
+            });
+        }
+
+        function wouldBlockMovement(x, y) {
+            return wouldCollide(x, y) || wouldCollideWithPlayers(x, y);
+        }
+
+        function ensureMyPlayerSprite() {
+            let sprite = document.getElementById("myPlayerSprite");
+            if (!sprite) {
+                sprite = document.createElement("img");
+                sprite.id = "myPlayerSprite";
+                sprite.className = "player-sprite";
+                sprite.alt = "";
+                document.querySelector(".game-board").appendChild(sprite);
+            }
+            sprite.src = avatarPathForId(mySelectedAvatarId);
+            return sprite;
+        }
+
+        function renderMyPlayerPosition() {
+            const sprite = document.getElementById("myPlayerSprite");
+            if (!sprite) return;
+            sprite.style.left = myPosition.x + "%";
+            sprite.style.top = myPosition.y + "%";
+            sprite.style.transform =
+                "translate(-50%, -70%) scaleX(" + (myFacingLeft ? -1 : 1) + ")";
+        }
+
+        function renderOtherPlayer(connectionId) {
+            const pos = otherPlayers[connectionId];
+            if (!pos) return;
+
+            let sprite = document.getElementById("player-" + connectionId);
+            if (!sprite) {
+                sprite = document.createElement("img");
+                sprite.id = "player-" + connectionId;
+                sprite.className = "player-sprite";
+                sprite.alt = "";
+                sprite.src = avatarPathForId(connectionIdToAvatar[connectionId]);
+                document.querySelector(".game-board").appendChild(sprite);
+            }
+
+            sprite.style.left = pos.x + "%";
+            sprite.style.top = pos.y + "%";
+
+            // Mismo ancla que el propio jugador (centrado en los "pies"), si no
+            // el sprite del otro se posiciona desde la esquina y se ve corrido.
+            sprite.style.transform = "translate(-50%, -70%)";
+        }
+
+        function maybeSendPosition(timestamp) {
+            if (!currentRoomCode) return;
+            if (timestamp - lastMoveSentAt < 90) return;
+
+            lastMoveSentAt = timestamp;
+            connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                .catch(function (err) { console.error(err.toString()); });
+        }
+
+        function movementLoop(timestamp) {
+            if (lastFrameTime === null) lastFrameTime = timestamp;
+            const deltaSeconds = (timestamp - lastFrameTime) / 1000;
+            lastFrameTime = timestamp;
+
+            const gameScreenVisible =
+                document.getElementById("gameScreen").style.display === "block";
+
+            if (gameScreenVisible) {
+
+                let dx = 0;
+                let dy = 0;
+
+                if (pressedKeys["arrowup"] || pressedKeys["w"]) dy -= 1;
+                if (pressedKeys["arrowdown"] || pressedKeys["s"]) dy += 1;
+                if (pressedKeys["arrowleft"] || pressedKeys["a"]) dx -= 1;
+                if (pressedKeys["arrowright"] || pressedKeys["d"]) dx += 1;
+
+                if (dx !== 0 || dy !== 0) {
+
+                    // Normaliza para que caminar en diagonal no sea más rápido
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const moveX = (dx / length) * PLAYER_SPEED * deltaSeconds;
+                    const moveY = (dy / length) * PLAYER_SPEED * deltaSeconds;
+
+                    const nextX = Math.max(2, Math.min(98, myPosition.x + moveX));
+                    const nextY = Math.max(2, Math.min(98, myPosition.y + moveY));
+
+                    // Revisa cada eje por separado: si choca de frente contra una pared
+                    // (o contra otro jugador), igual puede deslizarse por el eje libre.
+                    if (!wouldBlockMovement(nextX, myPosition.y)) {
+                        myPosition.x = nextX;
+                    }
+                    if (!wouldBlockMovement(myPosition.x, nextY)) {
+                        myPosition.y = nextY;
+                    }
+
+                    if (dx < 0) myFacingLeft = true;
+                    else if (dx > 0) myFacingLeft = false;
+
+                    renderMyPlayerPosition();
+                    maybeSendPosition(timestamp);
+                    wasMovingLastFrame = true;
+
+                } else if (wasMovingLastFrame) {
+
+                    // Se soltó la tecla: manda la posición final exacta de una vez,
+                    // sin esperar el siguiente turno del límite de frecuencia — así
+                    // nadie se queda viéndote unos pasos atrás de donde en verdad estás.
+                    wasMovingLastFrame = false;
+
+                    if (currentRoomCode) {
+                        connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                            .catch(function (err) { console.error(err.toString()); });
+                    }
+                }
+
+                // Latido de respaldo: si por lo que sea nadie se enteró de tu última
+                // posición (un mensaje que no llegó), esto lo corrige solo en máximo 1 segundo.
+                if (currentRoomCode && timestamp - lastMoveSentAt > 1000) {
+                    lastMoveSentAt = timestamp;
+                    connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                        .catch(function (err) { console.error(err.toString()); });
+                }
+            }
+
+            requestAnimationFrame(movementLoop);
+        }
+
+        requestAnimationFrame(movementLoop);
+
+        connection.on("PlayerMoved", function (data) {
+            otherPlayers[data.connectionId] = { x: data.x, y: data.y };
+            renderOtherPlayer(data.connectionId);
+        });
+
+        // AB#81 - si no se limpia, la última posición de quien se desconectó queda
+        // bloqueando el tablero como un obstáculo fantasma para siempre.
+        connection.on("PlayerLeft", function (data) {
+            delete otherPlayers[data.connectionId];
+            const sprite = document.getElementById("player-" + data.connectionId);
+            if (sprite) sprite.remove();
+        });
 
         document.getElementById("howToPlayButton")
             .addEventListener("click", function () {
@@ -814,6 +1249,11 @@
         // y cuál solo cambió de estado, y así animar únicamente lo que cambió.
         let previousIngredientStates = {};
 
+        // AB#82 - picar/hervir/freír: el botón de la estufa dice hervir o freír según el ingrediente.
+        function cookLabelFor(cookMethod) {
+            return cookMethod === "Freir" ? "Freír" : "Hervir";
+        }
+
         function renderMyIngredients() {
 
             const container = document.getElementById("myIngredientsList");
@@ -895,7 +1335,7 @@
 
                     // AB#78 - ingredientes como leche o arroz se cocinan directo, sin picarse antes
                     const cookDirectButton = document.createElement("button");
-                    cookDirectButton.textContent = "Cocinar";
+                    cookDirectButton.textContent = cookLabelFor(ingredient.cookMethod);
 
                     cookDirectButton.addEventListener("click", function () {
 
@@ -911,7 +1351,7 @@
                 } else if (ingredient.state === "Picado") {
 
                     const cookButton = document.createElement("button");
-                    cookButton.textContent = "Cocinar";
+                    cookButton.textContent = cookLabelFor(ingredient.cookMethod);
 
                     cookButton.addEventListener("click", function () {
 
@@ -985,7 +1425,8 @@
                 name: ingredient.name,
                 state: ingredient.state,
                 requiresChop: ingredient.requiresChop,
-                requiresCook: ingredient.requiresCook
+                requiresCook: ingredient.requiresCook,
+                cookMethod: ingredient.cookMethod
             };
             renderMyIngredients();
 
@@ -1048,27 +1489,37 @@
 
 
         // Actualizar lista de jugadores en tiempo real
-        connection.on("RoomPlayersUpdated", function (playerNames) {
+        connection.on("RoomPlayersUpdated", function (players) {
 
             document.getElementById("roomErrorDisplay").textContent = "";
 
             const list = document.getElementById("playersList");
             const startButton = document.getElementById("startGameButton");
 
+            // AB#81: mi posición en la sala (para el punto de spawn) y el avatar real
+            // de cada quien (elegido por ellos, no adivinado por hash)
+            const myIndex = players.findIndex(function (p) { return p.name === myPlayerName; });
+            if (myIndex !== -1) myPlayerIndex = myIndex;
+
+            connectionIdToAvatar = {};
+            players.forEach(function (p) {
+                connectionIdToAvatar[p.connectionId] = p.avatarId;
+            });
+
             list.innerHTML = "";
 
-            playerNames.forEach(function (name, index) {
+            players.forEach(function (p, index) {
 
                 const li = document.createElement("li");
 
                 const avatar = document.createElement("img");
                 avatar.className = "player-avatar";
-                avatar.src = CHARACTER_AVATARS[index % CHARACTER_AVATARS.length];
+                avatar.src = avatarPathForId(p.avatarId);
                 avatar.alt = "";
 
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "player-name";
-                nameSpan.textContent = name;
+                nameSpan.textContent = p.name;
 
                 li.appendChild(avatar);
                 li.appendChild(nameSpan);
@@ -1092,9 +1543,9 @@
 
                 // Se necesitan mínimo 2 jugadores
                 startButton.disabled =
-                    playerNames.length < 2 || playerNames.length > 4;
+                    players.length < 2 || players.length > 4;
 
-                if (playerNames.length < 2) {
+                if (players.length < 2) {
 
                     document.getElementById("startGameMessage").textContent =
                         "Esperando al menos otro jugador...";
@@ -1157,6 +1608,26 @@
             connection.invoke("GetCurrentOrder", gameInfo.roomCode)
                 .catch(function (err) { console.error(err.toString()); });
 
+            // AB#81: posición inicial en el piso abierto del mapa (distinta por jugador,
+            // para que nadie spawnee encima de otro), y arranca limpio
+            // (por si se reinicia una partida en la misma sesión del navegador)
+            currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
+            myPosition = pickSpawnPoint(gameInfo.level, myPlayerIndex);
+            myFacingLeft = false;
+            otherPlayers = {};
+
+            document.querySelectorAll(".player-sprite").forEach(function (el) {
+                el.remove();
+            });
+
+            ensureMyPlayerSprite();
+            renderMyPlayerPosition();
+
+            // AB#81: avisa la posición inicial de una vez, sin esperar a que te muevas,
+            // para que los demás te vean aparecer desde el primer momento.
+            connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y)
+                .catch(function (err) { console.error(err.toString()); });
+
         });
 
 
@@ -1197,7 +1668,11 @@
 
                 document.getElementById("roomErrorDisplay").textContent = "";
 
-                connection.invoke("CreateRoom", playerName)
+                // AB#81: se guarda ANTES de invocar al servidor — si no, el evento
+                // RoomPlayersUpdated puede llegar antes de que esto se asigne.
+                myPlayerName = playerName;
+
+                connection.invoke("CreateRoom", playerName, mySelectedAvatarId)
                     .then(function (roomCode) {
 
                         // El creador es el host
@@ -1253,7 +1728,10 @@
 
                 document.getElementById("roomErrorDisplay").textContent = "";
 
-                connection.invoke("JoinRoom", roomCode, playerName)
+                // AB#81: igual que en crear sala, se guarda antes de invocar al servidor
+                myPlayerName = playerName;
+
+                connection.invoke("JoinRoom", roomCode, playerName, mySelectedAvatarId)
                     .then(function () {
 
                         // El que se une NO es host

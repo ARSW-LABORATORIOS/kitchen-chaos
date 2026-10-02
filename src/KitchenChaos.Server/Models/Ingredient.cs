@@ -10,6 +10,14 @@ public enum IngredientState
     Quemado
 }
 
+/// <summary>Como se cocina un ingrediente, si le hace falta. AB#82.</summary>
+public enum CookMethod
+{
+    Ninguno,
+    Hervir,
+    Freir
+}
+
 /// <summary>
 /// Ingrediente que un jugador tiene en mano, en alguna etapa de preparación.
 /// AB#20, AB#21
@@ -23,5 +31,9 @@ public class Ingredient
 
     // AB#78 - que preparacion necesita este ingrediente en particular.
     public bool RequiresChop { get; set; } = true;
-    public bool RequiresCook { get; set; } = true;
+
+    // AB#82 - antes era un bool RequiresCook; ahora distingue hervir de freír
+    // para que las recetas de los niveles nuevos puedan pedir uno u otro.
+    public CookMethod CookMethod { get; set; } = CookMethod.Hervir;
+    public bool RequiresCook => CookMethod != CookMethod.Ninguno;
 }

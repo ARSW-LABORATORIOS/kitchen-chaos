@@ -30,17 +30,21 @@ public class PreparationService
     private const int BurnSeconds = 8;
     private const int RestockSeconds = 2;
 
-    /// <summary>Que preparacion necesita cada ingrediente. AB#78. Si uno no esta aqui, se asume picar+cocinar.</summary>
+    /// <summary>
+    /// Que preparacion necesita cada ingrediente. AB#78. Si uno no esta aqui, se asume picar+hervir.
+    /// AB#82: CookMethod distingue hervir de freír, para que los ingredientes nuevos de los
+    /// niveles 2-5 (salchipapa, bandeja paisa) puedan declarar cuál de los dos necesitan.
+    /// </summary>
     private static readonly Dictionary<string, IngredientDefinition> IngredientDefinitions = new()
     {
-        ["lechuga"] = new() { Name = "lechuga", RequiresChop = true, RequiresCook = false },
-        ["tomate"] = new() { Name = "tomate", RequiresChop = true, RequiresCook = false },
-        ["pepino"] = new() { Name = "pepino", RequiresChop = true, RequiresCook = false },
-        ["cebolla"] = new() { Name = "cebolla", RequiresChop = true, RequiresCook = false },
-        ["leche"] = new() { Name = "leche", RequiresChop = false, RequiresCook = true },
-        ["arroz"] = new() { Name = "arroz", RequiresChop = false, RequiresCook = true },
-        ["leche condensada"] = new() { Name = "leche condensada", RequiresChop = false, RequiresCook = false },
-        ["uvas pasas"] = new() { Name = "uvas pasas", RequiresChop = false, RequiresCook = false },
+        ["lechuga"] = new() { Name = "lechuga", RequiresChop = true },
+        ["tomate"] = new() { Name = "tomate", RequiresChop = true },
+        ["pepino"] = new() { Name = "pepino", RequiresChop = true },
+        ["cebolla"] = new() { Name = "cebolla", RequiresChop = true },
+        ["leche"] = new() { Name = "leche", CookMethod = CookMethod.Hervir },
+        ["arroz"] = new() { Name = "arroz", CookMethod = CookMethod.Hervir },
+        ["leche condensada"] = new() { Name = "leche condensada" },
+        ["uvas pasas"] = new() { Name = "uvas pasas" },
     };
 
     // Estaciones por sala, segun el nivel. Se crean la primera vez que se piden.
@@ -63,7 +67,7 @@ public class PreparationService
     private static IngredientDefinition GetDefinition(string ingredientName) =>
         IngredientDefinitions.GetValueOrDefault(
             ingredientName,
-            new IngredientDefinition { Name = ingredientName, RequiresChop = true, RequiresCook = true });
+            new IngredientDefinition { Name = ingredientName, RequiresChop = true, CookMethod = CookMethod.Hervir });
 
     /// <summary>AB#19, AB#78 - Estaciones de la sala segun los ingredientes que pide su nivel actual.</summary>
     public List<Station> GetStations(string roomCode) =>
@@ -104,7 +108,7 @@ public class PreparationService
             Name = station.IngredientName,
             HeldByConnectionId = connectionId,
             RequiresChop = definition.RequiresChop,
-            RequiresCook = definition.RequiresCook,
+            CookMethod = definition.CookMethod,
             // Un ingrediente que no necesita picarse ni cocinarse (ej. leche condensada) queda listo de una vez.
             State = needsPrep ? IngredientState.Crudo : IngredientState.Listo
         };
