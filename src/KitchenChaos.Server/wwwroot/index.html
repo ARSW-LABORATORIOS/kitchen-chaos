@@ -615,8 +615,8 @@
             </div>
 
             <div class="game-board-wrapper">
-                <div class="game-board">
-                    <img src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                <div class="game-board level-1">
+                    <img id="levelMap" src="images/niv1.png" class="game-board-image" alt="Nivel 1">
                     <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
                         <span class="station-label">Leche</span>
                     </button>
@@ -633,8 +633,36 @@
                         <span class="station-label">Uvas pasas</span>
                     </button>
 
-                    <button class="station-hotspot cook-station">
+                    <button class="station-hotspot ingredient-station station-5" data-ingredient="salsa roja">
+                        <span class="station-label">Salsa roja</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-6" data-ingredient="salsa blanca">
+                        <span class="station-label">Salsa blanca</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-7" data-ingredient="aguacate">
+                        <span class="station-label">Aguacate</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-8" data-ingredient="chicharrón">
+                        <span class="station-label">Chicharrón</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-9" data-ingredient="huevo">
+                        <span class="station-label">Huevo</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station generic-cook-station">
                         <span class="station-label">Cocinar</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station fry-station">
+                        <span class="station-label">Freír</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station boil-station">
+                        <span class="station-label">Hervir</span>
                     </button>
 
                     <button class="station-hotspot plate-station">
@@ -846,6 +874,24 @@
                 { x: 60, y: 39 },
                 { x: 27, y: 61 },
                 { x: 60, y: 61 }
+            ],
+            2: [
+                { x: 20, y: 45 },
+                { x: 28, y: 55 },
+                { x: 72, y: 45 },
+                { x: 80, y: 55 }
+            ],
+            3: [
+                { x: 35, y: 50 },
+                { x: 45, y: 60 },
+                { x: 60, y: 50 },
+                { x: 70, y: 60 }
+            ],
+            4: [
+                { x: 35, y: 45 },
+                { x: 45, y: 55 },
+                { x: 58, y: 45 },
+                { x: 68, y: 55 }
             ]
         };
 
@@ -1166,8 +1212,9 @@
                 });
         }
 
-        document.querySelector(".cook-station")
-            .addEventListener("click", useCookStation);
+        document.querySelectorAll(".cook-station").forEach(function (station) {
+            station.addEventListener("click", useCookStation);
+        });
 
         function updatePlateVisual(state) {
             const plateVisual = document.getElementById("plateVisual");
@@ -1581,6 +1628,31 @@
 
         });
 
+        function loadLevelMap(level) {
+            const levelMap = document.getElementById("levelMap");
+
+            const maps = {
+                1: "images/niv1.png",
+                2: "images/niv2.png",
+                3: "images/niv3.png",
+                4: "images/niv4.png"
+            };
+
+            if (!maps[level]) {
+                return;
+            }
+
+            levelMap.src = maps[level];
+            levelMap.alt = "Nivel " + level;
+
+            const board = document.querySelector(".game-board");
+            board.classList.remove("level-1", "level-2", "level-3", "level-4");
+            board.classList.add("level-" + level);
+
+            const ingredientStations = document.querySelectorAll(".ingredient-station");
+
+        }
+
 
         // Todos reciben este evento cuando el host inicia
         connection.on("GameStarted", function (gameInfo) {
@@ -1601,6 +1673,8 @@
             document.getElementById("gameScreen")
                 .querySelector("h2")
                 .textContent = "Nivel " + gameInfo.level;
+            
+            loadLevelMap(gameInfo.level);
 
             connection.invoke("GetStations", gameInfo.roomCode)
                 .catch(function (err) { console.error(err.toString()); });
