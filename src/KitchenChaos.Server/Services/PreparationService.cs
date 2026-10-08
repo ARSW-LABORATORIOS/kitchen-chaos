@@ -45,6 +45,20 @@ public class PreparationService
         ["arroz"] = new() { Name = "arroz", CookMethod = CookMethod.Hervir },
         ["leche condensada"] = new() { Name = "leche condensada" },
         ["uvas pasas"] = new() { Name = "uvas pasas" },
+        // Nivel 3 — Salchipapa. AB#84
+        ["salchicha"]   = new() { Name = "salchicha",  RequiresChop = true, CookMethod = CookMethod.Freir },
+        ["papa"]        = new() { Name = "papa",       RequiresChop = true, CookMethod = CookMethod.Freir },
+        ["pollo"]       = new() { Name = "pollo",      RequiresChop = true, CookMethod = CookMethod.Freir },
+        ["queso"]       = new() { Name = "queso",      RequiresChop = true },
+        ["salsa roja"]  = new() { Name = "salsa roja" },
+        ["salsa blanca"] = new() { Name = "salsa blanca" },
+        // Nivel 4 — Bandeja paisa. AB#84
+        ["frijol"]      = new() { Name = "frijol",     CookMethod = CookMethod.Hervir },
+        ["carne"]       = new() { Name = "carne",      RequiresChop = true, CookMethod = CookMethod.Freir },
+        ["platano"]     = new() { Name = "platano",    RequiresChop = true, CookMethod = CookMethod.Freir },
+        ["huevo"]       = new() { Name = "huevo",      CookMethod = CookMethod.Freir },
+        ["aguacate"]    = new() { Name = "aguacate",   RequiresChop = true },
+        ["chicharron"]  = new() { Name = "chicharron", RequiresChop = true, CookMethod = CookMethod.Freir },
     };
 
     // Estaciones por sala, segun el nivel. Se crean la primera vez que se piden.

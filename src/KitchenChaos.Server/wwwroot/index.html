@@ -2008,9 +2008,41 @@
         connection.on("LevelEnded", function (data) {
 
             document.getElementById("levelTimerDisplay").textContent = "0:00";
+            const stars = data.stars !== undefined ? " " + "★".repeat(data.stars) + "☆".repeat(3 - data.stars) : "";
             document.getElementById("scoreDisplay").textContent =
-                "Puntaje final: " + data.finalScore;
+                "Puntaje final: " + data.finalScore + stars;
 
+        });
+
+        // AB#84 - Apagón nivel 3
+        connection.on("BlackoutStart", function () {
+            let overlay = document.getElementById("blackoutOverlay");
+            if (!overlay) {
+                overlay = document.createElement("div");
+                overlay.id = "blackoutOverlay";
+                overlay.style.cssText = "position:absolute;inset:0;background:#000;z-index:50;border-radius:18px;";
+                document.querySelector(".game-board").appendChild(overlay);
+            }
+            overlay.style.display = "block";
+        });
+
+        connection.on("BlackoutEnd", function () {
+            const overlay = document.getElementById("blackoutOverlay");
+            if (overlay) overlay.style.display = "none";
+        });
+
+        // AB#84 - Ráfaga de viento nivel 4
+        connection.on("WindGust", function (data) {
+            const push = 8; // % del tablero que empuja
+            if (data.direction === "left")  myPosition.x = Math.max(2, myPosition.x - push);
+            if (data.direction === "right") myPosition.x = Math.min(98, myPosition.x + push);
+            if (data.direction === "up")    myPosition.y = Math.max(2, myPosition.y - push);
+            if (data.direction === "down")  myPosition.y = Math.min(98, myPosition.y + push);
+            renderMyPlayerPosition();
+            if (currentRoomCode) {
+                connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                    .catch(function (err) { console.error(err.toString()); });
+            }
         });
 
         connection.on("OrderDelivered", function (result) {
