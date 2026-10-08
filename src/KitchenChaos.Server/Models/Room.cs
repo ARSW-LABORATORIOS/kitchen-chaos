@@ -4,6 +4,9 @@ public class Player
 {
     public required string ConnectionId { get; set; }
     public required string Name { get; set; }
+
+    // AB#81 - personaje elegido por el jugador en el menú, para que todos vean el mismo avatar.
+    public string AvatarId { get; set; } = "vaca";
 }
 
 public class Room

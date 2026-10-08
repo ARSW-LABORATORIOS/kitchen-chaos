@@ -25,7 +25,7 @@ public class RoomService
     // desde jugadores distintos, sin que un hilo pise el diccionario de otro.
     private readonly ConcurrentDictionary<string, Room> _rooms = new();
 
-    public Room CreateRoom(string connectionId, string playerName)
+    public Room CreateRoom(string connectionId, string playerName, string avatarId)
     {
         var code = GenerateUniqueCode();
         var room = new Room
@@ -33,13 +33,13 @@ public class RoomService
             Code = code,
             HostConnectionId = connectionId
         };
-        room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName });
+        room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName, AvatarId = avatarId });
 
         _rooms[code] = room;
         return room;
     }
 
-    public JoinRoomResult JoinRoom(string code, string connectionId, string playerName)
+    public JoinRoomResult JoinRoom(string code, string connectionId, string playerName, string avatarId)
     {
         if (!_rooms.TryGetValue(code, out var room))
         {
@@ -55,7 +55,7 @@ public class RoomService
                 return new JoinRoomResult { Success = false, Error = "La sala ya está llena (4/4)." };
             }
 
-            room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName });
+            room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName, AvatarId = avatarId });
         }
 
         return new JoinRoomResult { Success = true, Room = room };
