@@ -15,8 +15,9 @@ public class GameHub : Hub
     private readonly PlatingService _platingService;
     private readonly DeliveryService _deliveryService;
     private readonly TimerService _timerService;
+    private readonly ObstacleService _obstacleService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService, ObstacleService obstacleService)
     {
         _roomService = roomService;
         _profileService = profileService;
@@ -25,6 +26,7 @@ public class GameHub : Hub
         _platingService = platingService;
         _deliveryService = deliveryService;
         _timerService = timerService;
+        _obstacleService = obstacleService;
     }
 
     // AB#4 - Crear sala de juego
@@ -81,7 +83,7 @@ public class GameHub : Hub
         await Clients.All.SendAsync("ReceiveMessage", user, message);
     
     // AB#6 - El host inicia la partida
-    public async Task StartGame(string roomCode)
+    public async Task StartGame(string roomCode, int level)
     {
         var result = _roomService.StartGame(
             roomCode,
@@ -104,12 +106,15 @@ public class GameHub : Hub
             new
             {
                 RoomCode = roomCode,
-                Level = 1
+                Level = level
             }
         );
 
         // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
         _timerService.StartLevel(roomCode);
+
+        // AB#84: arranca mecanica de obstaculo segun el nivel
+        _obstacleService.StartObstacle(roomCode, level);
 
         var order = _orderService.GenerateOrder(roomCode);
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
@@ -380,3 +385,4 @@ public class GameHub : Hub
         }
     }
 }
+

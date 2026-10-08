@@ -31,11 +31,13 @@ public class TimerService
     private readonly ConcurrentDictionary<string, RoomTimerState> _states = new();
     private readonly IHubContext<GameHub> _hub;
     private readonly OrderService _orderService;
+    private readonly RoomService _roomService;
 
-    public TimerService(IHubContext<GameHub> hub, OrderService orderService)
+    public TimerService(IHubContext<GameHub> hub, OrderService orderService, RoomService roomService)
     {
         _hub          = hub;
         _orderService = orderService;
+        _roomService  = roomService;
     }
 
     /// <summary>
@@ -176,6 +178,25 @@ public class TimerService
         });
     }
 
+    // Umbrales de estrellas por nivel: [1 estrella, 2 estrellas, 3 estrellas]. AB#84
+    private static readonly Dictionary<int, int[]> StarThresholds = new()
+    {
+        [1] = [100, 300,  600],
+        [2] = [250, 380,  880],
+        [3] = [300, 500, 1000],
+        [4] = [350, 600, 1200],
+        [5] = [500, 800, 1500]
+    };
+
+    private static int CalculateStars(int score, int level)
+    {
+        if (!StarThresholds.TryGetValue(level, out var t)) return 0;
+        if (score >= t[2]) return 3;
+        if (score >= t[1]) return 2;
+        if (score >= t[0]) return 1;
+        return 0;
+    }
+
     private async Task EndLevelAsync(string roomCode, RoomTimerState state)
     {
         lock (state)
@@ -187,9 +208,13 @@ public class TimerService
         state.LevelTimer?.Dispose();
         state.OrderTimer?.Dispose();
 
+        var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
+        var stars = CalculateStars(state.Score, level);
+
         await _hub.Clients.Group(roomCode).SendAsync("LevelEnded", new
         {
-            FinalScore = state.Score
+            FinalScore = state.Score,
+            Stars      = stars
         });
     }
 }

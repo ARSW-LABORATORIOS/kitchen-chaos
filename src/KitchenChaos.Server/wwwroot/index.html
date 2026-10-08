@@ -547,6 +547,17 @@
 
             <ul id="playersList"></ul>
 
+            <div id="levelSelectorContainer" style="display: none;">
+                <label for="levelSelector">Seleccionar nivel</label>
+
+                <select id="levelSelector">
+                    <option value="1">Nivel 1</option>
+                    <option value="2">Nivel 2</option>
+                    <option value="3">Nivel 3</option>
+                    <option value="4">Nivel 4</option>
+                </select>
+            </div>
+
             <button id="startGameButton" style="display: none;" disabled>
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -615,8 +626,8 @@
             </div>
 
             <div class="game-board-wrapper">
-                <div class="game-board">
-                    <img src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                <div class="game-board level-1">
+                    <img id="levelMap" src="images/niv1.png" class="game-board-image" alt="Nivel 1">
                     <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
                         <span class="station-label">Leche</span>
                     </button>
@@ -633,8 +644,36 @@
                         <span class="station-label">Uvas pasas</span>
                     </button>
 
-                    <button class="station-hotspot cook-station">
+                    <button class="station-hotspot ingredient-station station-5" data-ingredient="salsa roja">
+                        <span class="station-label">Salsa roja</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-6" data-ingredient="salsa blanca">
+                        <span class="station-label">Salsa blanca</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-7" data-ingredient="aguacate">
+                        <span class="station-label">Aguacate</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-8" data-ingredient="chicharrón">
+                        <span class="station-label">Chicharrón</span>
+                    </button>
+
+                    <button class="station-hotspot ingredient-station station-9" data-ingredient="huevo">
+                        <span class="station-label">Huevo</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station generic-cook-station">
                         <span class="station-label">Cocinar</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station fry-station">
+                        <span class="station-label">Freír</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station boil-station">
+                        <span class="station-label">Hervir</span>
                     </button>
 
                     <button class="station-hotspot plate-station">
@@ -797,13 +836,57 @@
                 [6, 4, 19],
                 [7, 4, 19],
                 [8, 4, 19]
-            ]
+            ],
+
+            // Nivel 2 — pegar dentro de WALKABLE_CELLS en index.html (8 tramo(s))
+            2: [
+                [4, 4, 17],
+                [5, 3, 18],
+                [6, 3, 4],
+                [6, 8, 13],
+                [6, 17, 18],
+                [7, 3, 18],
+                [8, 8, 17],
+                [9, 9, 12]
+            ],
+
+            // Nivel 3 — pegar dentro de WALKABLE_CELLS en index.html (11 tramo(s))
+            3: [
+                [4, 4, 12],
+                [5, 4, 18],
+                [6, 4, 5],
+                [6, 10, 12],
+                [6, 17, 19],
+                [7, 3, 5],
+                [7, 10, 12],
+                [7, 17, 19],
+                [8, 3, 19],
+                [9, 10, 18],
+                [10, 10, 12]
+            ],
+            // Nivel 4 — pegar dentro de WALKABLE_CELLS en index.html (11 tramo(s))
+            4: [
+                [3, 4, 7],
+                [3, 17, 17],
+                [4, 4, 19],
+                [5, 4, 7],
+                [5, 15, 20],
+                [6, 4, 7],
+                [6, 15, 20],
+                [7, 4, 19],
+                [8, 5, 19],
+                [9, 11, 17],
+                [10, 11, 13]
+            ],
         };
 
         const OBSTACLES_BY_LEVEL = {
             1: [
-                [6, 7, 6, 17]  // las 3 bancas del centro
-            ]
+                [6, 7, 6, 17]
+            ],
+            2: [],
+            3: [],
+            4: []
         };
 
         function buildWallGrid(walkable, obstacles) {
@@ -825,7 +908,10 @@
         }
 
         const WALLS_BY_LEVEL = {
-            1: buildWallGrid(WALKABLE_CELLS[1], OBSTACLES_BY_LEVEL[1])
+            1: buildWallGrid(WALKABLE_CELLS[1], OBSTACLES_BY_LEVEL[1]),
+            2: buildWallGrid(WALKABLE_CELLS[2], OBSTACLES_BY_LEVEL[2]),
+            3: buildWallGrid(WALKABLE_CELLS[3], OBSTACLES_BY_LEVEL[3]),
+            4: buildWallGrid(WALKABLE_CELLS[4], OBSTACLES_BY_LEVEL[4])
         };
 
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
@@ -834,8 +920,8 @@
         // paredes (si no, el jugador puede quedar "encerrado" sin poder moverse).
         // Celda X: 100/24 = 4.16% -> mitad = 2.08% -> se usa 1.5%
         // Celda Y: 100/14 = 7.14% -> mitad = 3.57% -> se usa 2.5%
-        const PLAYER_HALF_W = 1.5;
-        const PLAYER_HALF_H = 2.5;
+        const PLAYER_HALF_W = 0.8;
+        const PLAYER_HALF_H = 1.2;
 
         // AB#81 - 4 puntos de partida repartidos por el piso libre (no sobre la banca
         // central). Si todos los jugadores spawnearan en el mismo punto, quedarían
@@ -846,6 +932,24 @@
                 { x: 60, y: 39 },
                 { x: 27, y: 61 },
                 { x: 60, y: 61 }
+            ],
+            2: [
+                { x: 25, y: 39 },
+                { x: 75, y: 39 },
+                { x: 25, y: 53 },
+                { x: 75, y: 53 }
+            ],
+            3: [
+                { x: 28, y: 42 },
+                { x: 72, y: 42 },
+                { x: 28, y: 58 },
+                { x: 72, y: 58 }
+            ],
+            4: [
+                { x: 22, y: 58 },
+                { x: 78, y: 58 },
+                { x: 22, y: 58 },
+                { x: 78, y: 58 }
             ]
         };
 
@@ -976,7 +1080,7 @@
         }
 
         function wouldBlockMovement(x, y) {
-            return wouldCollide(x, y) || wouldCollideWithPlayers(x, y);
+            return wouldCollide(x, y);
         }
 
         function ensureMyPlayerSprite() {
@@ -1166,8 +1270,9 @@
                 });
         }
 
-        document.querySelector(".cook-station")
-            .addEventListener("click", useCookStation);
+        document.querySelectorAll(".cook-station").forEach(function (station) {
+            station.addEventListener("click", useCookStation);
+        });
 
         function updatePlateVisual(state) {
             const plateVisual = document.getElementById("plateVisual");
@@ -1495,6 +1600,7 @@
 
             const list = document.getElementById("playersList");
             const startButton = document.getElementById("startGameButton");
+            const levelSelectorContainer = document.getElementById("levelSelectorContainer");
 
             // AB#81: mi posición en la sala (para el punto de spawn) y el avatar real
             // de cada quien (elegido por ellos, no adivinado por hash)
@@ -1540,6 +1646,7 @@
             if (isHost) {
 
                 startButton.style.display = "block";
+                levelSelectorContainer.style.display = "block";
 
                 // Se necesitan mínimo 2 jugadores
                 startButton.disabled =
@@ -1560,6 +1667,7 @@
             } else {
 
                 startButton.style.display = "none";
+                levelSelectorContainer.style.display = "none";
 
             }
 
@@ -1581,6 +1689,31 @@
 
         });
 
+        function loadLevelMap(level) {
+            const levelMap = document.getElementById("levelMap");
+
+            const maps = {
+                1: "images/niv1.png",
+                2: "images/niv2.png",
+                3: "images/niv3.png",
+                4: "images/niv4.png"
+            };
+
+            if (!maps[level]) {
+                return;
+            }
+
+            levelMap.src = maps[level];
+            levelMap.alt = "Nivel " + level;
+
+            const board = document.querySelector(".game-board");
+            board.classList.remove("level-1", "level-2", "level-3", "level-4");
+            board.classList.add("level-" + level);
+
+            const ingredientStations = document.querySelectorAll(".ingredient-station");
+
+        }
+
 
         // Todos reciben este evento cuando el host inicia
         connection.on("GameStarted", function (gameInfo) {
@@ -1601,6 +1734,8 @@
             document.getElementById("gameScreen")
                 .querySelector("h2")
                 .textContent = "Nivel " + gameInfo.level;
+            
+            loadLevelMap(gameInfo.level);
 
             connection.invoke("GetStations", gameInfo.roomCode)
                 .catch(function (err) { console.error(err.toString()); });
@@ -1772,15 +1907,17 @@
                     return;
                 }
 
-                connection.invoke("StartGame", currentRoomCode)
+                const selectedLevel = parseInt(
+                    document.getElementById("levelSelector").value
+                );
+
+                connection.invoke("StartGame", currentRoomCode, selectedLevel)
                     .catch(function (err) {
-
                         console.error(err.toString());
-
                     });
 
             });
-
+            
         connection.on("DishPlated", function (plate) {
 
             currentPlateId = plate.id;
@@ -1871,9 +2008,41 @@
         connection.on("LevelEnded", function (data) {
 
             document.getElementById("levelTimerDisplay").textContent = "0:00";
+            const stars = data.stars !== undefined ? " " + "★".repeat(data.stars) + "☆".repeat(3 - data.stars) : "";
             document.getElementById("scoreDisplay").textContent =
-                "Puntaje final: " + data.finalScore;
+                "Puntaje final: " + data.finalScore + stars;
 
+        });
+
+        // AB#84 - Apagón nivel 3
+        connection.on("BlackoutStart", function () {
+            let overlay = document.getElementById("blackoutOverlay");
+            if (!overlay) {
+                overlay = document.createElement("div");
+                overlay.id = "blackoutOverlay";
+                overlay.style.cssText = "position:absolute;inset:0;background:#000;z-index:50;border-radius:18px;";
+                document.querySelector(".game-board").appendChild(overlay);
+            }
+            overlay.style.display = "block";
+        });
+
+        connection.on("BlackoutEnd", function () {
+            const overlay = document.getElementById("blackoutOverlay");
+            if (overlay) overlay.style.display = "none";
+        });
+
+        // AB#84 - Ráfaga de viento nivel 4
+        connection.on("WindGust", function (data) {
+            const push = 8; // % del tablero que empuja
+            if (data.direction === "left")  myPosition.x = Math.max(2, myPosition.x - push);
+            if (data.direction === "right") myPosition.x = Math.min(98, myPosition.x + push);
+            if (data.direction === "up")    myPosition.y = Math.max(2, myPosition.y - push);
+            if (data.direction === "down")  myPosition.y = Math.min(98, myPosition.y + push);
+            renderMyPlayerPosition();
+            if (currentRoomCode) {
+                connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                    .catch(function (err) { console.error(err.toString()); });
+            }
         });
 
         connection.on("OrderDelivered", function (result) {
