@@ -46,6 +46,10 @@
     background: transparent;
     z-index: 5;
     animation: stationPulse 2.8s ease-in-out infinite;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    min-height: 0;
 }
 
 .station-hotspot:hover {
@@ -180,28 +184,28 @@
     margin-top: 6px;
 }
 
-.station-1 {
+.level-1 .station-1 {
     left: 24.5%;
     top: 15%;
     width: 6%;
     height: 22%;
 }
 
-.station-2 {
+.level-1 .station-2 {
     left: 32%;
     top: 15%;
     width: 6%;
     height: 22%;
 }
 
-.station-3 {
+.level-1 .station-3 {
     left: 40%;
     top: 15%;
     width: 6%;
     height: 22%;
 }
 
-.station-4 {
+.level-1 .station-4 {
     left: 47.5%;
     top: 15%;
     width: 6%;
@@ -214,39 +218,286 @@
     outline: none;
 }
 
-.cook-station {
+.level-1 .cook-station {
     left: 66%;
     top: 24%;
     width: 12%;
     height: 4%;
 }
 
-.plate-station {
+.level-1 .plate-station {
     left: 54.5%;
     top: 26.5%;
     width: 11%;
     height: 14%;
 }
 
-.delivery-station {
+.level-1 .delivery-station {
     left: 14%;
     top: 62%;
     width: 16%;
     height: 22%;
 }
 
-.wash-station {
+.level-1 .wash-station {
     left: 80%;
     top: 54%;
     width: 4%;
     height: 6%;
 }
 
-.trash-station {
+.level-1 .trash-station {
     left: 16.8%;
     top: 49%;
     width: 1%;
     height: 1%;
+}
+
+.level-2 .station-1 {
+    left: 11%;
+    top: 28%;
+    width: 6%;
+    height: 5%;
+}
+
+.level-2 .station-2 {
+    left: 10%;
+    top: 36%;
+    width: 6%;
+    height: 5%;
+}
+
+.level-2 .station-3 {
+    left: 8%;
+    top: 44%;
+    width: 6%;
+    height: 5%;
+}
+
+.level-2 .station-4 {
+    left: 7%;
+    top: 54%;
+    width: 6%;
+    height: 5%;
+}
+
+.level-2 .cook-station {
+    left: 55%;
+    top: 18%;
+    width: 20%;
+    height: 13%;
+}
+
+.level-2 .plate-station {
+    left: 77%;
+    top: 30%;
+    width: 6%;
+    height: 6%;
+}
+
+.level-2 .delivery-station {
+    left: 58%;
+    top: 60%;
+    width: 18%;
+    height: 10%;
+}
+
+.level-2 .wash-station {
+    left: 82%;
+    top: 49%;
+    width: 6%;
+    height: 8%;
+}
+
+.level-2 .trash-station {
+    left: 13%;
+    top: 57%;
+    width: 3%;
+    height: 8%;
+}
+
+.level-3 .station-1 {
+    left: 11%;
+    top: 26%;
+    width: 5%;
+    height: 8%;
+}
+
+.level-3 .station-2 {
+    left: 10%;
+    top: 36%;
+    width: 5%;
+    height: 8%;
+}
+
+.level-3 .station-3 {
+    left: 8%;
+    top: 47%;
+    width: 5%;
+    height: 8%;
+}
+
+.level-3 .station-4 {
+    left: 6%;
+    top: 58%;
+    width: 5%;
+    height: 8%;
+}
+
+.level-3 .station-5 {
+    left: 25%;
+    top: 67%;
+    width: 6%;
+    height: 10%;
+    display: block !important;
+}
+
+.level-3 .station-6 {
+    left: 33%;
+    top: 67%;
+    width: 6%;
+    height: 10%;
+    display: block !important;
+}
+
+.level-3 .cook-station {
+    left: 56%;
+    top: 22%;
+    width: 25%;
+    height: 12%;
+}
+
+.level-3 .plate-station {
+    left: 82%;
+    top: 38%;
+    width: 6%;
+    height: 8%;
+}
+
+.level-3 .delivery-station {
+    left: 59%;
+    top: 67%;
+    width: 18%;
+    height: 10%;
+}
+
+.level-3 .wash-station {
+    left: 86%;
+    top: 56%;
+    width: 5%;
+    height: 9%;
+}
+
+.level-3 .trash-station {
+    left: 13%;
+    top: 63%;
+    width: 4%;
+    height: 7%;
+}
+
+.level-4 .station-1 {
+    left: 8%;
+    top: 31%;
+    width: 5%;
+    height: 7%;
+}
+
+.level-4 .station-2 {
+    left: 10%;
+    top: 38%;
+    width: 5%;
+    height: 7%;
+}
+
+.level-4 .station-3 {
+    left: 12%;
+    top: 46%;
+    width: 5%;
+    height: 7%;
+}
+
+.level-4 .station-4 {
+    left: 14%;
+    top: 54%;
+    width: 5%;
+    height: 7%;
+}
+
+.level-4 .station-7 {
+    left: 31%;
+    top: 66%;
+    width: 3%;
+    height: 7%;
+}
+
+.level-4 .station-8 {
+    left: 35%;
+    top: 66%;
+    width: 4%;
+    height: 7%;
+}
+
+.level-4 .station-9 {
+    left: 40%;
+    top: 68%;
+    width: 4%;
+    height: 7%;
+}
+
+.level-4 .plate-station {
+    left: 87%;
+    top: 36%;
+    width: 6%;
+    height: 8%;
+}
+
+.level-4 .wash-station {
+    left: 84%;
+    top: 52%;
+    width: 5%;
+    height: 8%;
+}
+
+.level-4 .delivery-station {
+    left: 58%;
+    top: 67%;
+    width: 16%;
+    height: 10%;
+}
+
+.level-4 .trash-station {
+    left: 18%;
+    top: 63%;
+    width: 4%;
+    height: 7%;
+}
+
+.fry-station,
+.boil-station {
+    display: none;
+}
+
+.level-4 .generic-cook-station {
+    display: none;
+}
+
+.level-4 .fry-station,
+.level-4 .boil-station {
+    display: block;
+}
+
+.level-4 .boil-station {
+    left: 74%;
+    top: 18%;
+    width: 7%;
+    height: 7%;
+}
+
+.level-4 .fry-station {
+    left: 80%;
+    top: 23%;
+    width: 7%;
+    height: 7%;
 }
 
 .stations-box {

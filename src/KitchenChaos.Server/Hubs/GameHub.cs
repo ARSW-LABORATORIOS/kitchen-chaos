@@ -81,7 +81,7 @@ public class GameHub : Hub
         await Clients.All.SendAsync("ReceiveMessage", user, message);
     
     // AB#6 - El host inicia la partida
-    public async Task StartGame(string roomCode)
+    public async Task StartGame(string roomCode, int level)
     {
         var result = _roomService.StartGame(
             roomCode,
@@ -104,7 +104,7 @@ public class GameHub : Hub
             new
             {
                 RoomCode = roomCode,
-                Level = 1
+                Level = level
             }
         );
 
