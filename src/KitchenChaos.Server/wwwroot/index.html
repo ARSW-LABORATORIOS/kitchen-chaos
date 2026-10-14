@@ -884,7 +884,10 @@
             1: [
                 [6, 7, 6, 17]
             ],
-            2: [],
+            2: [
+                [6, 7, 5, 7],   // mesa de picar izquierda
+                [6, 7, 14, 16]  // mesa de picar derecha
+            ],
             3: [],
             4: []
         };
@@ -916,12 +919,16 @@
 
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
 
-        // Hitbox menor a media celda para que nunca quede más grande que el hueco entre
-        // paredes (si no, el jugador puede quedar "encerrado" sin poder moverse).
-        // Celda X: 100/24 = 4.16% -> mitad = 2.08% -> se usa 1.5%
-        // Celda Y: 100/14 = 7.14% -> mitad = 3.57% -> se usa 2.5%
-        const PLAYER_HALF_W = 0.8;
-        const PLAYER_HALF_H = 1.2;
+        // Hitbox contra paredes: los pies del personaje. Tiene que ser menor a media celda para
+        // no quedar más grande que un hueco de 1 celda (si no, el jugador se "encierra").
+        // Celda X: 100/24 = 4.16% -> mitad = 2.08%. Celda Y: 100/14 = 7.14% -> mitad = 3.57%.
+        const PLAYER_HALF_W = 1.2;
+        const PLAYER_HALF_H = 2.0;
+
+        // Cuerpo contra otros jugadores: más grande que los pies, porque el sprite mide ~7% de
+        // ancho y con el hitbox de pies dos personajes se verían encimados.
+        const PLAYER_BODY_HALF_W = 2.5;
+        const PLAYER_BODY_HALF_H = 4.0;
 
         // AB#81 - 4 puntos de partida repartidos por el piso libre (no sobre la banca
         // central). Si todos los jugadores spawnearan en el mismo punto, quedarían
@@ -936,20 +943,20 @@
             2: [
                 { x: 25, y: 39 },
                 { x: 75, y: 39 },
-                { x: 25, y: 53 },
-                { x: 75, y: 53 }
+                { x: 36, y: 61 },
+                { x: 70, y: 61 }
             ],
             3: [
-                { x: 28, y: 42 },
-                { x: 72, y: 42 },
-                { x: 28, y: 58 },
-                { x: 72, y: 58 }
+                { x: 22, y: 39 },
+                { x: 75, y: 39 },
+                { x: 22, y: 61 },
+                { x: 75, y: 61 }
             ],
             4: [
-                { x: 22, y: 58 },
-                { x: 78, y: 58 },
-                { x: 22, y: 58 },
-                { x: 78, y: 58 }
+                { x: 22, y: 32 },
+                { x: 78, y: 32 },
+                { x: 26, y: 61 },
+                { x: 76, y: 61 }
             ]
         };
 
@@ -1053,34 +1060,33 @@
             );
         }
 
-        // AB#81 - Colisión entre jugadores: a cada otro jugador se le trata como un
-        // obstáculo más, con el mismo hitbox que usa el jugador local. Se compara contra
-        // la última posición conocida de cada uno (la que llegó por SignalR), que es todo
-        // lo que un cliente puede saber de los demás sin que el servidor valide movimiento.
-        function wouldCollideWithPlayers(x, y) {
-            const box = {
-                left: x - PLAYER_HALF_W,
-                right: x + PLAYER_HALF_W,
-                top: y - PLAYER_HALF_H,
-                bottom: y + PLAYER_HALF_H
-            };
+        // AB#81 - Colisión entre jugadores: cada otro jugador es un obstáculo sólido. Se compara
+        // contra la última posición conocida (la que llegó por SignalR), que es todo lo que un
+        // cliente sabe de los demás sin que el servidor valide movimiento.
+        // Dos cuerpos chocan si sus centros están más cerca que la suma de sus mitades. La
+        // "separación" normaliza ese tope a 1 en cada eje (>= 1 en algún eje = no se tocan).
+        function bodySeparation(x1, y1, x2, y2) {
+            return Math.max(
+                Math.abs(x1 - x2) / (2 * PLAYER_BODY_HALF_W),
+                Math.abs(y1 - y2) / (2 * PLAYER_BODY_HALF_H)
+            );
+        }
 
+        function wouldCollideWithPlayers(x, y) {
             return Object.keys(otherPlayers).some(function (id) {
                 const p = otherPlayers[id];
-                const otherBox = {
-                    left: p.x - PLAYER_HALF_W,
-                    right: p.x + PLAYER_HALF_W,
-                    top: p.y - PLAYER_HALF_H,
-                    bottom: p.y + PLAYER_HALF_H
-                };
+                const after = bodySeparation(x, y, p.x, p.y);
+                if (after >= 1) return false;
 
-                return box.left < otherBox.right && box.right > otherBox.left &&
-                    box.top < otherBox.bottom && box.bottom > otherBox.top;
+                // Si ya estábamos encimados (por ejemplo, alguien reapareció sobre uno), se deja
+                // pasar el paso que los aleja; si no, los dos quedarían trabados para siempre.
+                const before = bodySeparation(myPosition.x, myPosition.y, p.x, p.y);
+                return !(before < 1 && after > before);
             });
         }
 
         function wouldBlockMovement(x, y) {
-            return wouldCollide(x, y);
+            return wouldCollide(x, y) || wouldCollideWithPlayers(x, y);
         }
 
         function ensureMyPlayerSprite() {
@@ -1689,6 +1695,27 @@
 
         });
 
+        // Qué ingrediente va en cada hotspot (station-N) según el nivel. Los nombres tienen que
+        // ser idénticos a los del servidor (sin tildes); el hotspot que no aparece aquí se oculta.
+        const INGREDIENT_SLOTS_BY_LEVEL = {
+            1: { 1: ["leche", "Leche"], 2: ["arroz", "Arroz"], 3: ["leche condensada", "Leche condensada"], 4: ["uvas pasas", "Uvas pasas"] },
+            2: { 1: ["tomate", "Tomate"], 2: ["lechuga", "Lechuga"], 3: ["cebolla", "Cebolla"], 4: ["pepino", "Pepino"] },
+            3: { 1: ["salchicha", "Salchicha"], 2: ["papa", "Papa"], 3: ["pollo", "Pollo"], 4: ["queso", "Queso"], 5: ["salsa roja", "Salsa roja"], 6: ["salsa blanca", "Salsa blanca"] },
+            4: { 1: ["frijol", "Frijol"], 2: ["carne", "Carne"], 3: ["arroz", "Arroz"], 4: ["platano", "Plátano"], 7: ["aguacate", "Aguacate"], 8: ["chicharron", "Chicharrón"], 9: ["huevo", "Huevo"] }
+        };
+
+        function assignIngredientSlots(level) {
+            const slots = INGREDIENT_SLOTS_BY_LEVEL[level] || INGREDIENT_SLOTS_BY_LEVEL[1];
+
+            document.querySelectorAll(".ingredient-station").forEach(function (hotspot) {
+                const slotNumber = parseInt(hotspot.className.match(/station-(\d+)/)[1], 10);
+                const slot = slots[slotNumber];
+
+                hotspot.dataset.ingredient = slot ? slot[0] : "";
+                hotspot.querySelector(".station-label").textContent = slot ? slot[1] : "";
+            });
+        }
+
         function loadLevelMap(level) {
             const levelMap = document.getElementById("levelMap");
 
@@ -1710,8 +1737,7 @@
             board.classList.remove("level-1", "level-2", "level-3", "level-4");
             board.classList.add("level-" + level);
 
-            const ingredientStations = document.querySelectorAll(".ingredient-station");
-
+            assignIngredientSlots(level);
         }
 
 

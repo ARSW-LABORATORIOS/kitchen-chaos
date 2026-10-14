@@ -87,7 +87,8 @@ public class GameHub : Hub
     {
         var result = _roomService.StartGame(
             roomCode,
-            Context.ConnectionId
+            Context.ConnectionId,
+            level
         );
 
         if (!result.Success)

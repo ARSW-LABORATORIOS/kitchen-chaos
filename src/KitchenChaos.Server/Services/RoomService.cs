@@ -61,8 +61,20 @@ public class RoomService
         return new JoinRoomResult { Success = true, Room = room };
     }
 
-    public StartGameResult StartGame(string roomCode, string connectionId)
+    public const int MinLevel = 1;
+    public const int MaxLevel = 4;
+
+    public StartGameResult StartGame(string roomCode, string connectionId, int level)
     {
+        if (level < MinLevel || level > MaxLevel)
+        {
+            return new StartGameResult
+            {
+                Success = false,
+                Error = "El nivel elegido no existe."
+            };
+        }
+
         if (!_rooms.TryGetValue(roomCode, out var room))
         {
             return new StartGameResult
@@ -101,6 +113,9 @@ public class RoomService
                 };
             }
 
+            // Antes el nivel solo viajaba hacia los clientes y el servidor seguía en el 1:
+            // recetas, estaciones y estrellas leen room.Level, así que hay que fijarlo aquí.
+            room.Level = level;
             room.HasStarted = true;
 
             return new StartGameResult
