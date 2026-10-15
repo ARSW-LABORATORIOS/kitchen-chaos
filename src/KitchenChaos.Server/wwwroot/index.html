@@ -825,45 +825,124 @@
         // cada una marcada como pared (1) o piso (0). Coordenadas de Nivel 1 calcadas
         // a mano sobre niv1.png con una cuadrícula de referencia (24 columnas x 14 filas).
         // Mismo formato que va a usar la herramienta de pintar paredes para Vera.
-        const GRID_COLS = 24;
-        const GRID_ROWS = 14;
+        const GRID_COLS = 40;
+        const GRID_ROWS = 40;
 
         // Formato: [fila, colDesde, colHasta] para piso caminable,
         // [filaDesde, filaHasta, colDesde, colHasta] para obstáculos (tienen prioridad sobre el piso).
         const WALKABLE_CELLS = {
+            // Nivel 1 — pegar dentro de WALKABLE_CELLS en index.html (17 tramo(s))
             1: [
-                [5, 4, 19],
-                [6, 4, 19],
-                [7, 4, 19],
-                [8, 4, 19]
+                [13, 10, 29],
+                [14, 10, 30],
+                [15, 10, 30],
+                [16, 10, 30],
+                [17, 9, 12],
+                [17, 27, 31],
+                [18, 9, 12],
+                [18, 27, 31],
+                [19, 9, 12],
+                [19, 27, 31],
+                [20, 9, 12],
+                [20, 27, 31],
+                [21, 9, 32],
+                [22, 9, 32],
+                [23, 12, 32],
+                [24, 12, 32],
+                [25, 12, 32]
             ],
 
-            // Nivel 2 — pegar dentro de WALKABLE_CELLS en index.html (8 tramo(s))
+            // Nivel 2 — pegar dentro de WALKABLE_CELLS en index.html (40 tramo(s))
             2: [
-                [4, 4, 17],
-                [5, 3, 18],
-                [6, 3, 4],
-                [6, 8, 13],
-                [6, 17, 18],
-                [7, 3, 18],
-                [8, 8, 17],
-                [9, 9, 12]
+                [5, 14, 21],
+                [6, 14, 21],
+                [7, 14, 21],
+                [8, 14, 21],
+                [9, 14, 21],
+                [10, 14, 21],
+                [11, 7, 21],
+                [12, 6, 30],
+                [13, 6, 30],
+                [14, 6, 30],
+                [15, 6, 31],
+                [16, 6, 7],
+                [16, 13, 22],
+                [16, 29, 31],
+                [17, 6, 7],
+                [17, 13, 22],
+                [17, 29, 31],
+                [18, 5, 7],
+                [18, 13, 22],
+                [18, 29, 31],
+                [19, 5, 31],
+                [20, 5, 31],
+                [21, 5, 31],
+                [22, 5, 31],
+                [23, 5, 7],
+                [23, 14, 22],
+                [24, 14, 22],
+                [25, 14, 22],
+                [26, 14, 22],
+                [27, 14, 22],
+                [28, 15, 20],
+                [29, 15, 21],
+                [30, 15, 21],
+                [31, 15, 20],
+                [32, 15, 20],
+                [33, 15, 20],
+                [34, 15, 20],
+                [35, 15, 20],
+                [36, 15, 20],
+                [37, 15, 20]
             ],
 
-            // Nivel 3 — pegar dentro de WALKABLE_CELLS en index.html (11 tramo(s))
+            // Nivel 3 — pegar dentro de WALKABLE_CELLS en index.html (43 tramo(s))
             3: [
-                [4, 4, 12],
-                [5, 4, 18],
-                [6, 4, 5],
-                [6, 10, 12],
-                [6, 17, 19],
-                [7, 3, 5],
-                [7, 10, 12],
-                [7, 17, 19],
-                [8, 3, 19],
-                [9, 10, 18],
-                [10, 10, 12]
+                [12, 7, 15],
+                [12, 17, 21],
+                [13, 7, 15],
+                [13, 17, 21],
+                [14, 7, 21],
+                [15, 7, 31],
+                [16, 7, 32],
+                [17, 6, 32],
+                [18, 6, 9],
+                [18, 17, 21],
+                [18, 29, 32],
+                [19, 6, 9],
+                [19, 17, 21],
+                [19, 29, 32],
+                [20, 6, 9],
+                [20, 17, 21],
+                [20, 29, 32],
+                [21, 6, 9],
+                [21, 17, 21],
+                [21, 29, 32],
+                [22, 6, 9],
+                [22, 16, 22],
+                [22, 29, 32],
+                [23, 5, 33],
+                [24, 5, 33],
+                [25, 5, 21],
+                [25, 32, 33],
+                [26, 7, 9],
+                [26, 16, 21],
+                [27, 7, 8],
+                [27, 16, 21],
+                [28, 7, 8],
+                [28, 16, 21],
+                [29, 7, 8],
+                [29, 16, 21],
+                [30, 7, 8],
+                [30, 16, 21],
+                [31, 7, 8],
+                [31, 16, 21],
+                [32, 16, 21],
+                [33, 16, 21],
+                [34, 16, 21],
+                [35, 16, 21]
             ],
+
             // Nivel 4 — pegar dentro de WALKABLE_CELLS en index.html (11 tramo(s))
             4: [
                 [3, 4, 7],
@@ -881,13 +960,8 @@
         };
 
         const OBSTACLES_BY_LEVEL = {
-            1: [
-                [6, 7, 6, 17]
-            ],
-            2: [
-                [6, 7, 5, 7],   // mesa de picar izquierda
-                [6, 7, 14, 16]  // mesa de picar derecha
-            ],
+            1: [],
+            2: [],
             3: [],
             4: []
         };
@@ -922,29 +996,29 @@
         // Hitbox contra paredes: los pies del personaje. Tiene que ser menor a media celda para
         // no quedar más grande que un hueco de 1 celda (si no, el jugador se "encierra").
         // Celda X: 100/24 = 4.16% -> mitad = 2.08%. Celda Y: 100/14 = 7.14% -> mitad = 3.57%.
-        const PLAYER_HALF_W = 1.2;
-        const PLAYER_HALF_H = 2.0;
+        const PLAYER_HALF_W = 0.7;
+        const PLAYER_HALF_H = 0.7;
 
         // Cuerpo contra otros jugadores: más grande que los pies, porque el sprite mide ~7% de
         // ancho y con el hitbox de pies dos personajes se verían encimados.
-        const PLAYER_BODY_HALF_W = 2.5;
-        const PLAYER_BODY_HALF_H = 4.0;
+        const PLAYER_BODY_HALF_W = 1.8;
+        const PLAYER_BODY_HALF_H = 2.5;
 
         // AB#81 - 4 puntos de partida repartidos por el piso libre (no sobre la banca
         // central). Si todos los jugadores spawnearan en el mismo punto, quedarían
         // trabados entre sí desde el inicio sin poder moverse ninguno.
         const SPAWN_POINTS_BY_LEVEL = {
             1: [
-                { x: 27, y: 39 },
-                { x: 60, y: 39 },
-                { x: 27, y: 61 },
+                { x: 33, y: 39 },
+                { x: 45, y: 39 },
+                { x: 35, y: 61 },
                 { x: 60, y: 61 }
             ],
             2: [
-                { x: 25, y: 39 },
+                { x: 35, y: 39 },
                 { x: 75, y: 39 },
                 { x: 36, y: 61 },
-                { x: 70, y: 61 }
+                { x: 52, y: 61 }
             ],
             3: [
                 { x: 22, y: 39 },
@@ -985,7 +1059,7 @@
         // AB#81 - Espacio = agarrar/usar lo que esté más cerca, al estilo Overcooked.
         // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
         // exactamente la misma lógica que ya existe, no se duplica nada).
-        const GRAB_REACH = 9; // % del tablero, qué tan cerca hay que estar para poder agarrar
+        const GRAB_REACH = 13; // % del tablero, qué tan cerca hay que estar para poder agarrar
 
         function grabNearestStation() {
             const board = document.querySelector(".game-board");
@@ -1030,7 +1104,8 @@
             if (key === " " && !isTypingInField()) {
                 e.preventDefault();
                 // e.repeat evita que mantener la tecla presionada dispare "agarrar" en cadena
-                if (!e.repeat && document.getElementById("gameScreen").style.display === "block") {
+                if (!e.repeat && !document.getElementById("gameScreen").hidden &&
+                    getComputedStyle(document.getElementById("gameScreen")).display !== "none") {
                     grabNearestStation();
                 }
             }
@@ -1041,12 +1116,18 @@
         });
 
         function isWallCell(x, y) {
-            if (x < 0 || x >= 100 || y < 0 || y >= 100) return true;
+            if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+                return true;
+            }
 
             const col = Math.floor((x / 100) * GRID_COLS);
             const row = Math.floor((y / 100) * GRID_ROWS);
 
-            return !!(currentLevelWalls[row] && currentLevelWalls[row][col] === 1);
+            if (!currentLevelWalls[row]) {
+                return true;
+            }
+
+            return currentLevelWalls[row][col] !== 0;
         }
 
         function wouldCollide(x, y) {
@@ -1105,6 +1186,7 @@
         function renderMyPlayerPosition() {
             const sprite = document.getElementById("myPlayerSprite");
             if (!sprite) return;
+
             sprite.style.left = myPosition.x + "%";
             sprite.style.top = myPosition.y + "%";
             sprite.style.transform =
@@ -1167,16 +1249,25 @@
                     const moveX = (dx / length) * PLAYER_SPEED * deltaSeconds;
                     const moveY = (dy / length) * PLAYER_SPEED * deltaSeconds;
 
-                    const nextX = Math.max(2, Math.min(98, myPosition.x + moveX));
-                    const nextY = Math.max(2, Math.min(98, myPosition.y + moveY));
+                    const steps = Math.max(
+                        1,
+                        Math.ceil(Math.max(Math.abs(moveX), Math.abs(moveY)) / 0.5)
+                    );
 
-                    // Revisa cada eje por separado: si choca de frente contra una pared
-                    // (o contra otro jugador), igual puede deslizarse por el eje libre.
-                    if (!wouldBlockMovement(nextX, myPosition.y)) {
-                        myPosition.x = nextX;
-                    }
-                    if (!wouldBlockMovement(myPosition.x, nextY)) {
-                        myPosition.y = nextY;
+                    const stepX = moveX / steps;
+                    const stepY = moveY / steps;
+
+                    for (let i = 0; i < steps; i++) {
+                        const nextX = Math.max(2, Math.min(98, myPosition.x + stepX));
+                        const nextY = Math.max(2, Math.min(98, myPosition.y + stepY));
+
+                        if (!wouldBlockMovement(nextX, myPosition.y)) {
+                            myPosition.x = nextX;
+                        }
+
+                        if (!wouldBlockMovement(myPosition.x, nextY)) {
+                            myPosition.y = nextY;
+                        }
                     }
 
                     if (dx < 0) myFacingLeft = true;
@@ -1760,7 +1851,7 @@
             document.getElementById("gameScreen")
                 .querySelector("h2")
                 .textContent = "Nivel " + gameInfo.level;
-            
+
             loadLevelMap(gameInfo.level);
 
             connection.invoke("GetStations", gameInfo.roomCode)
@@ -1943,7 +2034,7 @@
                     });
 
             });
-            
+
         connection.on("DishPlated", function (plate) {
 
             currentPlateId = plate.id;

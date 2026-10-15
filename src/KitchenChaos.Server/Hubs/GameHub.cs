@@ -15,9 +15,8 @@ public class GameHub : Hub
     private readonly PlatingService _platingService;
     private readonly DeliveryService _deliveryService;
     private readonly TimerService _timerService;
-    private readonly ObstacleService _obstacleService;
 
-    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService, ObstacleService obstacleService)
+    public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService)
     {
         _roomService = roomService;
         _profileService = profileService;
@@ -26,7 +25,6 @@ public class GameHub : Hub
         _platingService = platingService;
         _deliveryService = deliveryService;
         _timerService = timerService;
-        _obstacleService = obstacleService;
     }
 
     // AB#4 - Crear sala de juego
@@ -113,9 +111,6 @@ public class GameHub : Hub
 
         // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
         _timerService.StartLevel(roomCode);
-
-        // AB#84: arranca mecanica de obstaculo segun el nivel
-        _obstacleService.StartObstacle(roomCode, level);
 
         var order = _orderService.GenerateOrder(roomCode);
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
@@ -262,6 +257,46 @@ public class GameHub : Hub
         });
     }
 
+    public async Task TakePlate(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+
+        if (room is null ||
+            !room.HasStarted ||
+            !room.Players.Any(p => p.ConnectionId == Context.ConnectionId))
+        {
+            await Clients.Caller.SendAsync(
+                "TakePlateError",
+                "No perteneces a una partida activa en esta sala."
+            );
+            return;
+        }
+
+        var result = _platingService.TakePlate(
+            roomCode,
+            Context.ConnectionId
+        );
+
+        if (!result.Success)
+        {
+            await Clients.Caller.SendAsync(
+                "TakePlateError",
+                result.Error
+            );
+            return;
+        }
+
+        await Clients.Group(roomCode).SendAsync(
+            "PlateTaken",
+            new
+            {
+                ConnectionId = Context.ConnectionId,
+                PlateId = result.Plate!.Id,
+                State = result.Plate.State.ToString()
+            }
+        );
+    }
+
     /// <summary>Arma un plato con los ingredientes indicados y lo deja listo para entregar. AB#22, AB#76.</summary>
     public async Task PlateDish(
         string roomCode,
@@ -269,7 +304,8 @@ public class GameHub : Hub
     {
         var result = _platingService.PlateDish(
             roomCode,
-            ingredientIds);
+            ingredientIds,
+            Context.ConnectionId);
 
         if (!result.Success)
         {
@@ -386,4 +422,3 @@ public class GameHub : Hub
         }
     }
 }
-
