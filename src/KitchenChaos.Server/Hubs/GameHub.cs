@@ -86,6 +86,61 @@ public class GameHub : Hub
     public async Task SendMessage(string user, string message) =>
         await Clients.All.SendAsync("ReceiveMessage", user, message);
     
+    // Avanza al siguiente nivel sin destruir la sala
+    public async Task NextLevel(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || room.HostConnectionId != Context.ConnectionId)
+        {
+            await Clients.Caller.SendAsync("StartGameError", "Solo el host puede avanzar de nivel.");
+            return;
+        }
+
+        var nextLevel = room.Level + 1;
+        if (nextLevel > RoomService.MaxLevel)
+        {
+            await Clients.Caller.SendAsync("StartGameError", "Ya estás en el último nivel.");
+            return;
+        }
+
+        room.Level = nextLevel;
+        _preparationService.ResetStations(roomCode);
+        _timerService.StartLevel(roomCode);
+
+        await Clients.Group(roomCode).SendAsync("GameStarted", new { RoomCode = roomCode, Level = nextLevel });
+
+        var order = _orderService.GenerateOrder(roomCode);
+        await Clients.Group(roomCode).SendAsync("OrderUpdated", new
+        {
+            order.Id,
+            order.DishName,
+            order.RequiredIngredients
+        });
+    }
+
+    public async Task PauseGame(string roomCode)
+    {
+        // Puede venir del jugador directo o de su control móvil vinculado
+        var callerConnectionId = Context.ConnectionId;
+        if (LinkedControls.TryGetValue(callerConnectionId, out var playerConnId))
+            callerConnectionId = playerConnId;
+
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+        await Clients.Group(roomCode).SendAsync("GamePaused", new { By = callerConnectionId });
+    }
+
+    public async Task ResumeGame(string roomCode)
+    {
+        var callerConnectionId = Context.ConnectionId;
+        if (LinkedControls.TryGetValue(callerConnectionId, out var playerConnId))
+            callerConnectionId = playerConnId;
+
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+        await Clients.Group(roomCode).SendAsync("GameResumed");
+    }
+
     // AB#6 - El host inicia la partida
     public async Task StartGame(string roomCode, int level)
     {

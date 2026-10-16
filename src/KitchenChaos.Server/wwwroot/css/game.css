@@ -764,3 +764,85 @@
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4));
     transition: left 0.08s linear, top 0.08s linear;
 }
+
+/* Modal fin de nivel */
+.level-end-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.level-end-modal {
+    background: rgba(255, 250, 236, 0.97);
+    border-radius: 26px;
+    padding: 40px 36px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+    animation: modalPop 0.3s ease-out;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.level-end-modal h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: #2a1a0f;
+}
+
+.level-end-stars {
+    font-size: 48px;
+    margin: 12px 0;
+    letter-spacing: 6px;
+}
+
+.level-end-score {
+    font-size: 20px;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.level-end-msg {
+    font-size: 15px;
+    color: #777;
+    margin-bottom: 20px;
+}
+
+.btn-end {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: none;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: opacity 0.15s, transform 0.15s;
+}
+
+.btn-end:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-next-level {
+    background: linear-gradient(135deg, #328a81, #276b64);
+    color: #fff;
+}
+
+.btn-home {
+    background: rgba(255, 255, 255, 0.6);
+    color: #6b4a2a;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}

@@ -104,15 +104,6 @@ public class RoomService
                 };
             }
 
-            if (room.HasStarted)
-            {
-                return new StartGameResult
-                {
-                    Success = false,
-                    Error = "La partida ya fue iniciada."
-                };
-            }
-
             // Antes el nivel solo viajaba hacia los clientes y el servidor seguía en el 1:
             // recetas, estaciones y estrellas leen room.Level, así que hay que fijarlo aquí.
             room.Level = level;
@@ -123,6 +114,16 @@ public class RoomService
                 Success = true,
                 Room = room
             };
+        }
+    }
+
+    // Reinicia el estado de la sala para un nuevo nivel (sin destruirla)
+    public void ResetForNextLevel(string roomCode, int level)
+    {
+        if (!_rooms.TryGetValue(roomCode, out var room)) return;
+        lock (room)
+        {
+            room.Level = level;
         }
     }
 

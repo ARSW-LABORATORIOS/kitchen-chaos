@@ -450,6 +450,104 @@
                 opacity: 0.55;
             }
         }
+        .level-end-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.65);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .level-end-modal {
+            background: rgba(255,250,236,0.97);
+            border-radius: 26px; padding: 40px 36px;
+            text-align: center; max-width: 420px; width: 90%;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+            animation: modalPop 0.3s ease-out;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        /* ===== Modal fin de nivel ===== */
+        .level-end-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.72);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .level-end-modal {
+            background: linear-gradient(160deg, #fff8e7 0%, #ffe0b2 60%, #ffccbc 100%);
+            border-radius: 28px; padding: 44px 38px 36px;
+            text-align: center; max-width: 440px; width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 4px #f4a261;
+            animation: modalPop 0.35s cubic-bezier(.34,1.56,.64,1);
+            position: relative; overflow: hidden;
+        }
+        .level-end-modal::before {
+            content: '🍳'; font-size: 90px; opacity: 0.07;
+            position: absolute; top: -10px; right: -10px; line-height: 1;
+        }
+        .level-end-modal h2 {
+            font-size: 30px; margin-bottom: 4px; color: #b2582c;
+            font-family: var(--font-title); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .level-end-banner {
+            display: inline-block; background: linear-gradient(90deg,#f4a261,#e76f51);
+            color: #fff; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; padding: 3px 14px; border-radius: 999px;
+            margin-bottom: 14px;
+        }
+        .level-end-stars { font-size: 52px; margin: 10px 0; letter-spacing: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .level-end-score {
+            font-size: 22px; font-weight: 700; color: #2a1a0f;
+            background: rgba(255,255,255,0.55); border-radius: 12px;
+            padding: 8px 20px; display: inline-block; margin-bottom: 10px;
+        }
+        .level-end-msg { font-size: 15px; color: #6b4a2a; margin-bottom: 22px; font-weight: 600; }
+        .level-end-modal .btn-end {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 15px; margin-bottom: 10px;
+            border: none; border-radius: 999px; font-size: 16px; font-weight: 700;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .level-end-modal .btn-end:hover { transform: translateY(-2px); opacity: 0.92; }
+        .btn-next-level { background: linear-gradient(135deg,#f4a261,#e76f51); color:#fff; box-shadow: 0 4px 14px rgba(231,111,81,0.45); }
+        .btn-home       { background: rgba(255,255,255,0.65); color:#6b4a2a; border: 1.5px solid rgba(178,88,44,0.35) !important; }
+
+        /* ===== Modal pausa ===== */
+        .pause-overlay {
+            position: fixed; inset: 0; z-index: 300;
+            background: rgba(10,10,30,0.78);
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .pause-modal {
+            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            border-radius: 28px; padding: 44px 38px 36px;
+            text-align: center; max-width: 400px; width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 3px #e94560;
+            animation: modalPop 0.3s cubic-bezier(.34,1.56,.64,1);
+            color: #fff;
+        }
+        .pause-modal h2 {
+            font-size: 36px; margin-bottom: 6px; color: #e94560;
+            font-family: var(--font-title); text-transform: uppercase; letter-spacing: 2px;
+        }
+        .pause-emoji { font-size: 52px; margin-bottom: 10px; display: block; }
+        .pause-quote {
+            font-size: 14px; color: #a8b2d8; font-style: italic;
+            margin-bottom: 28px; line-height: 1.5;
+            background: rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 16px;
+        }
+        .pause-modal .btn-pause {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 15px; margin-bottom: 10px;
+            border: none; border-radius: 999px; font-size: 15px; font-weight: 700;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .pause-modal .btn-pause:hover { transform: translateY(-2px); opacity: 0.92; }
+        .btn-resume  { background: linear-gradient(135deg,#43e97b,#38f9d7); color:#0f3460; }
+        .btn-restart { background: linear-gradient(135deg,#f7971e,#ffd200); color:#1a1a2e; }
+        .btn-menu    { background: rgba(255,255,255,0.12); color:#fff; border: 1.5px solid rgba(255,255,255,0.25) !important; }
     </style>
 </head>
 
@@ -844,7 +942,7 @@
             document.getElementById("mobileControlCode").textContent = data.code;
             document.getElementById("mobileControlCodeDisplay").style.display = "block";
             document.getElementById("mobileControlStatus").textContent =
-                "Introduce este código en tu celular. Válido durante 2 minutos.";
+                "Introduce este cdigo en tu celular. Vlido durante 2 minutos.";
         });
 
         
@@ -852,7 +950,7 @@
             mobilePressedKeys = {};
             
             document.getElementById("mobileControlStatus").textContent =
-                "✅ Celular vinculado correctamente.";
+                " Celular vinculado correctamente.";
 
             syncMobileInventory();
             syncMobileTeammates();
@@ -871,10 +969,11 @@
         let currentRoomCode = null;
         let isHost = false;
         let myPlayerName = null;
-        let myPlayerIndex = 0; // AB#81: posición en la lista de jugadores, usada para el punto de spawn
+        let myPlayerIndex = 0; // AB#81: posicin en la lista de jugadores, usada para el punto de spawn
         let myIngredients = {};
+        let currentLevel = 1;
 
-        // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el menú
+        // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el men
         // y el servidor lo reparte a todos, para que nadie vea un avatar distinto al elegido.
         const AVATAR_IDS = ["vaca", "nutria", "pinguino", "gato", "panda", "perro", "aguila", "dragon"];
 
@@ -917,19 +1016,19 @@
             document.querySelector(".waiting-room").style.display = "block";
         }
 
-        // ===================== AB#81 - Movimiento, colisión y personajes =====================
+        // ===================== AB#81 - Movimiento, colisin y personajes =====================
 
-        // AB#81 - Colisión por matriz: el tablero se parte en una cuadrícula de celdas,
+        // AB#81 - Colisin por matriz: el tablero se parte en una cuadrcula de celdas,
         // cada una marcada como pared (1) o piso (0). Coordenadas de Nivel 1 calcadas
-        // a mano sobre niv1.png con una cuadrícula de referencia (24 columnas x 14 filas).
+        // a mano sobre niv1.png con una cuadrcula de referencia (24 columnas x 14 filas).
         // Mismo formato que va a usar la herramienta de pintar paredes para Vera.
         const GRID_COLS = 40;
         const GRID_ROWS = 40;
 
         // Formato: [fila, colDesde, colHasta] para piso caminable,
-        // [filaDesde, filaHasta, colDesde, colHasta] para obstáculos (tienen prioridad sobre el piso).
+        // [filaDesde, filaHasta, colDesde, colHasta] para obstculos (tienen prioridad sobre el piso).
         const WALKABLE_CELLS = {
-            // Nivel 1 — pegar dentro de WALKABLE_CELLS en index.html (17 tramo(s))
+            // Nivel 1  pegar dentro de WALKABLE_CELLS en index.html (17 tramo(s))
             1: [
                 [13, 10, 29],
                 [14, 10, 30],
@@ -950,7 +1049,7 @@
                 [25, 12, 32]
             ],
 
-            // Nivel 2 — pegar dentro de WALKABLE_CELLS en index.html (40 tramo(s))
+            // Nivel 2  pegar dentro de WALKABLE_CELLS en index.html (40 tramo(s))
             2: [
                 [5, 14, 21],
                 [6, 14, 21],
@@ -994,7 +1093,7 @@
                 [37, 15, 20]
             ],
 
-            // Nivel 3 — pegar dentro de WALKABLE_CELLS en index.html (43 tramo(s))
+            // Nivel 3  pegar dentro de WALKABLE_CELLS en index.html (43 tramo(s))
             3: [
                 [12, 7, 15],
                 [12, 17, 21],
@@ -1041,7 +1140,7 @@
                 [35, 16, 21]
             ],
 
-            // Nivel 4 — pegar dentro de WALKABLE_CELLS en index.html (36 tramo(s))
+            // Nivel 4  pegar dentro de WALKABLE_CELLS en index.html (36 tramo(s))
             4: [
                 [9, 10, 11],
                 [10, 9, 13],
@@ -1117,19 +1216,19 @@
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
 
         // Hitbox contra paredes: los pies del personaje. Tiene que ser menor a media celda para
-        // no quedar más grande que un hueco de 1 celda (si no, el jugador se "encierra").
+        // no quedar ms grande que un hueco de 1 celda (si no, el jugador se "encierra").
         // Celda X: 100/24 = 4.16% -> mitad = 2.08%. Celda Y: 100/14 = 7.14% -> mitad = 3.57%.
         const PLAYER_HALF_W = 0.7;
         const PLAYER_HALF_H = 0.7;
 
-        // Cuerpo contra otros jugadores: más grande que los pies, porque el sprite mide ~7% de
-        // ancho y con el hitbox de pies dos personajes se verían encimados.
+        // Cuerpo contra otros jugadores: ms grande que los pies, porque el sprite mide ~7% de
+        // ancho y con el hitbox de pies dos personajes se veran encimados.
         const PLAYER_BODY_HALF_W = 1.8;
         const PLAYER_BODY_HALF_H = 2.5;
 
         // AB#81 - 4 puntos de partida repartidos por el piso libre (no sobre la banca
-        // central). Si todos los jugadores spawnearan en el mismo punto, quedarían
-        // trabados entre sí desde el inicio sin poder moverse ninguno.
+        // central). Si todos los jugadores spawnearan en el mismo punto, quedaran
+        // trabados entre s desde el inicio sin poder moverse ninguno.
         const SPAWN_POINTS_BY_LEVEL = {
             1: [
                 { x: 33, y: 39 },
@@ -1172,7 +1271,7 @@
         connection.on("MobileControlDisconnected", function () {
             mobilePressedKeys = {};
             document.getElementById("mobileControlStatus").textContent =
-                "⚠️ El celular se desconectó. Puedes seguir jugando con el teclado.";
+                " El celular se desconect. Puedes seguir jugando con el teclado.";
             document.getElementById("mobileControlCodeDisplay").style.display = "none";
         });
 
@@ -1214,10 +1313,10 @@
             return tag === "INPUT" || tag === "TEXTAREA";
         }
 
-        // AB#81 - Espacio = agarrar/usar lo que esté más cerca, al estilo Overcooked.
+        // AB#81 - Espacio = agarrar/usar lo que est ms cerca, al estilo Overcooked.
         // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
-        // exactamente la misma lógica que ya existe, no se duplica nada).
-        const GRAB_REACH = 13; // % del tablero, qué tan cerca hay que estar para poder agarrar
+        // exactamente la misma lgica que ya existe, no se duplica nada).
+        const GRAB_REACH = 13; // % del tablero, qu tan cerca hay que estar para poder agarrar
 
         connection.on("MobileInteractionReceived", function () {
             const gameScreen = document.getElementById("gameScreen");
@@ -1264,8 +1363,8 @@
             const key = e.key.toLowerCase();
             pressedKeys[key] = true;
 
-            // Evita que las flechas/WASD hagan scroll de la página mientras se juega,
-            // pero nunca cuando se está escribiendo en un input (nombre, código de sala).
+            // Evita que las flechas/WASD hagan scroll de la pgina mientras se juega,
+            // pero nunca cuando se est escribiendo en un input (nombre, cdigo de sala).
             if (MOVEMENT_KEYS.includes(key) && !isTypingInField()) {
                 e.preventDefault();
             }
@@ -1276,6 +1375,20 @@
                 if (!e.repeat && !document.getElementById("gameScreen").hidden &&
                     getComputedStyle(document.getElementById("gameScreen")).display !== "none") {
                     grabNearestStation();
+                }
+            }
+
+            if (key === "p" && !isTypingInField() &&
+                getComputedStyle(document.getElementById("gameScreen")).display !== "none") {
+                e.preventDefault();
+                if (!e.repeat) {
+                    if (!isPaused) {
+                        isPaused = true;
+                        showPauseModal();
+                        if (currentRoomCode) connection.invoke('PauseGame', currentRoomCode).catch(console.error);
+                    } else {
+                        resumeGame();
+                    }
                 }
             }
         });
@@ -1310,11 +1423,11 @@
             );
         }
 
-        // AB#81 - Colisión entre jugadores: cada otro jugador es un obstáculo sólido. Se compara
-        // contra la última posición conocida (la que llegó por SignalR), que es todo lo que un
-        // cliente sabe de los demás sin que el servidor valide movimiento.
-        // Dos cuerpos chocan si sus centros están más cerca que la suma de sus mitades. La
-        // "separación" normaliza ese tope a 1 en cada eje (>= 1 en algún eje = no se tocan).
+        // AB#81 - Colisin entre jugadores: cada otro jugador es un obstculo slido. Se compara
+        // contra la ltima posicin conocida (la que lleg por SignalR), que es todo lo que un
+        // cliente sabe de los dems sin que el servidor valide movimiento.
+        // Dos cuerpos chocan si sus centros estn ms cerca que la suma de sus mitades. La
+        // "separacin" normaliza ese tope a 1 en cada eje (>= 1 en algn eje = no se tocan).
         function bodySeparation(x1, y1, x2, y2) {
             return Math.max(
                 Math.abs(x1 - x2) / (2 * PLAYER_BODY_HALF_W),
@@ -1328,8 +1441,8 @@
                 const after = bodySeparation(x, y, p.x, p.y);
                 if (after >= 1) return false;
 
-                // Si ya estábamos encimados (por ejemplo, alguien reapareció sobre uno), se deja
-                // pasar el paso que los aleja; si no, los dos quedarían trabados para siempre.
+                // Si ya estbamos encimados (por ejemplo, alguien reapareci sobre uno), se deja
+                // pasar el paso que los aleja; si no, los dos quedaran trabados para siempre.
                 const before = bodySeparation(myPosition.x, myPosition.y, p.x, p.y);
                 return !(before < 1 && after > before);
             });
@@ -1362,7 +1475,7 @@
                 connection.state === signalR.HubConnectionState.Connected) {
                 connection.invoke("SyncMobilePlate", state)
                     .catch(function (error) {
-                        console.error("Error al sincronizar el plato móvil:", error);
+                        console.error("Error al sincronizar el plato mvil:", error);
                     });
             }
 
@@ -1379,11 +1492,11 @@
             plate.style.display = state === null ? "none" : "block";
 
             if (state === "clean") {
-                plate.textContent = "🍽️";
+                plate.textContent = "";
             } else if (state === "food") {
-                plate.textContent = "🍛";
+                plate.textContent = "";
             } else if (state === "dirty") {
-                plate.textContent = "🥣";
+                plate.textContent = "";
             }
 
             renderMyPlayerPosition();
@@ -1444,8 +1557,8 @@
             }
 
             plate.textContent =
-                plateState === "food" ? "🍛" :
-                plateState === "dirty" ? "🥣" : "🍽️";
+                plateState === "food" ? "" :
+                plateState === "dirty" ? "" : "";
 
             plate.style.display = "block";
             plate.style.left = pos.x + "%";
@@ -1469,7 +1582,7 @@
             const gameScreenVisible =
                 document.getElementById("gameScreen").style.display === "block";
 
-            if (gameScreenVisible) {
+            if (gameScreenVisible && !isPaused) {
 
                 let dx = 0;
                 let dy = 0;
@@ -1481,7 +1594,7 @@
 
                 if (dx !== 0 || dy !== 0) {
 
-                    // Normaliza para que caminar en diagonal no sea más rápido
+                    // Normaliza para que caminar en diagonal no sea ms rpido
                     const length = Math.sqrt(dx * dx + dy * dy);
                     const moveX = (dx / length) * PLAYER_SPEED * deltaSeconds;
                     const moveY = (dy / length) * PLAYER_SPEED * deltaSeconds;
@@ -1516,9 +1629,9 @@
 
                 } else if (wasMovingLastFrame) {
 
-                    // Se soltó la tecla: manda la posición final exacta de una vez,
-                    // sin esperar el siguiente turno del límite de frecuencia — así
-                    // nadie se queda viéndote unos pasos atrás de donde en verdad estás.
+                    // Se solt la tecla: manda la posicin final exacta de una vez,
+                    // sin esperar el siguiente turno del lmite de frecuencia  as
+                    // nadie se queda vindote unos pasos atrs de donde en verdad ests.
                     wasMovingLastFrame = false;
 
                     if (currentRoomCode) {
@@ -1527,8 +1640,8 @@
                     }
                 }
 
-                // Latido de respaldo: si por lo que sea nadie se enteró de tu última
-                // posición (un mensaje que no llegó), esto lo corrige solo en máximo 1 segundo.
+                // Latido de respaldo: si por lo que sea nadie se enter de tu ltima
+                // posicin (un mensaje que no lleg), esto lo corrige solo en mximo 1 segundo.
                 if (currentRoomCode && timestamp - lastMoveSentAt > 1000) {
                     lastMoveSentAt = timestamp;
                     connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
@@ -1551,8 +1664,8 @@
             renderOtherPlayer(data.connectionId);
         });
 
-        // AB#81 - si no se limpia, la última posición de quien se desconectó queda
-        // bloqueando el tablero como un obstáculo fantasma para siempre.
+        // AB#81 - si no se limpia, la ltima posicin de quien se desconect queda
+        // bloqueando el tablero como un obstculo fantasma para siempre.
         connection.on("PlayerLeft", function (data) {
             delete otherPlayers[data.connectionId];
             const sprite = document.getElementById("player-" + data.connectionId);
@@ -1623,7 +1736,7 @@
 
             if (ingredient.state === "Cocinando") {
                 document.getElementById("preparationError").textContent =
-                    "El ingrediente todavía se está cocinando.";
+                    "El ingrediente todava se est cocinando.";
                 return;
             }
 
@@ -1724,13 +1837,13 @@
         }
 
 
-        // Guarda el estado del render anterior para saber qué ingrediente es nuevo
-        // y cuál solo cambió de estado, y así animar únicamente lo que cambió.
+        // Guarda el estado del render anterior para saber qu ingrediente es nuevo
+        // y cul solo cambi de estado, y as animar nicamente lo que cambi.
         let previousIngredientStates = {};
 
-        // AB#82 - picar/hervir/freír: el botón de la estufa dice hervir o freír según el ingrediente.
+        // AB#82 - picar/hervir/frer: el botn de la estufa dice hervir o frer segn el ingrediente.
         function cookLabelFor(cookMethod) {
-            return cookMethod === "Freir" ? "Freír" : "Hervir";
+            return cookMethod === "Freir" ? "Frer" : "Hervir";
         }
 
         let mobileTeammates = [];
@@ -1741,7 +1854,7 @@
             }
             connection.invoke("SyncMobileTeammates", mobileTeammates)
                 .catch(function (error) {
-                    console.error("Error al sincronizar compañeros móviles:", error);
+                    console.error("Error al sincronizar compaeros mviles:", error);
                 });
         }
         
@@ -1752,7 +1865,7 @@
             }
             connection.invoke("SyncMobileScore", score)
                 .catch(function (error) {
-                    console.error("Error al sincronizar el puntaje móvil:", error);
+                    console.error("Error al sincronizar el puntaje mvil:", error);
                 });
         }
 
@@ -1773,7 +1886,7 @@
 
             connection.invoke("SyncMobileInventory", ingredients)
                 .catch(function (error) {
-                    console.error("Error al sincronizar inventario móvil:", error);
+                    console.error("Error al sincronizar inventario mvil:", error);
                 });
         }
 
@@ -1828,7 +1941,7 @@
                 });
 
                 const label = document.createElement("span");
-                label.textContent = ingredient.name + " — ";
+                label.textContent = ingredient.name + "  ";
 
                 const stateSpan = document.createElement("span");
                 stateSpan.className = "ingredient-state";
@@ -1942,7 +2055,7 @@
         });
 
 
-        // AB#19 - Confirmación de que tomé un ingrediente
+        // AB#19 - Confirmacin de que tom un ingrediente
         connection.on("IngredientTaken", function (ingredient) {
 
             myIngredients[ingredient.id] = {
@@ -2021,7 +2134,7 @@
             const startButton = document.getElementById("startGameButton");
             const levelSelectorContainer = document.getElementById("levelSelectorContainer");
 
-            // AB#81: mi posición en la sala (para el punto de spawn) y el avatar real
+            // AB#81: mi posicin en la sala (para el punto de spawn) y el avatar real
             // de cada quien (elegido por ellos, no adivinado por hash)
             const myIndex = players.findIndex(function (p) { return p.name === myPlayerName; });
             if (myIndex !== -1) myPlayerIndex = myIndex;
@@ -2061,11 +2174,11 @@
                 li.appendChild(avatar);
                 li.appendChild(nameSpan);
 
-                // El primer jugador de la lista siempre es quien creó la sala (el host)
+                // El primer jugador de la lista siempre es quien cre la sala (el host)
                 if (index === 0) {
                     const badge = document.createElement("span");
                     badge.className = "player-host-badge";
-                    badge.textContent = "👑";
+                    badge.textContent = "";
                     li.appendChild(badge);
                 }
 
@@ -2073,13 +2186,13 @@
 
             });
 
-            // Solo el host ve el botón de iniciar
+            // Solo el host ve el botn de iniciar
             if (isHost) {
 
                 startButton.style.display = "block";
                 levelSelectorContainer.style.display = "block";
 
-                // Se necesitan mínimo 2 jugadores
+                // Se necesitan mnimo 2 jugadores
                 startButton.disabled =
                     players.length < 2 || players.length > 4;
 
@@ -2091,7 +2204,7 @@
                 } else {
 
                     document.getElementById("startGameMessage").textContent =
-                        "La partida está lista para iniciar.";
+                        "La partida est lista para iniciar.";
 
                 }
 
@@ -2120,13 +2233,13 @@
 
         });
 
-        // Qué ingrediente va en cada hotspot (station-N) según el nivel. Los nombres tienen que
-        // ser idénticos a los del servidor (sin tildes); el hotspot que no aparece aquí se oculta.
+        // Qu ingrediente va en cada hotspot (station-N) segn el nivel. Los nombres tienen que
+        // ser idnticos a los del servidor (sin tildes); el hotspot que no aparece aqu se oculta.
         const INGREDIENT_SLOTS_BY_LEVEL = {
             1: { 1: ["leche", "Leche"], 2: ["arroz", "Arroz"], 3: ["leche condensada", "Leche condensada"], 4: ["uvas pasas", "Uvas pasas"] },
             2: { 1: ["tomate", "Tomate"], 2: ["lechuga", "Lechuga"], 3: ["cebolla", "Cebolla"], 4: ["pepino", "Pepino"] },
             3: { 1: ["salchicha", "Salchicha"], 2: ["papa", "Papa"], 3: ["pollo", "Pollo"], 4: ["queso", "Queso"], 5: ["salsa roja", "Salsa roja"], 6: ["salsa blanca", "Salsa blanca"] },
-            4: { 1: ["frijol", "Frijol"], 2: ["carne", "Carne"], 3: ["arroz", "Arroz"], 4: ["platano", "Plátano"], 7: ["aguacate", "Aguacate"], 8: ["chicharron", "Chicharrón"], 9: ["huevo", "Huevo"] }
+            4: { 1: ["frijol", "Frijol"], 2: ["carne", "Carne"], 3: ["arroz", "Arroz"], 4: ["platano", "Pltano"], 7: ["aguacate", "Aguacate"], 8: ["chicharron", "Chicharrn"], 9: ["huevo", "Huevo"] }
         };
 
         function assignIngredientSlots(level) {
@@ -2180,7 +2293,7 @@
 
             document.querySelector(".instructions").style.display = "none";
 
-            // AB#80: durante la partida el tablero ocupa toda la pantalla, no hace falta el logo/subtítulo del menú
+            // AB#80: durante la partida el tablero ocupa toda la pantalla, no hace falta el logo/subttulo del men
             document.querySelector(".logo").style.display = "none";
 
             document.querySelector(".subtitle").style.display = "none";
@@ -2199,10 +2312,13 @@
             connection.invoke("GetCurrentOrder", gameInfo.roomCode)
                 .catch(function (err) { console.error(err.toString()); });
 
-            // AB#81: posición inicial en el piso abierto del mapa (distinta por jugador,
+            // AB#81: posicin inicial en el piso abierto del mapa (distinta por jugador,
             // para que nadie spawnee encima de otro), y arranca limpio
-            // (por si se reinicia una partida en la misma sesión del navegador)
+            // (por si se reinicia una partida en la misma sesin del navegador)
+            currentLevel = gameInfo.level;
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
+            isPaused = false;
+            hidePauseModal();
             myPosition = pickSpawnPoint(gameInfo.level, myPlayerIndex);
             myFacingLeft = false;
             otherPlayers = {};
@@ -2221,15 +2337,15 @@
             ensureMyPlayerSprite();
             renderMyPlayerPosition();
 
-            // AB#81: avisa la posición inicial de una vez, sin esperar a que te muevas,
-            // para que los demás te vean aparecer desde el primer momento.
+            // AB#81: avisa la posicin inicial de una vez, sin esperar a que te muevas,
+            // para que los dems te vean aparecer desde el primer momento.
             connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
 
         });
 
 
-        // Iniciar conexión con SignalR
+        // Iniciar conexin con SignalR
         connection.start()
             .then(function () {
 
@@ -2266,7 +2382,7 @@
 
                 document.getElementById("roomErrorDisplay").textContent = "";
 
-                // AB#81: se guarda ANTES de invocar al servidor — si no, el evento
+                // AB#81: se guarda ANTES de invocar al servidor  si no, el evento
                 // RoomPlayersUpdated puede llegar antes de que esto se asigne.
                 myPlayerName = playerName;
 
@@ -2278,7 +2394,7 @@
                         isHost = true;
 
                         document.getElementById("roomCodeDisplay")
-                            .textContent = "Código de tu sala: " + roomCode;
+                            .textContent = "Cdigo de tu sala: " + roomCode;
 
                         document.getElementById("roomCodeInput")
                             .value = roomCode;
@@ -2319,7 +2435,7 @@
                 if (roomCode === "") {
 
                     document.getElementById("roomErrorDisplay")
-                        .textContent = "Ingresa el código de la sala.";
+                        .textContent = "Ingresa el cdigo de la sala.";
 
                     return;
                 }
@@ -2354,15 +2470,15 @@
             });
 
 
-        // Salir de la sala: recargar simplemente cierra esta conexión y el servidor
-        // limpia al jugador de la sala en OnDisconnectedAsync, sin necesitar un método nuevo en el hub
+        // Salir de la sala: recargar simplemente cierra esta conexin y el servidor
+        // limpia al jugador de la sala en OnDisconnectedAsync, sin necesitar un mtodo nuevo en el hub
         document.getElementById("leaveRoomButton")
             .addEventListener("click", function () {
                 location.reload();
             });
 
 
-        // Botón del host para iniciar la partida
+        // Botn del host para iniciar la partida
         document.getElementById("startGameButton")
             .addEventListener("click", function () {
 
@@ -2449,7 +2565,7 @@
                 document.getElementById("washPlateButton").disabled = false;
 
                 document.getElementById("plateStatus").textContent =
-                    "El plato quedó sucio.";
+                    "El plato qued sucio.";
 
             }
 
@@ -2500,13 +2616,13 @@
 
         connection.on("LevelEnded", function (data) {
             document.getElementById("levelTimerDisplay").textContent = "0:00";
-            const stars = data.stars !== undefined ? " " + "★".repeat(data.stars) + "☆".repeat(3 - data.stars) : "";
-            document.getElementById("scoreDisplay").textContent =
-                "Puntaje final: " + data.finalScore + stars;
+            const stars = data.stars || 0;
+            document.getElementById("scoreDisplay").textContent = "Puntaje final: " + data.finalScore;
             syncMobileScore(data.finalScore);
+            showLevelEndModal(data.finalScore, stars, currentLevel);
         });
 
-        // AB#84 - Apagón nivel 3
+        // AB#84 - Apagn nivel 3
         connection.on("BlackoutStart", function () {
             let overlay = document.getElementById("blackoutOverlay");
             if (!overlay) {
@@ -2523,7 +2639,7 @@
             if (overlay) overlay.style.display = "none";
         });
 
-        // AB#84 - Ráfaga de viento nivel 4
+        // AB#84 - Rfaga de viento nivel 4
         connection.on("WindGust", function (data) {
             const push = 8; // % del tablero que empuja
             if (data.direction === "left")  myPosition.x = Math.max(2, myPosition.x - push);
@@ -2547,7 +2663,7 @@
             } else {
 
                 document.getElementById("plateStatus").textContent =
-                    "Pedido incorrecto. Se aplicó una penalización.";
+                    "Pedido incorrecto. Se aplic una penalizacin.";
 
             }
 
@@ -2754,6 +2870,125 @@
                 });
 
             });
+
+        const MAX_LEVEL = 4;
+        let isPaused = false;
+
+        const PAUSE_QUOTES = [
+            'El chef que pausa es el que no quema el arroz.',
+            'Hasta Gordon Ramsay necesita un descanso... o eso dicen.',
+            'Pausa activada. El caldo sigue hirviendo sin ti.',
+            'Los tacos no se hacen solos, chef!',
+            'El que pausa primero... tiene hambre.',
+            'Modo pausa: porque la cocina tambien necesita respirar.',
+            'Pausa epica activada. El queso ya se derritio sin ti.',
+            'Alto al fuego! Literalmente, apaga la estufa.',
+            'Pausa: el ingrediente secreto que ningun recetario menciona.',
+            'El arroz no espera, pero tu si.',
+            'Segun los expertos, pausar es el 90% de la cocina.',
+            'Pausa activada. Ya lavaste los platos de ayer?',
+            'Un chef que no pausa es un chef que quema todo.',
+            'Pausa: porque hasta el microondas tiene boton de stop.',
+            'La sazon perfecta requiere paciencia... y pausa.',
+            'Pausa activada. El sous-chef esta llorando con la cebolla.',
+            'Segun Confucio: el que pausa, no quema la bandeja paisa.',
+            'Pausa! Alguien apago la freidora? Pregunto por un amigo.',
+            'El tiempo en pausa no cuenta para el pedido. O si?',
+            'Pausa activada. El chef necesita un tinto.'
+        ];
+
+        function showPauseModal() {
+            if (document.getElementById('pauseOverlay')) return;
+            const quote = PAUSE_QUOTES[Math.floor(Math.random() * PAUSE_QUOTES.length)];
+            const overlay = document.createElement('div');
+            overlay.id = 'pauseOverlay';
+            overlay.className = 'pause-overlay';
+            overlay.innerHTML =
+                '<div class="pause-modal">' +
+                '<h2>|| PAUSA</h2>' +
+                '<div class="pause-quote">' + quote + '</div>' +
+                '<button class="btn-pause btn-resume" onclick="resumeGame()">Reanudar juego</button>' +
+                '<button class="btn-pause btn-restart" onclick="restartLevel()">Reiniciar nivel</button>' +
+                '<button class="btn-pause btn-menu" onclick="location.reload()">Menu principal</button>' +
+                '</div>';
+            document.body.appendChild(overlay);
+        }
+
+        function hidePauseModal() {
+            const el = document.getElementById('pauseOverlay');
+            if (el) el.remove();
+        }
+
+        function resumeGame() {
+            if (!isPaused) return;
+            isPaused = false;
+            hidePauseModal();
+            if (currentRoomCode) connection.invoke('ResumeGame', currentRoomCode).catch(console.error);
+        }
+
+        function restartLevel() {
+            hidePauseModal();
+            isPaused = false;
+            if (!currentRoomCode) { location.reload(); return; }
+            if (isHost) {
+                connection.invoke('StartGame', currentRoomCode, currentLevel).catch(console.error);
+            }
+        }
+
+        connection.on('GamePaused', function () {
+            isPaused = true;
+            showPauseModal();
+        });
+
+        connection.on('GameResumed', function () {
+            isPaused = false;
+            hidePauseModal();
+        });
+
+        function showLevelEndModal(score, stars, level) {
+            const existing = document.getElementById('levelEndOverlay');
+            if (existing) existing.remove();
+
+            const isLast = level >= MAX_LEVEL;
+            const messages = [
+                'Sigue practicando, lo haras mejor!',
+                'Buen trabajo, casi lo logras!',
+                'Excelente! Eres todo un chef!',
+                'Perfecto! Dominas la cocina!'
+            ];
+            const msg = messages[Math.min(stars, 3)];
+            const starsStr = '\u2605'.repeat(stars) + '\u2606'.repeat(3 - stars);
+
+            const overlay = document.createElement('div');
+            overlay.id = 'levelEndOverlay';
+            overlay.className = 'level-end-overlay';
+
+            let html = '<div class="level-end-modal">';
+            html += '<div class="level-end-banner">Nivel ' + level + ' completado</div>';
+            html += '<h2>' + (isLast ? 'Juego completado!' : 'Nivel ' + level + ' terminado!') + '</h2>';
+            html += '<div class="level-end-stars">' + starsStr + '</div>';
+            html += '<div class="level-end-score">' + score + ' pts</div>';
+            html += '<div class="level-end-msg">' + msg + '</div>';
+            if (isLast) {
+                html += '<div class="level-end-msg" style="color:#e76f51;font-size:16px">Gracias por jugar Kitchen Chaos!</div>';
+            }
+            if (!isLast) {
+                html += '<button class="btn-end btn-next-level" onclick="nextLevel()">Siguiente nivel</button>';
+            }
+            html += '<button class="btn-end btn-home" onclick="location.reload()">Volver al inicio</button>';
+            html += '</div>';
+
+            overlay.innerHTML = html;
+            document.body.appendChild(overlay);
+        }
+
+        function nextLevel() {
+            const overlay = document.getElementById('levelEndOverlay');
+            if (overlay) overlay.remove();
+            if (currentRoomCode && isHost) {
+                connection.invoke('NextLevel', currentRoomCode).catch(console.error);
+            }
+        }
 
     </script>
 
