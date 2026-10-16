@@ -128,6 +128,22 @@ public class RoomService
 
     public Room? GetRoom(string code) =>
         _rooms.TryGetValue(code, out var room) ? room : null;
+    
+    public Room? GetRoomByPlayerConnectionId(string connectionId)
+    {
+        foreach (var room in _rooms.Values)
+        {
+            lock (room)
+            {
+                if (room.Players.Any(p => p.ConnectionId == connectionId))
+                {
+                    return room;
+                }
+            }
+        }
+
+        return null;
+    }
 
     public Room? RemovePlayer(string connectionId)
     {

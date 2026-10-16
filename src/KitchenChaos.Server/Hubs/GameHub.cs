@@ -1,5 +1,7 @@
 using KitchenChaos.Server.Services;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
 
 namespace KitchenChaos.Server.Hubs;
 
@@ -15,6 +17,10 @@ public class GameHub : Hub
     private readonly PlatingService _platingService;
     private readonly DeliveryService _deliveryService;
     private readonly TimerService _timerService;
+    private static readonly ConcurrentDictionary<string, (string ConnectionId, DateTime ExpiresAt)> ControlCodes = new();
+    private static readonly ConcurrentDictionary<string, string> LinkedControls = new();
+    private static readonly ConcurrentDictionary<string, string> PlayerControls = new();
+    private static readonly ConcurrentDictionary<string, DateTime> ControlAttempts = new();
 
     public GameHub(RoomService roomService, PlayerProfileService profileService, PreparationService preparationService, OrderService orderService, PlatingService platingService, DeliveryService deliveryService, TimerService timerService)
     {
@@ -223,17 +229,315 @@ public class GameHub : Hub
             });
     }
 
+    public async Task GenerateControlCode(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+
+        if (room is null ||
+            !room.Players.Any(p => p.ConnectionId == Context.ConnectionId))
+        {
+            throw new HubException("No perteneces a esta sala.");
+        }
+
+        foreach (var entry in ControlCodes)
+        {
+            if (entry.Value.ConnectionId == Context.ConnectionId)
+            {
+                ControlCodes.TryRemove(entry.Key, out _);
+            }
+        }
+
+        string code;
+
+        do
+        {
+            code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+        }
+        while (!ControlCodes.TryAdd(
+            code,
+            (Context.ConnectionId, DateTime.UtcNow.AddMinutes(2))
+        ));
+
+        await Clients.Caller.SendAsync("ControlCodeGenerated", new
+        {
+            Code = code,
+            ExpiresInSeconds = 120
+        });
+    }
+
+    public async Task LinkMobileControl(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(code, @"^\d{6}$"))
+        {
+            throw new HubException("El código debe tener seis dígitos.");
+        }
+
+        var mobileConnectionId = Context.ConnectionId;
+
+        if (ControlAttempts.TryGetValue(mobileConnectionId, out var lastAttempt) &&
+            DateTime.UtcNow - lastAttempt < TimeSpan.FromSeconds(2))
+        {
+            throw new HubException("Espera antes de intentar nuevamente.");
+        }
+
+        ControlAttempts[mobileConnectionId] = DateTime.UtcNow;
+
+        if (!ControlCodes.TryRemove(code, out var entry) || entry.ExpiresAt <= DateTime.UtcNow)
+        {
+            throw new HubException("El código es inválido o ha expirado.");
+        }
+
+        var room = _roomService.GetRoomByPlayerConnectionId(entry.ConnectionId);
+
+        if (room is null)
+        {
+            throw new HubException("El jugador ya no está conectado.");
+        }
+
+        if (PlayerControls.TryGetValue(entry.ConnectionId, out var previousControl))
+        {
+            LinkedControls.TryRemove(previousControl, out _);
+            await Clients.Client(previousControl).SendAsync("MobileControlUnlinked");
+        }
+
+        LinkedControls[mobileConnectionId] = entry.ConnectionId;
+        PlayerControls[entry.ConnectionId] = mobileConnectionId;
+
+        var player = room.Players.First(p => p.ConnectionId == entry.ConnectionId);
+
+        await Clients.Caller.SendAsync("MobileControlLinked", new
+        {
+            PlayerName = player.Name,
+            AvatarId = player.AvatarId,
+            RoomCode = room.Code
+        });
+
+        await Clients.Client(entry.ConnectionId).SendAsync("MobileControllerConnected");
+    }
+
+    
+    public async Task SendMobileDirection(string direction, bool pressed)
+    {
+        if (!LinkedControls.TryGetValue(Context.ConnectionId, out var playerConnectionId))
+        {
+            throw new HubException("Este control no está vinculado.");
+        }
+
+        if (!PlayerControls.TryGetValue(playerConnectionId, out var activeControlId) ||
+            activeControlId != Context.ConnectionId)
+        {
+            throw new HubException("Este control ya no está autorizado.");
+        }
+
+        var validDirections = new[] { "up", "down", "left", "right" };
+
+        if (!validDirections.Contains(direction))
+        {
+            throw new HubException("Dirección no válida.");
+        }
+
+        var room = _roomService.GetRoomByPlayerConnectionId(playerConnectionId);
+
+        if (room is null || !room.HasStarted)
+        {
+            throw new HubException("El jugador no está en una partida activa.");
+        }
+
+        await Clients.Client(playerConnectionId).SendAsync("MobileDirectionReceived", new
+        {
+            Direction = direction,
+            Pressed = pressed
+        });
+    }
+
+    public async Task SendMobileInteraction()
+    {
+        if (!LinkedControls.TryGetValue(Context.ConnectionId, out var playerConnectionId))
+        {
+            throw new HubException("Este control no está vinculado.");
+        }
+
+        if (!PlayerControls.TryGetValue(playerConnectionId, out var activeControlId) ||
+            activeControlId != Context.ConnectionId)
+        {
+            throw new HubException("Este control ya no está autorizado.");
+        }
+
+        var room = _roomService.GetRoomByPlayerConnectionId(playerConnectionId);
+
+        if (room is null || !room.HasStarted)
+        {
+            throw new HubException("El jugador no está en una partida activa.");
+        }
+
+        await Clients.Client(playerConnectionId).SendAsync("MobileInteractionReceived");
+    }
+
+    
+    public record MobileIngredientInfo(
+        string Id,
+        string Name,
+        string State,
+        bool Selected
+    );
+
+    public async Task SyncMobileInventory(List<MobileIngredientInfo> ingredients)
+    {
+        var room = _roomService.GetRoomByPlayerConnectionId(Context.ConnectionId);
+
+        if (room is null)
+        {
+            throw new HubException("El jugador no pertenece a una sala.");
+        }
+
+        if (!PlayerControls.TryGetValue(Context.ConnectionId, out var mobileConnectionId))
+        {
+            return;
+        }
+
+        if (!LinkedControls.TryGetValue(mobileConnectionId, out var playerConnectionId) ||
+            playerConnectionId != Context.ConnectionId)
+        {
+            return;
+        }
+
+        if (ingredients is null || ingredients.Count > 50)
+        {
+            throw new HubException("Inventario no válido.");
+        }
+
+        await Clients.Client(mobileConnectionId)
+            .SendAsync("MobileInventoryUpdated", ingredients);
+    }
+
+    public async Task SelectMobileIngredient(string ingredientId, bool selected)
+    {
+        if (!LinkedControls.TryGetValue(Context.ConnectionId, out var playerConnectionId))
+        {
+            throw new HubException("Este control no está vinculado.");
+        }
+
+        if (!PlayerControls.TryGetValue(playerConnectionId, out var activeControlId) ||
+            activeControlId != Context.ConnectionId)
+        {
+            throw new HubException("Este control ya no está autorizado.");
+        }
+
+        var room = _roomService.GetRoomByPlayerConnectionId(playerConnectionId);
+
+        if (room is null || !room.HasStarted)
+        {
+            throw new HubException("El jugador no está en una partida activa.");
+        }
+
+        if (string.IsNullOrWhiteSpace(ingredientId))
+        {
+            throw new HubException("Ingrediente no válido.");
+        }
+
+        await Clients.Client(playerConnectionId).SendAsync("MobileIngredientSelectionReceived", new
+        {
+            IngredientId = ingredientId,
+            Selected = selected
+        });
+    }
+
+
+    
+    public async Task SyncMobilePlate(string? plateState)
+    {
+        var room = _roomService.GetRoomByPlayerConnectionId(Context.ConnectionId);
+
+        if (room is null)
+        {
+            throw new HubException("El jugador no pertenece a una sala.");
+        }
+
+        if (!PlayerControls.TryGetValue(Context.ConnectionId, out var mobileConnectionId))
+        {
+            return;
+        }
+
+        if (!LinkedControls.TryGetValue(mobileConnectionId, out var playerConnectionId) ||
+            playerConnectionId != Context.ConnectionId)
+        {
+            return;
+        }
+
+        if (plateState is not null &&
+            plateState != "clean" &&
+            plateState != "food" &&
+            plateState != "dirty")
+        {
+            throw new HubException("Estado de plato no válido.");
+        }
+
+        await Clients.Client(mobileConnectionId)
+            .SendAsync("MobilePlateUpdated", plateState);
+    }
+  
+    public async Task SyncMobileScore(int score)
+    {
+        var room = _roomService.GetRoomByPlayerConnectionId(Context.ConnectionId);
+
+        if (room is null)
+        {
+            throw new HubException("El jugador no pertenece a una sala.");
+        }
+
+        if (!PlayerControls.TryGetValue(Context.ConnectionId, out var mobileConnectionId))
+        {
+            return;
+        }
+
+        if (!LinkedControls.TryGetValue(mobileConnectionId, out var playerConnectionId) ||
+            playerConnectionId != Context.ConnectionId)
+        {
+            return;
+        }
+
+        await Clients.Client(mobileConnectionId)
+            .SendAsync("MobileScoreUpdated", score);
+    }
+
+    public record MobileTeammateInfo(string Name, string AvatarId);
+    public async Task SyncMobileTeammates(List<MobileTeammateInfo> teammates)
+    {
+        var room = _roomService.GetRoomByPlayerConnectionId(Context.ConnectionId);
+        if (room is null)
+        {
+            throw new HubException("El jugador no pertenece a una sala.");
+        }
+        if (!PlayerControls.TryGetValue(Context.ConnectionId, out var mobileConnectionId))
+        {
+            return;
+        }
+        if (!LinkedControls.TryGetValue(mobileConnectionId, out var playerConnectionId) ||
+            playerConnectionId != Context.ConnectionId)
+        {
+            return;
+        }
+        if (teammates is null || teammates.Count > 20)
+        {
+            throw new HubException("Lista de compañeros no válida.");
+        }
+        await Clients.Client(mobileConnectionId)
+            .SendAsync("MobileTeammatesUpdated", teammates);
+    }
+
     /// <summary>
     /// Retransmite la posición del jugador a los demás de la sala. AB#81.
     /// Puramente visual: no valida colisiones en el servidor, cada cliente ya las calculó localmente.
     /// </summary>
-    public async Task MovePlayer(string roomCode, double x, double y)
+    public async Task MovePlayer(string roomCode, double x, double y, bool facingLeft)
     {
         await Clients.OthersInGroup(roomCode).SendAsync("PlayerMoved", new
         {
             ConnectionId = Context.ConnectionId,
             X = x,
-            Y = y
+            Y = y,
+            FacingLeft = facingLeft
         });
     }
 
@@ -323,6 +627,7 @@ public class GameHub : Hub
             "DishPlated",
             new
             {
+                ConnectionId = Context.ConnectionId,
                 result.Plate!.Id,
                 result.Plate.DishName,
                 result.Plate.Ingredients,
@@ -330,30 +635,56 @@ public class GameHub : Hub
             });
     }
 
+    
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var room = _roomService.RemovePlayer(Context.ConnectionId);
-
-        if (room != null)
+        var connectionId = Context.ConnectionId;
+        ControlAttempts.TryRemove(connectionId, out _);
+        foreach (var entry in ControlCodes)
         {
-            // AB#81 - avisa a los demás para que borren el sprite/posición de quien se fue;
-            // si no, su última posición queda como un obstáculo fantasma para siempre.
-            await Clients.Group(room.Code)
-                .SendAsync("PlayerLeft", new { ConnectionId = Context.ConnectionId });
-
-            if (room.Players.Count > 0)
+            if (entry.Value.ConnectionId == connectionId)
             {
-                var playerNames = room.Players
-                    .Select(p => p.Name)
-                    .ToList();
-
-                await Clients.Group(room.Code)
-                    .SendAsync("RoomPlayersUpdated", playerNames);
+                ControlCodes.TryRemove(entry.Key, out _);
             }
         }
-
+        if (LinkedControls.TryRemove(connectionId, out var playerConnectionId))
+        {
+            if (PlayerControls.TryGetValue(playerConnectionId, out var activeControlId) &&
+                activeControlId == connectionId)
+            {
+                PlayerControls.TryRemove(playerConnectionId, out _);
+                await Clients.Client(playerConnectionId).SendAsync("MobileControlDisconnected");
+            }
+        }
+        if (PlayerControls.TryRemove(connectionId, out var mobileConnectionId))
+        {
+            if (LinkedControls.TryGetValue(mobileConnectionId, out var linkedPlayerId) &&
+                linkedPlayerId == connectionId)
+            {
+                LinkedControls.TryRemove(mobileConnectionId, out _);
+                await Clients.Client(mobileConnectionId).SendAsync("MobileControlUnlinked");
+            }
+        }
+        var room = _roomService.RemovePlayer(connectionId);
+        if (room != null)
+        {
+            await Clients.Group(room.Code)
+                .SendAsync("PlayerLeft", new { ConnectionId = connectionId });
+            if (room.Players.Count > 0)
+            {
+                var players = room.Players.Select(p => new
+                {
+                    p.Name,
+                    p.AvatarId,
+                    p.ConnectionId
+                }).ToList();
+                await Clients.Group(room.Code)
+                    .SendAsync("RoomPlayersUpdated", players);
+            }
+        }
         await base.OnDisconnectedAsync(exception);
     }
+
 
     public async Task WashPlate(string roomCode, string plateId)
     {
@@ -372,6 +703,7 @@ public class GameHub : Hub
             "PlateWashed",
             new
             {
+                ConnectionId = Context.ConnectionId,
                 result.Plate!.Id,
                 State = result.Plate.State.ToString()
             });
@@ -394,6 +726,7 @@ public class GameHub : Hub
             "PlateUpdated",
             new
             {
+                ConnectionId = Context.ConnectionId,
                 result.Plate!.Id,
                 State = result.Plate.State.ToString()
             });

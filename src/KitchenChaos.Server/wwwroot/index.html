@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/game.css?v=2">
 
     <style>
         :root {
@@ -625,6 +625,20 @@
 
             </div>
 
+            <div id="mobileControlPanel" style="text-align: center; margin: 10px 0;">
+                <button id="generateControlCodeButton" type="button"
+                    style="width: auto; margin: 0 auto; padding: 10px 20px;">
+                    📱 Vincular celular
+                </button>
+
+                <p id="mobileControlCodeDisplay" style="display: none; margin-top: 10px;">
+                    Código para tu celular:
+                    <strong id="mobileControlCode"></strong>
+                </p>
+
+                <p id="mobileControlStatus" style="margin-top: 8px;"></p>
+            </div>
+
             <div class="game-board-wrapper">
                 <div class="game-board level-1">
                     <img id="levelMap" src="images/niv1.png" class="game-board-image" alt="Nivel 1">
@@ -683,20 +697,20 @@
                     <button class="station-hotspot ingredient-station station-16" data-ingredient="carne">
                         <span class="station-label">Carne</span>
                     </button>
-                    <button class="station-hotspot ingredient-station station-17" data-ingredient="aguacate">
-                        <span class="station-label">Aguacate</span>
+                    <button class="station-hotspot ingredient-station station-17" data-ingredient="arroz">
+                        <span class="station-label">Arroz</span>
                     </button>
                     <button class="station-hotspot ingredient-station station-18" data-ingredient="platano">
                         <span class="station-label">Plátano</span>
                     </button>
-                    <button class="station-hotspot ingredient-station station-19" data-ingredient="chicharron">
+                    <button class="station-hotspot ingredient-station station-19" data-ingredient="aguacate">
+                        <span class="station-label">Aguacate</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-20" data-ingredient="chicharron">
                         <span class="station-label">Chicharrón</span>
                     </button>
-                    <button class="station-hotspot ingredient-station station-20" data-ingredient="huevo">
+                    <button class="station-hotspot ingredient-station station-21" data-ingredient="huevo">
                         <span class="station-label">Huevo</span>
-                    </button>
-                    <button class="station-hotspot ingredient-station station-21" data-ingredient="arroz">
-                        <span class="station-label">Arroz</span>
                     </button>
 
                     <button class="station-hotspot cook-station generic-cook-station">
@@ -709,6 +723,14 @@
 
                     <button class="station-hotspot cook-station boil-station">
                         <span class="station-label">Hervir</span>
+                    </button>
+
+                    <button class="station-hotspot cook-station fry-station-2">
+                        <span class="station-label">Freír</span>
+                    </button>
+
+                    <button class="station-hotspot take-plate-station">
+                        <span class="station-label">Recoger plato</span>
                     </button>
 
                     <button class="station-hotspot plate-station">
@@ -744,7 +766,7 @@
 
                 <div id="plateVisual" class="plate-visual plate-clean">
                     <div class="plate-circle">
-                        <span id="plateVisualText">Limpio</span>
+                        <span id="plateVisualText">Sin plato</span>
                     </div>
                 </div>
 
@@ -804,6 +826,47 @@
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/gamehub")
             .build();
+        
+        document.getElementById("generateControlCodeButton")
+            .addEventListener("click", function () {
+                if (!currentRoomCode) {
+                    return;
+                }
+
+                connection.invoke("GenerateControlCode", currentRoomCode)
+                    .catch(function (err) {
+                        document.getElementById("mobileControlStatus").textContent =
+                            err.message;
+                    });
+            });
+
+        connection.on("ControlCodeGenerated", function (data) {
+            document.getElementById("mobileControlCode").textContent = data.code;
+            document.getElementById("mobileControlCodeDisplay").style.display = "block";
+            document.getElementById("mobileControlStatus").textContent =
+                "Introduce este código en tu celular. Válido durante 2 minutos.";
+        });
+
+        
+        connection.on("MobileControllerConnected", function () {
+            mobilePressedKeys = {};
+            
+            document.getElementById("mobileControlStatus").textContent =
+                "✅ Celular vinculado correctamente.";
+
+            syncMobileInventory();
+            syncMobileTeammates();
+            
+            connection.invoke("SyncMobilePlate", carriedPlateState)
+                .catch(function (error) {
+                    console.error("Error al enviar el plato inicial:", error);
+                });
+            
+            const scoreText = document.getElementById("scoreDisplay").textContent;
+            const scoreMatch = scoreText.match(/-?\d+/);
+            syncMobileScore(scoreMatch ? Number(scoreMatch[0]) : 0);
+        });
+
 
         let currentRoomCode = null;
         let isHost = false;
@@ -978,19 +1041,44 @@
                 [35, 16, 21]
             ],
 
-            // Nivel 4 — pegar dentro de WALKABLE_CELLS en index.html (11 tramo(s))
+            // Nivel 4 — pegar dentro de WALKABLE_CELLS en index.html (36 tramo(s))
             4: [
-                [3, 4, 7],
-                [3, 17, 17],
-                [4, 4, 19],
-                [5, 4, 7],
-                [5, 15, 20],
-                [6, 4, 7],
-                [6, 15, 20],
-                [7, 4, 19],
-                [8, 5, 19],
-                [9, 11, 17],
-                [10, 11, 13]
+                [9, 10, 11],
+                [10, 9, 13],
+                [10, 27, 28],
+                [11, 8, 14],
+                [11, 27, 29],
+                [12, 5, 5],
+                [12, 7, 14],
+                [12, 24, 30],
+                [13, 5, 31],
+                [14, 6, 32],
+                [15, 6, 12],
+                [15, 25, 33],
+                [16, 6, 12],
+                [16, 25, 33],
+                [17, 6, 12],
+                [17, 25, 33],
+                [18, 7, 12],
+                [18, 25, 33],
+                [19, 7, 12],
+                [19, 25, 33],
+                [20, 7, 12],
+                [20, 25, 33],
+                [21, 7, 32],
+                [22, 8, 32],
+                [23, 10, 32],
+                [24, 12, 30],
+                [25, 18, 24],
+                [26, 18, 21],
+                [27, 18, 21],
+                [28, 18, 21],
+                [29, 18, 21],
+                [30, 18, 21],
+                [31, 18, 21],
+                [32, 18, 21],
+                [33, 18, 21],
+                [34, 18, 21]
             ],
         };
 
@@ -1062,10 +1150,10 @@
                 { x: 75, y: 61 }
             ],
             4: [
-                { x: 22, y: 32 },
-                { x: 78, y: 32 },
-                { x: 26, y: 61 },
-                { x: 76, y: 61 }
+                { x: 27, y: 32 },
+                { x: 72, y: 32 },
+                { x: 27, y: 61 },
+                { x: 72, y: 61 }
             ]
         };
 
@@ -1078,8 +1166,43 @@
         let myPosition = { x: 27, y: 39 };
         let myFacingLeft = false;
         let pressedKeys = {};
+        let mobilePressedKeys = {};
+
+        
+        connection.on("MobileControlDisconnected", function () {
+            mobilePressedKeys = {};
+            document.getElementById("mobileControlStatus").textContent =
+                "⚠️ El celular se desconectó. Puedes seguir jugando con el teclado.";
+            document.getElementById("mobileControlCodeDisplay").style.display = "none";
+        });
+
+
+        connection.on("MobileDirectionReceived", function (data) {
+            const directionToKey = {
+                up: "arrowup",
+                down: "arrowdown",
+                left: "arrowleft",
+                right: "arrowright"
+            };
+
+            const key = directionToKey[data.direction];
+
+            if (!key) {
+                return;
+            }
+
+            mobilePressedKeys[key] = data.pressed === true;
+        });
         let currentLevelWalls = WALLS_BY_LEVEL[1];
-        let otherPlayers = {}; // connectionId -> { x, y }
+        let otherPlayers = {};
+
+        let otherPlayerPlateStates = {};
+
+        function updateOtherPlayerPlate(connectionId, state) {
+            otherPlayerPlateStates[connectionId] = state;
+            renderOtherPlayer(connectionId);
+        }
+
         let lastMoveSentAt = 0;
         let lastFrameTime = null;
         let wasMovingLastFrame = false;
@@ -1095,6 +1218,16 @@
         // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
         // exactamente la misma lógica que ya existe, no se duplica nada).
         const GRAB_REACH = 13; // % del tablero, qué tan cerca hay que estar para poder agarrar
+
+        connection.on("MobileInteractionReceived", function () {
+            const gameScreen = document.getElementById("gameScreen");
+
+            if (gameScreen.style.display !== "block") {
+                return;
+            }
+
+            grabNearestStation();
+        });
 
         function grabNearestStation() {
             const board = document.querySelector(".game-board");
@@ -1219,6 +1352,43 @@
             return sprite;
         }
 
+        let carriedPlateState = null;
+
+        function updateCarriedPlate(state) {
+            carriedPlateState = state;
+
+            
+            if (currentRoomCode &&
+                connection.state === signalR.HubConnectionState.Connected) {
+                connection.invoke("SyncMobilePlate", state)
+                    .catch(function (error) {
+                        console.error("Error al sincronizar el plato móvil:", error);
+                    });
+            }
+
+
+            let plate = document.getElementById("myCarriedPlate");
+
+            if (!plate) {
+                plate = document.createElement("div");
+                plate.id = "myCarriedPlate";
+                plate.className = "carried-plate";
+                document.querySelector(".game-board").appendChild(plate);
+            }
+
+            plate.style.display = state === null ? "none" : "block";
+
+            if (state === "clean") {
+                plate.textContent = "🍽️";
+            } else if (state === "food") {
+                plate.textContent = "🍛";
+            } else if (state === "dirty") {
+                plate.textContent = "🥣";
+            }
+
+            renderMyPlayerPosition();
+        }
+
         function renderMyPlayerPosition() {
             const sprite = document.getElementById("myPlayerSprite");
             if (!sprite) return;
@@ -1227,6 +1397,12 @@
             sprite.style.top = myPosition.y + "%";
             sprite.style.transform =
                 "translate(-50%, -70%) scaleX(" + (myFacingLeft ? -1 : 1) + ")";
+            const carriedPlate = document.getElementById("myCarriedPlate");
+
+            if (carriedPlate) {
+                carriedPlate.style.left = myPosition.x + "%";
+                carriedPlate.style.top = (myPosition.y - 7) + "%";
+            }
         }
 
         function renderOtherPlayer(connectionId) {
@@ -1248,7 +1424,32 @@
 
             // Mismo ancla que el propio jugador (centrado en los "pies"), si no
             // el sprite del otro se posiciona desde la esquina y se ve corrido.
-            sprite.style.transform = "translate(-50%, -70%)";
+            sprite.style.transform = "translate(-50%, -70%) scaleX(" + (pos.facingLeft ? -1 : 1) + ")";
+            const plateId = "carried-plate-" + connectionId;
+            let plate = document.getElementById(plateId);
+            const plateState = otherPlayerPlateStates[connectionId];
+
+            if (plateState === undefined || plateState === null) {
+                if (plate) {
+                    plate.remove();
+                }
+                return;
+            }
+
+            if (!plate) {
+                plate = document.createElement("div");
+                plate.id = plateId;
+                plate.className = "carried-plate";
+                document.querySelector(".game-board").appendChild(plate);
+            }
+
+            plate.textContent =
+                plateState === "food" ? "🍛" :
+                plateState === "dirty" ? "🥣" : "🍽️";
+
+            plate.style.display = "block";
+            plate.style.left = pos.x + "%";
+            plate.style.top = (pos.y - 7) + "%";
         }
 
         function maybeSendPosition(timestamp) {
@@ -1256,7 +1457,7 @@
             if (timestamp - lastMoveSentAt < 90) return;
 
             lastMoveSentAt = timestamp;
-            connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+            connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
         }
 
@@ -1273,10 +1474,10 @@
                 let dx = 0;
                 let dy = 0;
 
-                if (pressedKeys["arrowup"] || pressedKeys["w"]) dy -= 1;
-                if (pressedKeys["arrowdown"] || pressedKeys["s"]) dy += 1;
-                if (pressedKeys["arrowleft"] || pressedKeys["a"]) dx -= 1;
-                if (pressedKeys["arrowright"] || pressedKeys["d"]) dx += 1;
+                if (pressedKeys["arrowup"] || pressedKeys["w"] || mobilePressedKeys["arrowup"]) dy -= 1;
+                if (pressedKeys["arrowdown"] || pressedKeys["s"] || mobilePressedKeys["arrowdown"]) dy += 1;
+                if (pressedKeys["arrowleft"] || pressedKeys["a"] || mobilePressedKeys["arrowleft"]) dx -= 1;
+                if (pressedKeys["arrowright"] || pressedKeys["d"] || mobilePressedKeys["arrowright"]) dx += 1;
 
                 if (dx !== 0 || dy !== 0) {
 
@@ -1321,7 +1522,7 @@
                     wasMovingLastFrame = false;
 
                     if (currentRoomCode) {
-                        connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                        connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
                             .catch(function (err) { console.error(err.toString()); });
                     }
                 }
@@ -1330,7 +1531,7 @@
                 // posición (un mensaje que no llegó), esto lo corrige solo en máximo 1 segundo.
                 if (currentRoomCode && timestamp - lastMoveSentAt > 1000) {
                     lastMoveSentAt = timestamp;
-                    connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                    connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
                         .catch(function (err) { console.error(err.toString()); });
                 }
             }
@@ -1341,7 +1542,12 @@
         requestAnimationFrame(movementLoop);
 
         connection.on("PlayerMoved", function (data) {
-            otherPlayers[data.connectionId] = { x: data.x, y: data.y };
+            otherPlayers[data.connectionId] = {
+                x: data.x,
+                y: data.y,
+                facingLeft: data.facingLeft
+            };
+
             renderOtherPlayer(data.connectionId);
         });
 
@@ -1351,6 +1557,15 @@
             delete otherPlayers[data.connectionId];
             const sprite = document.getElementById("player-" + data.connectionId);
             if (sprite) sprite.remove();
+            delete otherPlayerPlateStates[data.connectionId];
+
+            const carriedPlate = document.getElementById(
+                "carried-plate-" + data.connectionId
+            );
+
+            if (carriedPlate) {
+                carriedPlate.remove();
+            }
         });
 
         document.getElementById("howToPlayButton")
@@ -1359,6 +1574,21 @@
                 box.style.display = box.style.display === "none" ? "block" : "none";
             });
         let selectedIngredientIds = new Set();
+        connection.on("MobileIngredientSelectionReceived", function (data) {
+            const ingredientId = data.ingredientId;
+
+            if (!Object.prototype.hasOwnProperty.call(myIngredients, ingredientId)) {
+                return;
+            }
+
+            if (data.selected === true) {
+                selectedIngredientIds.add(ingredientId);
+            } else {
+                selectedIngredientIds.delete(ingredientId);
+            }
+
+            renderMyIngredients();
+        });
         let currentPlateId = null;
 
         document.querySelector(".game-board").addEventListener(
@@ -1423,9 +1653,12 @@
             } else if (state === "dirty") {
                 plateVisual.classList.add("plate-dirty");
                 plateText.textContent = "Sucio";
-            } else {
+            } else if (state === "clean") {
                 plateVisual.classList.add("plate-clean");
                 plateText.textContent = "Limpio";
+            } else {
+                plateVisual.classList.add("plate-clean");
+                plateText.textContent = "Sin plato";
             }
         }
 
@@ -1498,6 +1731,50 @@
         // AB#82 - picar/hervir/freír: el botón de la estufa dice hervir o freír según el ingrediente.
         function cookLabelFor(cookMethod) {
             return cookMethod === "Freir" ? "Freír" : "Hervir";
+        }
+
+        let mobileTeammates = [];
+        function syncMobileTeammates() {
+            if (!currentRoomCode ||
+                connection.state !== signalR.HubConnectionState.Connected) {
+                return;
+            }
+            connection.invoke("SyncMobileTeammates", mobileTeammates)
+                .catch(function (error) {
+                    console.error("Error al sincronizar compañeros móviles:", error);
+                });
+        }
+        
+        function syncMobileScore(score) {
+            if (!currentRoomCode ||
+                connection.state !== signalR.HubConnectionState.Connected) {
+                return;
+            }
+            connection.invoke("SyncMobileScore", score)
+                .catch(function (error) {
+                    console.error("Error al sincronizar el puntaje móvil:", error);
+                });
+        }
+
+        function syncMobileInventory() {
+            if (!currentRoomCode ||
+                connection.state !== signalR.HubConnectionState.Connected) {
+                return;
+            }
+
+            const ingredients = Object.entries(myIngredients).map(function ([id, ingredient]) {
+                return {
+                    id: id,
+                    name: ingredient.name,
+                    state: ingredient.state,
+                    selected: selectedIngredientIds.has(id)
+                };
+            });
+
+            connection.invoke("SyncMobileInventory", ingredients)
+                .catch(function (error) {
+                    console.error("Error al sincronizar inventario móvil:", error);
+                });
         }
 
         function renderMyIngredients() {
@@ -1654,6 +1931,7 @@
             });
 
             previousIngredientStates = currentStates;
+            syncMobileInventory();
 
         }
 
@@ -1752,6 +2030,18 @@
             players.forEach(function (p) {
                 connectionIdToAvatar[p.connectionId] = p.avatarId;
             });
+
+            mobileTeammates = players
+                .filter(function (p) {
+                    return p.connectionId !== connection.connectionId;
+                })
+                .map(function (p) {
+                    return {
+                        name: p.name,
+                        avatarId: p.avatarId
+                    };
+                });
+            syncMobileTeammates();
 
             list.innerHTML = "";
 
@@ -1865,7 +2155,7 @@
                 return;
             }
 
-            levelMap.src = maps[level];
+            levelMap.src = maps[level] + "?v=2";
             levelMap.alt = "Nivel " + level;
 
             const board = document.querySelector(".game-board");
@@ -1873,11 +2163,11 @@
             board.classList.add("level-" + level);
 
             // Limpiar estilos inline de todos los ingredient-station para que el CSS tome control
-            document.querySelectorAll(".ingredient-station).forEach(function(h) {
- h.style.display = ";
-                h.style.pointerEvents = ";
- h.onclick = null;
- });
+            document.querySelectorAll(".ingredient-station").forEach(function (h) {
+                h.style.removeProperty("display");
+                h.style.removeProperty("pointer-events");
+                h.onclick = null;
+            });
         }
 
 
@@ -1916,17 +2206,24 @@
             myPosition = pickSpawnPoint(gameInfo.level, myPlayerIndex);
             myFacingLeft = false;
             otherPlayers = {};
+            otherPlayerPlateStates = {};
 
             document.querySelectorAll(".player-sprite").forEach(function (el) {
                 el.remove();
             });
 
+            document.querySelectorAll('[id^="carried-plate-"]').forEach(function (el) {
+                el.remove();
+            });
+
+            currentPlateId = null;
+            updateCarriedPlate(null);
             ensureMyPlayerSprite();
             renderMyPlayerPosition();
 
             // AB#81: avisa la posición inicial de una vez, sin esperar a que te muevas,
             // para que los demás te vean aparecer desde el primer momento.
-            connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y)
+            connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
 
         });
@@ -2084,11 +2381,35 @@
 
             });
 
+        connection.on("PlateTaken", function (data) {
+            if (data.connectionId !== connection.connectionId) {
+                updateOtherPlayerPlate(data.connectionId, "clean");
+                return;
+            }
+
+            currentPlateId = data.plateId;
+
+            updatePlateVisual("clean");
+            updateCarriedPlate("clean");
+
+            document.getElementById("plateStatus").textContent =
+                "Tienes un plato limpio. Ahora puedes emplatar.";
+        });
+
+        connection.on("TakePlateError", function (error) {
+            document.getElementById("plateStatus").textContent = error;
+        });
+
         connection.on("DishPlated", function (plate) {
+            if (plate.connectionId !== connection.connectionId) {
+                updateOtherPlayerPlate(plate.connectionId, "food");
+                return;
+            }
 
             currentPlateId = plate.id;
 
             updatePlateVisual("food");
+            updateCarriedPlate("food");
 
             selectedIngredientIds.forEach(function (id) {
                 delete myIngredients[id];
@@ -2112,10 +2433,17 @@
         });
 
         connection.on("PlateUpdated", function (plate) {
+            if (plate.connectionId !== connection.connectionId) {
+                if (plate.state === "Dirty") {
+                    updateOtherPlayerPlate(plate.connectionId, "dirty");
+                }
+                return;
+            }
 
             if (plate.id === currentPlateId && plate.state === "Dirty") {
 
                 updatePlateVisual("dirty");
+                updateCarriedPlate("dirty");
 
                 document.getElementById("deliverPlateButton").disabled = true;
                 document.getElementById("washPlateButton").disabled = false;
@@ -2163,21 +2491,19 @@
         });
 
         connection.on("OrderExpired", function (data) {
-
             document.getElementById("orderTimerSeconds").textContent = "0";
             document.getElementById("orderTimerBar").style.width = "0%";
             document.getElementById("scoreDisplay").textContent =
                 "Puntaje: " + data.score;
-
+            syncMobileScore(data.score);
         });
 
         connection.on("LevelEnded", function (data) {
-
             document.getElementById("levelTimerDisplay").textContent = "0:00";
             const stars = data.stars !== undefined ? " " + "★".repeat(data.stars) + "☆".repeat(3 - data.stars) : "";
             document.getElementById("scoreDisplay").textContent =
                 "Puntaje final: " + data.finalScore + stars;
-
+            syncMobileScore(data.finalScore);
         });
 
         // AB#84 - Apagón nivel 3
@@ -2206,7 +2532,7 @@
             if (data.direction === "down")  myPosition.y = Math.min(98, myPosition.y + push);
             renderMyPlayerPosition();
             if (currentRoomCode) {
-                connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y)
+                connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
                     .catch(function (err) { console.error(err.toString()); });
             }
         });
@@ -2226,10 +2552,9 @@
             }
 
             if (result.score !== undefined) {
-
                 document.getElementById("scoreDisplay").textContent =
                     "Puntaje: " + result.score;
-
+                syncMobileScore(result.score);
             }
 
         });
@@ -2241,12 +2566,17 @@
         });
 
         connection.on("PlateWashed", function (plate) {
+            if (plate.connectionId !== connection.connectionId) {
+                updateOtherPlayerPlate(plate.connectionId, null);
+                return;
+            }
 
             if (plate.id === currentPlateId) {
                 currentPlateId = null;
             }
 
-            updatePlateVisual("clean");
+            updatePlateVisual(null);
+            updateCarriedPlate(null);
 
             document.getElementById("washPlateButton").disabled = true;
             document.getElementById("deliverPlateButton").disabled = true;
@@ -2284,6 +2614,20 @@
                 });
 
             });
+        function useTakePlateStation() {
+            if (!currentRoomCode) {
+                return;
+            }
+
+            connection.invoke("TakePlate", currentRoomCode)
+                .catch(function (err) {
+                    console.error(err.toString());
+                });
+        }
+
+        document.querySelector(".take-plate-station")
+            .addEventListener("click", useTakePlateStation);
+
         function usePlateStation() {
             const ingredientIds = Array.from(selectedIngredientIds);
 
