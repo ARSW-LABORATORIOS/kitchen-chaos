@@ -628,40 +628,75 @@
             <div class="game-board-wrapper">
                 <div class="game-board level-1">
                     <img id="levelMap" src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                    <!-- Nivel 1: Arroz con leche -->
                     <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
                         <span class="station-label">Leche</span>
                     </button>
-
                     <button class="station-hotspot ingredient-station station-2" data-ingredient="arroz">
                         <span class="station-label">Arroz</span>
                     </button>
-
                     <button class="station-hotspot ingredient-station station-3" data-ingredient="leche condensada">
                         <span class="station-label">Leche condensada</span>
                     </button>
-
                     <button class="station-hotspot ingredient-station station-4" data-ingredient="uvas pasas">
                         <span class="station-label">Uvas pasas</span>
                     </button>
 
-                    <button class="station-hotspot ingredient-station station-5" data-ingredient="salsa roja">
-                        <span class="station-label">Salsa roja</span>
+                    <!-- Nivel 2: Ensalada -->
+                    <button class="station-hotspot ingredient-station station-5" data-ingredient="tomate">
+                        <span class="station-label">Tomate</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-6" data-ingredient="lechuga">
+                        <span class="station-label">Lechuga</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-7" data-ingredient="cebolla">
+                        <span class="station-label">Cebolla</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-8" data-ingredient="pepino">
+                        <span class="station-label">Pepino</span>
                     </button>
 
-                    <button class="station-hotspot ingredient-station station-6" data-ingredient="salsa blanca">
+                    <!-- Nivel 3: Salchipapa -->
+                    <button class="station-hotspot ingredient-station station-9" data-ingredient="salchicha">
+                        <span class="station-label">Salchicha</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-10" data-ingredient="papa">
+                        <span class="station-label">Papa</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-11" data-ingredient="pollo">
+                        <span class="station-label">Pollo</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-12" data-ingredient="queso">
+                        <span class="station-label">Queso</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-13" data-ingredient="salsa roja">
+                        <span class="station-label">Salsa roja</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-14" data-ingredient="salsa blanca">
                         <span class="station-label">Salsa blanca</span>
                     </button>
 
-                    <button class="station-hotspot ingredient-station station-7" data-ingredient="aguacate">
+                    <!-- Nivel 4: Bandeja paisa -->
+                    <button class="station-hotspot ingredient-station station-15" data-ingredient="frijoles">
+                        <span class="station-label">Frijoles</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-16" data-ingredient="carne">
+                        <span class="station-label">Carne</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-17" data-ingredient="aguacate">
                         <span class="station-label">Aguacate</span>
                     </button>
-
-                    <button class="station-hotspot ingredient-station station-8" data-ingredient="chicharrón">
+                    <button class="station-hotspot ingredient-station station-18" data-ingredient="platano">
+                        <span class="station-label">Plátano</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-19" data-ingredient="chicharron">
                         <span class="station-label">Chicharrón</span>
                     </button>
-
-                    <button class="station-hotspot ingredient-station station-9" data-ingredient="huevo">
+                    <button class="station-hotspot ingredient-station station-20" data-ingredient="huevo">
                         <span class="station-label">Huevo</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-21" data-ingredient="arroz">
+                        <span class="station-label">Arroz</span>
                     </button>
 
                     <button class="station-hotspot cook-station generic-cook-station">
@@ -1066,7 +1101,8 @@
             if (!board) return;
 
             const boardRect = board.getBoundingClientRect();
-            const hotspots = board.querySelectorAll(".station-hotspot:not(:disabled)");
+            const hotspots = Array.from(board.querySelectorAll(".station-hotspot"))
+                .filter(function(h) { return h.offsetParent !== null && !h.disabled && getComputedStyle(h).pointerEvents !== "none"; });
 
             let nearest = null;
             let nearestDist = Infinity;
@@ -1428,14 +1464,22 @@
                     return item.ingredientName.toLowerCase() === ingredientName.toLowerCase();
                 });
 
+                const cssVisible = getComputedStyle(hotspot).display !== "none";
+
                 if (!station) {
-                    hotspot.style.display = "none";
+                    if (!cssVisible) {
+                        hotspot.style.display = "none";
+                        hotspot.style.pointerEvents = "none";
+                    }
+                    hotspot.disabled = false;
                     hotspot.onclick = null;
                     return;
                 }
 
-                hotspot.style.display = "block";
+                hotspot.style.removeProperty("display");
+                hotspot.style.removeProperty("pointer-events");
                 hotspot.disabled = !station.isAvailable;
+                hotspot.classList.toggle("station-taken", !station.isAvailable);
 
                 hotspot.onclick = function () {
                     connection.invoke("TakeIngredient", currentRoomCode, station.id)
@@ -1828,7 +1872,12 @@
             board.classList.remove("level-1", "level-2", "level-3", "level-4");
             board.classList.add("level-" + level);
 
-            assignIngredientSlots(level);
+            // Limpiar estilos inline de todos los ingredient-station para que el CSS tome control
+            document.querySelectorAll(".ingredient-station).forEach(function(h) {
+ h.style.display = ";
+                h.style.pointerEvents = ";
+ h.onclick = null;
+ });
         }
 
 

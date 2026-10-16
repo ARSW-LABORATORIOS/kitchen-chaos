@@ -20,26 +20,26 @@ public class OrderService
         new() { Level = 1, DishName = "Arroz con leche",            Ingredients = ["leche", "arroz", "leche condensada"] },
         new() { Level = 1, DishName = "Arroz con leche con pasas",  Ingredients = ["leche", "arroz", "leche condensada", "uvas pasas"] },
 
-        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "lechuga"] },
-        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "pepino", "cebolla"] },
-        new() { Level = 2, DishName = "Ensalada", Ingredients = ["lechuga", "pepino"] },
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "lechuga", "cebolla", "pepino"] },
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["tomate", "lechuga", "pepino"] },
+        new() { Level = 2, DishName = "Ensalada", Ingredients = ["lechuga", "cebolla", "pepino"] },
 
         // Nivel 3 — Salchipapa. AB#84
-        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "queso"] },
-        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "pollo"] },
-        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "salsa roja", "salsa blanca"] },
+        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "queso", "salsa roja"] },
+        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "pollo", "salsa blanca"] },
+        new() { Level = 3, DishName = "Salchipapa", Ingredients = ["salchicha", "papa", "queso", "salsa roja", "salsa blanca"] },
 
         // Nivel 4 — Bandeja paisa. AB#84
-        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijol", "carne", "arroz", "platano", "huevo"] },
-        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijol", "carne", "arroz", "aguacate", "chicharron"] },
-        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijol", "arroz", "platano", "huevo", "chicharron"] },
+        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijoles", "carne", "arroz", "aguacate", "platano", "chicharron", "huevo"] },
+        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijoles", "carne", "arroz", "platano", "huevo"] },
+        new() { Level = 4, DishName = "Bandeja paisa", Ingredients = ["frijoles", "arroz", "aguacate", "platano", "chicharron", "huevo"] },
 
         // Nivel 5 — Todos los platos (reutiliza recetas 1-4). AB#84
         new() { Level = 5, DishName = "Arroz con leche",            Ingredients = ["leche", "arroz", "leche condensada"] },
         new() { Level = 5, DishName = "Arroz con leche con pasas",  Ingredients = ["leche", "arroz", "leche condensada", "uvas pasas"] },
-        new() { Level = 5, DishName = "Ensalada",    Ingredients = ["tomate", "lechuga"] },
-        new() { Level = 5, DishName = "Salchipapa",  Ingredients = ["salchicha", "papa", "queso"] },
-        new() { Level = 5, DishName = "Bandeja paisa", Ingredients = ["frijol", "carne", "arroz", "platano", "huevo"] },
+        new() { Level = 5, DishName = "Ensalada",    Ingredients = ["tomate", "lechuga", "cebolla", "pepino"] },
+        new() { Level = 5, DishName = "Salchipapa",  Ingredients = ["salchicha", "papa", "queso", "salsa roja"] },
+        new() { Level = 5, DishName = "Bandeja paisa", Ingredients = ["frijoles", "carne", "arroz", "platano", "huevo"] },
     ];
 
     private readonly RoomService _roomService;

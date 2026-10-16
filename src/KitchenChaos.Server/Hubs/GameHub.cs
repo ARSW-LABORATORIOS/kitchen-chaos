@@ -112,6 +112,9 @@ public class GameHub : Hub
         // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
         _timerService.StartLevel(roomCode);
 
+        // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
+        _preparationService.ResetStations(roomCode);
+
         var order = _orderService.GenerateOrder(roomCode);
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
         {

@@ -53,7 +53,7 @@ public class PreparationService
         ["salsa roja"]  = new() { Name = "salsa roja" },
         ["salsa blanca"] = new() { Name = "salsa blanca" },
         // Nivel 4 — Bandeja paisa. AB#84
-        ["frijol"]      = new() { Name = "frijol",     CookMethod = CookMethod.Hervir },
+        ["frijoles"]    = new() { Name = "frijoles",   CookMethod = CookMethod.Hervir },
         ["carne"]       = new() { Name = "carne",      RequiresChop = true, CookMethod = CookMethod.Freir },
         ["platano"]     = new() { Name = "platano",    RequiresChop = true, CookMethod = CookMethod.Freir },
         ["huevo"]       = new() { Name = "huevo",      CookMethod = CookMethod.Freir },
@@ -82,6 +82,13 @@ public class PreparationService
         IngredientDefinitions.GetValueOrDefault(
             ingredientName,
             new IngredientDefinition { Name = ingredientName, RequiresChop = true, CookMethod = CookMethod.Hervir });
+
+    /// <summary>Limpia el caché de estaciones de una sala para que se regeneren con el nivel correcto.</summary>
+    public void ResetStations(string roomCode)
+    {
+        _stationsByRoom.TryRemove(roomCode, out _);
+        _ingredientsByRoom.TryRemove(roomCode, out _);
+    }
 
     /// <summary>AB#19, AB#78 - Estaciones de la sala segun los ingredientes que pide su nivel actual.</summary>
     public List<Station> GetStations(string roomCode) =>
