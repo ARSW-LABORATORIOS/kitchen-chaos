@@ -258,6 +258,7 @@ public class PlatingService
             }
 
             plate.State = PlateState.Available;
+            plate.HolderConnectionId = null;
             plate.DishName = null;
             plate.Ingredients.Clear();
 
