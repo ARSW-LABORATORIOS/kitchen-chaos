@@ -43,12 +43,19 @@ builder.Services.AddScoped<PlayerProfileService>();
 var app = builder.Build();
 
 // Crear base de datos y contenedor si no existen (útil en local con el emulador)
-using (var scope = app.Services.CreateScope())
+// El juego no depende de Cosmos (los perfiles son opcionales), así que si no está disponible
+// se avisa en el log y el servidor arranca igual en vez de caerse.
+try
 {
+    using var scope = app.Services.CreateScope();
     var cosmos = scope.ServiceProvider.GetRequiredService<CosmosClient>();
     var cfg = app.Configuration;
     var db = await cosmos.CreateDatabaseIfNotExistsAsync(cfg["CosmosDb:DatabaseName"]!);
     await db.Database.CreateContainerIfNotExistsAsync(cfg["CosmosDb:ContainerName"]!, "/id");
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning("Cosmos DB no disponible, los perfiles de jugador no funcionarán: {Message}", ex.Message);
 }
 
 app.UseDefaultFiles();

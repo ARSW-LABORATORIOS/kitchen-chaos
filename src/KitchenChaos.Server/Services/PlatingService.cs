@@ -25,10 +25,68 @@ public class PlatingService
         _orderService = orderService;
     }
 
+    public PlateResult TakePlate(string roomCode, string connectionId)
+    {
+        var plates = _platesByRoom.GetOrAdd(
+            roomCode,
+            _ => new List<Plate>());
+
+        lock (plates)
+        {
+            if (plates.Any(p => p.HolderConnectionId == connectionId))
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Ya tienes un plato en tus manos."
+                };
+            }
+
+            var plate = plates.FirstOrDefault(
+                p => p.State == PlateState.Available);
+
+            if (plate is null)
+            {
+                plate = new Plate();
+                plates.Add(plate);
+            }
+
+            plate.State = PlateState.Carried;
+            plate.HolderConnectionId = connectionId;
+
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
+    }
+
     public PlateResult PlateDish(
         string roomCode,
-        List<string> ingredientIds)
+        List<string> ingredientIds,
+        string connectionId)
     {
+        var plates = _platesByRoom.GetOrAdd(
+            roomCode,
+            _ => new List<Plate>());
+
+        lock (plates)
+        {
+            var carriedPlate = plates.FirstOrDefault(
+                p => p.HolderConnectionId == connectionId &&
+                    p.State == PlateState.Carried);
+
+            if (carriedPlate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Primero debes recoger un plato vacío."
+                };
+            }
+        }
+
         var order = _orderService.GetActiveOrder(roomCode);
 
         if (order is null)
@@ -83,43 +141,44 @@ public class PlatingService
             };
         }
 
-        var removed = _preparationService.RemoveRoomIngredients(
-            roomCode,
-            ingredientIds);
-
-        if (!removed)
-        {
-            return new PlateResult
-            {
-                Success = false,
-                Error = "No fue posible consumir los ingredientes seleccionados."
-            };
-        }
-
-        var plates = _platesByRoom.GetOrAdd(
-            roomCode,
-            _ => new List<Plate>());
-
-        Plate plate;
-
         lock (plates)
         {
-            plate = plates.FirstOrDefault(p => p.State == PlateState.Available)
-                ?? new Plate();
+            var plate = plates.FirstOrDefault(
+                p => p.HolderConnectionId == connectionId &&
+                    p.State == PlateState.Carried);
 
-            if (!plates.Contains(plate))
-                plates.Add(plate);
+            if (plate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Primero debes recoger un plato vacío."
+                };
+            }
+
+            var removed = _preparationService.RemoveRoomIngredients(
+                roomCode,
+                ingredientIds);
+
+            if (!removed)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "No fue posible consumir los ingredientes seleccionados."
+                };
+            }
 
             plate.State = PlateState.Ready;
             plate.DishName = order.DishName;
             plate.Ingredients = selectedNames;
-        }
 
-        return new PlateResult
-        {
-            Success = true,
-            Plate = plate
-        };
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
     }
 
     public PlateResult TakePlateForDelivery(string roomCode, string plateId)
