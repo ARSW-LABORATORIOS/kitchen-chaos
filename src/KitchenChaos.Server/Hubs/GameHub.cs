@@ -87,7 +87,8 @@ public class GameHub : Hub
     {
         var result = _roomService.StartGame(
             roomCode,
-            Context.ConnectionId
+            Context.ConnectionId,
+            level
         );
 
         if (!result.Success)
@@ -112,6 +113,9 @@ public class GameHub : Hub
 
         // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
         _timerService.StartLevel(roomCode);
+
+        // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
+        _preparationService.ResetStations(roomCode);
 
         // AB#84: arranca mecanica de obstaculo segun el nivel
         _obstacleService.StartObstacle(roomCode, level);

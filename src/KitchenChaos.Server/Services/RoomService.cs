@@ -61,7 +61,7 @@ public class RoomService
         return new JoinRoomResult { Success = true, Room = room };
     }
 
-    public StartGameResult StartGame(string roomCode, string connectionId)
+    public StartGameResult StartGame(string roomCode, string connectionId, int level)
     {
         if (!_rooms.TryGetValue(roomCode, out var room))
         {
@@ -101,6 +101,7 @@ public class RoomService
                 };
             }
 
+            room.Level = level;
             room.HasStarted = true;
 
             return new StartGameResult
