@@ -239,6 +239,27 @@
             transform: scale(.96);
         }
 
+        #pauseBtn {
+            width: min(100%, 155px);
+            padding: 12px 0;
+            border-radius: 14px;
+            border: 3px solid #e94560;
+            color: white;
+            background: linear-gradient(145deg, #c0394f, #8b1a2e);
+            font-weight: 900;
+            font-size: clamp(13px, 2vw, 18px);
+            letter-spacing: 1px;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #pauseBtn.active {
+            background: linear-gradient(145deg, #43a87a, #1e6b4a);
+            border-color: #43e97b;
+        }
+
         .note {
             font-size: 11px;
             opacity: .75;
@@ -438,7 +459,11 @@
 
             <section class="panel action-panel">
                 <button id="interact" aria-label="Agarrar o interactuar">
-                    ✋<br>AGARRAR
+                    &#x270B;<br>AGARRAR
+                </button>
+
+                <button id="pauseBtn" aria-label="Pausar o reanudar">
+                    &#x23F8; PAUSA
                 </button>
 
                 <h2>INTERACTUAR</h2>
@@ -470,6 +495,7 @@
         const connectionStatus = document.getElementById("connectionStatus");
 
         let mobileLinked = false;
+        let linkedRoomCode = null;
 
         mobileConnection.on("MobileTeammatesUpdated", function (teammates) {
             const container = document.getElementById("teammates");
@@ -568,6 +594,7 @@
 
         mobileConnection.on("MobileControlLinked", function (data) {
             mobileLinked = true;
+            linkedRoomCode = data.roomCode;
 
             connectionStatus.textContent = "Conectado";
             connectionStatus.style.color = "#45e0a4";
@@ -584,6 +611,10 @@
 
         mobileConnection.on("MobileControlUnlinked", function () {
             mobileLinked = false;
+            linkedRoomCode = null;
+            mobilePaused = false;
+            pauseBtn.classList.remove('active');
+            pauseBtn.textContent = '\u23F8 PAUSA';
             resetMobileControls();
             connectionStatus.textContent = "Sin vincular";
             connectionStatus.style.color = "#ffcf91";
@@ -736,6 +767,34 @@
             interactButton.addEventListener(name, () => {
                 interactButton.classList.remove('pressed');
             });
+        });
+
+        let mobilePaused = false;
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        pauseBtn.addEventListener('click', function () {
+            if (!mobileLinked ||
+                mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                feedback.textContent = 'El control no esta vinculado.';
+                return;
+            }
+            mobilePaused = !mobilePaused;
+            pauseBtn.classList.toggle('active', mobilePaused);
+            pauseBtn.textContent = mobilePaused ? '\u25B6 REANUDAR' : '\u23F8 PAUSA';
+            mobileConnection.invoke(mobilePaused ? 'PauseGame' : 'ResumeGame',
+                linkedRoomCode).catch(function (e) { feedback.textContent = e.message; });
+        });
+
+        mobileConnection.on('GamePaused', function () {
+            mobilePaused = true;
+            pauseBtn.classList.add('active');
+            pauseBtn.textContent = '\u25B6 REANUDAR';
+        });
+
+        mobileConnection.on('GameResumed', function () {
+            mobilePaused = false;
+            pauseBtn.classList.remove('active');
+            pauseBtn.textContent = '\u23F8 PAUSA';
         });
 
         window.addEventListener('blur', () => {
