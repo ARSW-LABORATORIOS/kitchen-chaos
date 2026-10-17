@@ -811,6 +811,14 @@
                         <span class="station-label">Huevo</span>
                     </button>
 
+                    <button class="station-hotspot chop-station chop-station-left">
+                        <span class="station-label">Cortar</span>
+                    </button>
+
+                    <button class="station-hotspot chop-station chop-station-right">
+                        <span class="station-label">Cortar</span>
+                    </button>
+
                     <button class="station-hotspot cook-station generic-cook-station">
                         <span class="station-label">Cocinar</span>
                     </button>
@@ -1687,6 +1695,22 @@
                 box.style.display = box.style.display === "none" ? "block" : "none";
             });
         let selectedIngredientIds = new Set();
+
+        connection.on("MobileChopReceived", function (ingredientId) {
+            if (!currentRoomCode ||
+                !Object.prototype.hasOwnProperty.call(myIngredients, ingredientId)) {
+                return;
+            }
+            const ingredient = myIngredients[ingredientId];
+            if (ingredient.state !== "Crudo" || !ingredient.requiresChop) {
+                return;
+            }
+            connection.invoke("ChopIngredient", currentRoomCode, ingredientId)
+                .catch(function (error) {
+                    document.getElementById("preparationError").textContent = error.message;
+                });
+        });
+
         connection.on("MobileIngredientSelectionReceived", function (data) {
             const ingredientId = data.ingredientId;
 
@@ -1748,6 +1772,30 @@
 
         document.querySelectorAll(".cook-station").forEach(function (station) {
             station.addEventListener("click", useCookStation);
+        });
+
+        function useChopStation() {
+            const ingredientIds = Array.from(selectedIngredientIds);
+            if (ingredientIds.length !== 1) {
+                document.getElementById("preparationError").textContent =
+                    "Selecciona un solo ingrediente para cortar.";
+                return;
+            }
+            const ingredientId = ingredientIds[0];
+            const ingredient = myIngredients[ingredientId];
+            if (!ingredient || ingredient.state !== "Crudo" || !ingredient.requiresChop) {
+                document.getElementById("preparationError").textContent =
+                    "El ingrediente seleccionado no necesita cortarse o ya fue procesado.";
+                return;
+            }
+            connection.invoke("ChopIngredient", currentRoomCode, ingredientId)
+                .catch(function (error) {
+                    document.getElementById("preparationError").textContent = error.message;
+                });
+        }
+
+        document.querySelectorAll(".chop-station").forEach(function (station) {
+            station.addEventListener("click", useChopStation);
         });
 
         function updatePlateVisual(state) {
@@ -1843,7 +1891,7 @@
 
         // AB#82 - picar/hervir/frer: el botn de la estufa dice hervir o frer segn el ingrediente.
         function cookLabelFor(cookMethod) {
-            return cookMethod === "Freir" ? "Frer" : "Hervir";
+            return cookMethod === "Freir" ? "FRE\u00CDR" : "Hervir";
         }
 
         let mobileTeammates = [];
@@ -1880,7 +1928,8 @@
                     id: id,
                     name: ingredient.name,
                     state: ingredient.state,
-                    selected: selectedIngredientIds.has(id)
+                    selected: selectedIngredientIds.has(id),
+                    requiresChop: ingredient.requiresChop === true
                 };
             });
 

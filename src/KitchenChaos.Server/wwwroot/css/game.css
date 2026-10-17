@@ -307,6 +307,10 @@
     height: 7%;
 }
 
+.level-1 .chop-station {
+    display: none;
+}
+
 /* Nivel 2 — Ensalada: tomate, lechuga, cebolla, pepino */
 .level-2 .station-5 {
     left: 11%;
@@ -376,6 +380,19 @@
     top: 57%;
     width: 14%;
     height: 9%;
+}
+
+.level-2 .chop-station-left {
+    left: 19%;
+    top: 40%;
+    width: 14%;
+    height: 9%;
+}
+.level-2 .chop-station-right {
+    left: 58%;
+    top: 42%;
+    width: 14%;
+    height: 7%;
 }
 
 /* Nivel 3 — Salchipapa: salchicha, papa, pollo, queso, salsa roja, salsa blanca */
@@ -461,6 +478,20 @@
     top: 22%;
     width: 10%;
     height: 9%;
+}
+
+.level-3 .chop-station-left {
+    left: 25%;
+    top: 42%;
+    width: 16%;
+    height: 12%;
+}
+
+.level-3 .chop-station-right {
+    left: 56%;
+    top: 42%;
+    width: 16%;
+    height: 12%;
 }
 
 /* Nivel 4 — Bandeja paisa: frijoles, carne, aguacate, platano, chicharron, huevo */
@@ -590,6 +621,20 @@
     top: 62%;
     width: 4%;
     height: 6%;
+}
+
+.level-4 .chop-station-left {
+    left: 33%;
+    top: 40%;
+    width: 15%;
+    height: 10%;
+}
+
+.level-4 .chop-station-right {
+    left: 47%;
+    top: 40%;
+    width: 15%;
+    height: 10%;
 }
 
 .stations-box {

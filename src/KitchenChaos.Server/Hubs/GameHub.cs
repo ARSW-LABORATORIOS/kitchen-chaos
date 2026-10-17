@@ -372,6 +372,31 @@ public class GameHub : Hub
     }
 
     
+    public async Task SendMobileChop(string ingredientId)
+    {
+        if (!LinkedControls.TryGetValue(Context.ConnectionId, out var playerConnectionId))
+        {
+            throw new HubException("Este control no está vinculado.");
+        }
+        if (!PlayerControls.TryGetValue(playerConnectionId, out var activeControlId) ||
+            activeControlId != Context.ConnectionId)
+        {
+            throw new HubException("Este control ya no está autorizado.");
+        }
+        var room = _roomService.GetRoomByPlayerConnectionId(playerConnectionId);
+        if (room is null || !room.HasStarted)
+        {
+            throw new HubException("El jugador no está en una partida activa.");
+        }
+        if (string.IsNullOrWhiteSpace(ingredientId))
+        {
+            throw new HubException("Ingrediente no válido.");
+        }
+        await Clients.Client(playerConnectionId)
+            .SendAsync("MobileChopReceived", ingredientId);
+    }
+
+
     public async Task SendMobileDirection(string direction, bool pressed)
     {
         if (!LinkedControls.TryGetValue(Context.ConnectionId, out var playerConnectionId))
@@ -434,7 +459,8 @@ public class GameHub : Hub
         string Id,
         string Name,
         string State,
-        bool Selected
+        bool Selected,
+        bool RequiresChop
     );
 
     public async Task SyncMobileInventory(List<MobileIngredientInfo> ingredients)
