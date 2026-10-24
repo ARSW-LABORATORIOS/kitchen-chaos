@@ -11,7 +11,7 @@ namespace KitchenChaos.Server.Services;
 /// </summary>
 public class TimerService
 {
-    private const int LevelDurationSeconds  = 300;
+    private const int LevelDurationSeconds  = 240;
     private const int OrderDurationSeconds  = 45;
     private const int OrderExpiredPenalty   = 20;
     private const int OrderDeliveredPoints  = 100;
