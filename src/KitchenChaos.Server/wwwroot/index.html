@@ -685,22 +685,10 @@
             <div class="game-hud-sticky">
 
                 <div class="game-hud">
-
-                    <div class="hud-section">
+                    <div class="hud-section hud-level">
                         <span class="hud-label">Nivel</span>
                         <h2>Nivel 1</h2>
                     </div>
-
-                    <div class="hud-section">
-                        <span class="hud-label">Tiempo</span>
-                        <div class="level-timer" id="levelTimerDisplay">5:00</div>
-                    </div>
-
-                    <div class="hud-section">
-                        <span class="hud-label">Puntaje</span>
-                        <div id="scoreDisplay">Puntaje: 0</div>
-                    </div>
-
                 </div>
 
                 <div class="hud-order">
@@ -854,6 +842,18 @@
                     <button class="station-hotspot trash-station">
                         <span class="station-label">Basura</span>
                     </button>
+                </div>
+            </div>
+
+            <div class="game-hud-bottom">
+                <div class="hud-section hud-score">
+                    <span class="hud-label">Puntaje</span>
+                    <div id="scoreDisplay">Puntaje: 0</div>
+                </div>
+
+                <div class="hud-section hud-time">
+                    <span class="hud-label">Tiempo restante</span>
+                    <div class="level-timer" id="levelTimerDisplay">4:00</div>
                 </div>
             </div>
 
@@ -2622,7 +2622,7 @@
 
         connection.on("LevelTimerTick", function (data) {
 
-            const total = 300;
+            const total = 240;
             const s = data.secondsRemaining;
             const min = Math.floor(s / 60);
             const sec = s % 60;

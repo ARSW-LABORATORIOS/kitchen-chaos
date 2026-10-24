@@ -7,887 +7,1909 @@
     box-sizing: border-box;
 }
 
+
+
 .game-board {
+
     position: relative;
+
     width: min(100%, calc(50vh * 1280 / 722));
+
     max-width: 1300px;
+
     margin: 0 auto;
+
     aspect-ratio: 3 / 2;
+
     overflow: hidden;
+
     border-radius: 18px;
+
 }
+
+
 
 /* AB#81 - personaje del jugador sobre el tablero */
+
 .player-sprite {
+
     position: absolute;
+
     width: 5.5%;
+
     height: auto;
+
     z-index: 8;
+
     pointer-events: none;
+
     filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+
     transition: left 0.08s linear, top 0.08s linear;
+
 }
+
+
 
 .game-board-image {
+
     position: absolute;
+
     width: 100%;
+
     height: 100%;
+
     object-fit: contain;
+
     inset: 0;
+
     user-select: none;
+
     pointer-events: none;
+
 }
+
+
 
 .station-hotspot {
+
     position: absolute;
+
     cursor: pointer;
+
     border: 2px solid red;
+
     border-radius: 6px;
+
     background: rgba(255, 0, 0, 0.25);
+
     z-index: 20;
+
     animation: stationPulse 2.8s ease-in-out infinite;
+
     padding: 0;
+
     margin: 0;
+
     min-width: 0;
+
     min-height: 0;
+
     box-sizing: border-box;
+
     transform: none;
+
 }
+
+
 
 .station-hotspot:hover {
+
     outline: 3px solid rgba(255, 255, 255, 0.8);
+
     background: rgba(255, 255, 255, 0.15);
+
     animation: none;
+
 }
+
+
 
 .station-hotspot:disabled {
+
     animation: none;
+
 }
 
+
+
 .station-hotspot.station-taken {
+
     animation: none;
+
     background: rgba(0, 0, 0, 0.18);
+
     cursor: not-allowed;
+
 }
+
+
 
 @keyframes stationPulse {
 
+
+
     0%,
+
     100% {
+
         box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+
     }
+
+
 
     50% {
+
         box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.22);
+
     }
+
 }
+
+
 
 .station-label {
+
     position: absolute;
+
     left: 50%;
+
     bottom: 100%;
+
     transform: translateX(-50%);
+
     white-space: nowrap;
+
     background: rgba(0, 0, 0, 0.8);
+
     color: white;
+
     padding: 6px 10px;
+
     border-radius: 8px;
+
     font-size: 14px;
+
     opacity: 0;
+
     pointer-events: none;
+
 }
+
+
 
 .station-hotspot:hover .station-label {
+
     opacity: 1;
+
 }
+
+
 
 .game-hud {
+
     width: 100%;
+
     margin: 0 auto 12px;
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: stretch;
+
     gap: 12px;
+
 }
+
+
 
 .hud-section {
+
     flex: 1;
+
     background: rgba(255, 255, 255, 0.35);
+
     border: 1.5px solid rgba(244, 140, 6, 0.55);
+
     border-radius: 12px;
+
     padding: 10px 15px;
+
     text-align: center;
+
 }
+
+
 
 .hud-label {
+
     display: block;
+
     font-size: 12px;
+
     font-weight: bold;
+
     text-transform: uppercase;
+
     color: #666;
+
     margin-bottom: 4px;
+
 }
+
+
 
 .hud-section h2 {
+
     margin: 0;
+
     font-size: 24px;
+
     color: #333;
+
 }
+
+
 
 .hud-section .level-timer {
+
     margin: 0;
+
     font-size: 30px;
+
     line-height: 1.2;
+
 }
+
+
 
 #scoreDisplay {
+
     font-size: 24px;
+
     font-weight: bold;
+
     color: #2a9d8f;
+
 }
+
+
 
 .hud-order {
+
     width: 100%;
+
     margin: 0 auto 12px;
+
     display: flex;
+
     align-items: center;
+
     gap: 20px;
+
     padding: 12px 16px;
+
     background: rgba(255, 255, 255, 0.35);
+
     border: 1.5px solid rgba(42, 157, 143, 0.55);
+
     border-radius: 12px;
+
     text-align: left;
+
 }
+
+
 
 .hud-order-info {
+
     flex: 1;
+
     display: flex;
+
     flex-direction: column;
+
     gap: 4px;
+
 }
+
+
 
 .hud-order-info strong {
+
     color: #e85d04;
+
     font-size: 18px;
+
 }
+
+
 
 #orderDish {
+
     font-weight: bold;
+
     color: #333;
+
 }
+
+
 
 #orderIngredients {
+
     font-size: 13px;
+
     color: #666;
+
 }
+
+
 
 .hud-order-timer {
+
     width: 35%;
+
     min-width: 150px;
+
     text-align: center;
+
     font-weight: bold;
+
 }
+
+
 
 .hud-order-timer .order-timer-bar-bg {
+
     margin-top: 6px;
+
 }
+
+
 
 /* Todos los ingredient-station ocultos por defecto, el JS los muestra según el nivel */
+
 .ingredient-station {
+
     display: none;
+
     pointer-events: none;
+
 }
+
+
 
 /* Solo el nivel activo activa sus estaciones */
+
 .level-1 .station-1,
+
 .level-1 .station-2,
+
 .level-1 .station-3,
+
 .level-1 .station-4 {
+
     display: block;
+
     pointer-events: auto;
+
 }
+
+
 
 .level-2 .station-5,
+
 .level-2 .station-6,
+
 .level-2 .station-7,
+
 .level-2 .station-8 {
+
     display: block;
+
     pointer-events: auto;
+
 }
+
+
 
 .level-3 .station-9,
+
 .level-3 .station-10,
+
 .level-3 .station-11,
+
 .level-3 .station-12,
+
 .level-3 .station-13,
+
 .level-3 .station-14 {
+
     display: block;
+
     pointer-events: auto;
+
 }
+
+
 
 .level-4 .station-15,
+
 .level-4 .station-16,
+
 .level-4 .station-17,
+
 .level-4 .station-18,
+
 .level-4 .station-19,
+
 .level-4 .station-20,
+
 .level-4 .station-21 {
+
     display: block;
+
     pointer-events: auto;
+
 }
+
+
 
 .level-1 .station-1 {
+
     left: 26%;
+
     top: 18%;
+
     width: 6%;
+
     height: 16%;
+
 }
+
+
 
 .level-1 .station-2 {
+
     left: 33%;
+
     top: 18%;
+
     width: 6%;
+
     height: 16%;
+
 }
+
+
 
 .level-1 .station-3 {
+
     left: 40%;
+
     top: 18%;
+
     width: 6%;
+
     height: 16%;
+
 }
 
+
+
 .level-1 .station-4 {
+
     left: 48%;
+
     top: 18%;
+
     width: 6%;
+
     height: 16%;
+
 }
+
+
+
 
 
 .level-1 .cook-station {
+
     left: 67%;
+
     top: 25%;
+
     width: 11%;
+
     height: 9%;
+
 }
+
+
 
 .level-1 .plate-station {
+
     left: 55%;
+
     top: 23%;
+
     width: 11%;
+
     height: 8%;
+
 }
+
+
 
 .level-1 .take-plate-station {
+
     left: 79%;
+
     top: 40%;
+
     width: 5%;
+
     height: 6%;
+
 }
+
+
 
 .level-1 .delivery-station {
+
     left: 18%;
+
     top: 60%;
+
     width: 12%;
+
     height: 12%;
+
 }
+
+
 
 .level-1 .wash-station {
+
     left: 82%;
+
     top: 51%;
+
     width: 6%;
+
     height: 8%;
+
 }
+
+
 
 .level-1 .trash-station {
+
     left: 19%;
+
     top: 42%;
+
     width: 4%;
+
     height: 7%;
+
 }
+
+
 
 .level-1 .chop-station {
+
     display: none;
+
 }
+
+
 
 /* Nivel 2 — Ensalada: tomate, lechuga, cebolla, pepino */
+
 .level-2 .station-5 {
+
     left: 11%;
+
     top: 28%;
+
     width: 6%;
+
     height: 6%;
+
 }
+
+
 
 .level-2 .station-6 {
+
     left: 10%;
+
     top: 36%;
+
     width: 6%;
+
     height: 6%;
+
 }
+
+
 
 .level-2 .station-7 {
+
     left: 8%;
+
     top: 44%;
+
     width: 6%;
+
     height: 6%;
+
 }
+
+
 
 .level-2 .station-8 {
+
     left: 7%;
+
     top: 54%;
+
     width: 6%;
+
     height: 6%;
+
 }
+
+
 
 .level-2 .cook-station {
+
     left: 56%;
+
     top: 20%;
+
     width: 20%;
+
     height: 13%;
+
 }
+
+
 
 .level-2 .plate-station {
+
     left: 77%;
+
     top: 30%;
+
     width: 6%;
+
     height: 8%;
+
 }
+
+
 
 .level-2 .delivery-station {
+
     left: 57%;
+
     top: 59%;
+
     width: 18%;
+
     height: 10%;
+
 }
+
+
 
 .level-2 .wash-station {
+
     left: 81%;
+
     top: 49%;
+
     width: 6%;
+
     height: 8%;
+
 }
+
+
 
 .level-2 .trash-station {
+
     left: 12%;
+
     top: 57%;
+
     width: 4%;
+
     height: 8%;
+
 }
+
+
 
 .level-2 .take-plate-station {
+
     left: 20%;
+
     top: 57%;
+
     width: 14%;
+
     height: 9%;
+
 }
+
+
 
 .level-2 .chop-station-left {
+
     left: 19%;
+
     top: 40%;
+
     width: 14%;
+
     height: 9%;
+
 }
+
 .level-2 .chop-station-right {
+
     left: 58%;
+
     top: 42%;
+
     width: 14%;
+
     height: 7%;
+
 }
+
+
 
 /* Nivel 3 — Salchipapa: salchicha, papa, pollo, queso, salsa roja, salsa blanca */
+
 .level-3 .station-9 {
+
     left: 12%;
+
     top: 28%;
+
     width: 5%;
+
     height: 8%;
+
 }
+
+
 
 .level-3 .station-10 {
+
     left: 10%;
+
     top: 36%;
+
     width: 5%;
+
     height: 8%;
+
 }
+
+
 
 .level-3 .station-11 {
+
     left: 9%;
+
     top: 45%;
+
     width: 5%;
+
     height: 8%;
+
 }
+
+
 
 .level-3 .station-12 {
+
     left: 7%;
+
     top: 55%;
+
     width: 5%;
+
     height: 8%;
+
 }
+
+
 
 .level-3 .station-13 {
+
     left: 25%;
+
     top: 66%;
+
     width: 6%;
+
     height: 10%;
+
 }
+
+
 
 .level-3 .station-14 {
+
     left: 33%;
+
     top: 66%;
+
     width: 6%;
+
     height: 10%;
+
 }
+
+
 
 .level-3 .cook-station {
+
     left: 56%;
+
     top: 23%;
+
     width: 25%;
+
     height: 12%;
+
 }
+
+
 
 .level-3 .plate-station {
+
     left: 82%;
+
     top: 38%;
+
     width: 6%;
+
     height: 8%;
+
 }
+
+
 
 .level-3 .delivery-station {
+
     left: 57%;
+
     top: 66%;
+
     width: 19%;
+
     height: 10%;
+
 }
+
+
 
 .level-3 .wash-station {
+
     left: 86%;
+
     top: 55%;
+
     width: 5%;
+
     height: 9%;
+
 }
+
+
 
 .level-3 .trash-station {
+
     left: 13%;
+
     top: 63%;
+
     width: 4%;
+
     height: 7%;
+
 }
+
+
 
 .level-3 .take-plate-station {
+
     left: 19%;
+
     top: 22%;
+
     width: 10%;
+
     height: 9%;
+
 }
+
+
 
 .level-3 .chop-station-left {
+
     left: 25%;
+
     top: 42%;
+
     width: 16%;
+
     height: 12%;
+
 }
+
+
 
 .level-3 .chop-station-right {
+
     left: 56%;
+
     top: 42%;
+
     width: 16%;
+
     height: 12%;
+
 }
+
+
 
 /* Nivel 4 — Bandeja paisa: frijoles, carne, aguacate, platano, chicharron, huevo */
+
 .level-4 .station-15 {
+
     left: 9%;
+
     top: 34%;
+
     width: 5%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-16 {
+
     left: 10%;
+
     top: 40%;
+
     width: 5%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-17 {
+
     left: 12%;
+
     top: 46%;
+
     width: 5%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-18 {
+
     left: 14%;
+
     top: 53%;
+
     width: 5%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-19 {
+
     left: 30%;
+
     top: 64%;
+
     width: 4%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-20 {
+
     left: 35%;
+
     top: 64%;
+
     width: 4%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .station-21 {
+
     left: 40%;
+
     top: 65%;
+
     width: 4%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .plate-station {
+
     left: 87%;
+
     top: 37%;
+
     width: 6%;
+
     height: 8%;
+
 }
+
+
 
 .level-4 .wash-station {
+
     left: 84%;
+
     top: 52%;
+
     width: 5%;
+
     height: 8%;
+
 }
+
+
 
 .level-4 .delivery-station {
+
     left: 58%;
+
     top: 66%;
+
     width: 16%;
+
     height: 10%;
+
 }
+
+
 
 .level-4 .trash-station {
+
     left: 18%;
+
     top: 58%;
+
     width: 4%;
+
     height: 7%;
+
 }
+
+
 
 .fry-station,
+
 .boil-station {
+
     display: none;
+
 }
+
+
 
 .level-4 .generic-cook-station {
+
     display: none;
+
 }
+
+
 
 .level-4 .fry-station,
+
 .level-4 .boil-station {
+
     display: block;
+
 }
+
+
 
 .fry-station-2 {
+
     display: none;
+
 }
 
+
+
 .level-4 .fry-station-2 {
+
     display: block;
+
 }
+
+
+
 
 
 .level-4 .boil-station {
+
     left: 74%;
+
     top: 21%;
+
     width: 5%;
+
     height: 5%;
+
 }
+
+
 
 .level-4 .fry-station {
+
     left: 79%;
+
     top: 25%;
+
     width: 5%;
+
     height: 5%;
+
 }
+
+
 
 .level-4 .fry-station-2 {
+
     left: 83%;
+
     top: 29%;
+
     width: 5%;
+
     height: 5%;
+
 }
+
+
 
 .level-4 .take-plate-station {
+
     left: 25%;
+
     top: 62%;
+
     width: 4%;
+
     height: 6%;
+
 }
+
+
 
 .level-4 .chop-station-left {
+
     left: 33%;
+
     top: 40%;
+
     width: 15%;
+
     height: 10%;
+
 }
+
+
 
 .level-4 .chop-station-right {
+
     left: 47%;
+
     top: 40%;
+
     width: 15%;
+
     height: 10%;
+
 }
 
+
+
 .stations-box {
+
     display: none;
+
 }
+
+
+
 
 
 #myIngredientsList {
+
     display: flex;
+
     flex-wrap: wrap;
+
     gap: 10px;
+
     margin-top: 12px;
+
 }
+
+
 
 #myIngredientsList .ingredient-item {
+
     flex: 1 1 180px;
+
     min-height: 70px;
+
     margin: 0;
+
     padding: 12px;
+
     border: 2px solid transparent;
+
     border-radius: 12px;
+
     transition: background 0.3s, border-color 0.3s, transform 0.2s;
+
 }
+
+
 
 #myIngredientsList .ingredient-item:hover {
+
     transform: translateY(-2px);
+
 }
+
+
 
 .ingredient-pop-in {
+
     animation: ingredientPopIn 0.25s ease-out;
+
 }
+
+
 
 @keyframes ingredientPopIn {
+
     from {
+
         opacity: 0;
+
         transform: scale(0.88) translateY(4px);
+
     }
+
+
 
     to {
+
         opacity: 1;
+
         transform: scale(1) translateY(0);
+
     }
+
 }
+
+
 
 .ingredient-flash {
+
     animation: ingredientFlash 0.5s ease-out;
+
 }
+
+
 
 @keyframes ingredientFlash {
+
     0% {
+
         box-shadow: 0 0 0 0 rgba(244, 140, 6, 0.45);
+
     }
+
+
 
     100% {
+
         box-shadow: 0 0 0 9px rgba(244, 140, 6, 0);
+
     }
+
 }
+
+
 
 .ingredient-raw {
+
     background: #eee2c6 !important;
+
     border-color: #b89b72 !important;
+
 }
+
+
 
 .ingredient-chopped {
+
     background: #fff3b0 !important;
+
     border-color: #e9c46a !important;
+
 }
+
+
 
 .ingredient-cooking {
+
     background: #ffd6a5 !important;
+
     border-color: #f48c06 !important;
+
 }
+
+
 
 .ingredient-cooked {
+
     background: #cdeccf !important;
+
     border-color: #2a9d8f !important;
+
 }
+
+
 
 .ingredient-burned {
+
     background: #f5b7b1 !important;
+
     border-color: #c1121f !important;
+
 }
+
+
 
 .ingredient-state {
+
     font-weight: bold;
+
     color: #333;
+
 }
+
+
 
 .ingredient-ready {
+
     background: #d8f3dc !important;
+
     border-color: #40916c !important;
+
 }
+
+
 
 .plate-box {
+
     margin-top: 20px;
+
     padding-top: 15px;
+
     border-top: 1px solid #eee;
+
 }
+
+
 
 .plate-box h3 {
+
     margin-bottom: 12px;
+
 }
+
+
 
 .plate-visual {
+
     display: flex;
+
     justify-content: center;
+
     margin: 15px 0;
+
 }
+
+
 
 .plate-circle {
+
     width: 110px;
+
     height: 110px;
+
     border-radius: 50%;
+
     display: flex;
+
     justify-content: center;
+
     align-items: center;
+
     border: 8px solid #d9d9d9;
+
     background: #f8f8f8;
+
     box-shadow: inset 0 0 0 3px #eeeeee;
+
     font-weight: bold;
+
     transition: 0.3s;
+
 }
+
+
 
 .plate-clean .plate-circle {
+
     background: #f8f8f8;
+
     border-color: #d9d9d9;
+
 }
+
+
 
 .plate-food .plate-circle {
+
     background: #ffe8a3;
+
     border-color: #f4a261;
+
 }
+
+
 
 .plate-dirty .plate-circle {
+
     background: #b08968;
+
     border-color: #7f5539;
+
     color: white;
+
 }
+
+
 
 .legacy-plate-controls {
+
     display: none;
+
 }
+
+
 
 #plateStatus {
+
     text-align: center;
+
     color: #555;
+
 }
+
+
 
 .game-hud-sticky {
+
     position: sticky;
+
     top: 10px;
+
     z-index: 30;
+
     background: rgba(255, 250, 236, 0.32);
+
     backdrop-filter: blur(16px) saturate(160%);
+
     -webkit-backdrop-filter: blur(16px) saturate(160%);
+
     border: 1px solid rgba(255, 255, 255, 0.55);
+
     padding: 8px;
+
     border-radius: 18px;
+
     box-shadow:
+
         0 8px 24px rgba(0, 0, 0, 0.25),
+
         inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
 }
+
+
 
 .carried-plate {
+
     position: absolute;
+
     z-index: 12;
+
     font-size: clamp(18px, 2.5vw, 32px);
+
     line-height: 1;
+
     transform: translate(-50%, -50%);
+
     pointer-events: none;
+
     display: none;
+
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4));
+
     transition: left 0.08s linear, top 0.08s linear;
+
 }
+
+
 
 /* Modal fin de nivel */
+
 .level-end-overlay {
+
     position: fixed;
+
     inset: 0;
+
     z-index: 200;
+
     background: rgba(0, 0, 0, 0.65);
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
 }
+
+
 
 .level-end-modal {
+
     background: rgba(255, 250, 236, 0.97);
+
     border-radius: 26px;
+
     padding: 40px 36px;
+
     text-align: center;
+
     max-width: 420px;
+
     width: 90%;
+
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+
     animation: modalPop 0.3s ease-out;
+
 }
+
+
 
 @keyframes modalPop {
+
     from { transform: scale(0.85); opacity: 0; }
+
     to   { transform: scale(1);    opacity: 1; }
+
 }
+
+
 
 .level-end-modal h2 {
+
     font-size: 28px;
+
     margin-bottom: 8px;
+
     color: #2a1a0f;
+
 }
+
+
 
 .level-end-stars {
+
     font-size: 48px;
+
     margin: 12px 0;
+
     letter-spacing: 6px;
+
 }
+
+
 
 .level-end-score {
+
     font-size: 20px;
+
     color: #555;
+
     margin-bottom: 6px;
+
 }
+
+
 
 .level-end-msg {
+
     font-size: 15px;
+
     color: #777;
+
     margin-bottom: 20px;
+
 }
+
+
 
 .btn-end {
+
     display: block;
+
     width: 100%;
+
     padding: 14px;
+
     margin-bottom: 12px;
+
     border: none;
+
     border-radius: 999px;
+
     font-size: 16px;
+
     font-weight: 700;
+
     cursor: pointer;
+
     text-transform: uppercase;
+
     letter-spacing: 0.5px;
+
     transition: opacity 0.15s, transform 0.15s;
+
 }
+
+
 
 .btn-end:hover {
+
     opacity: 0.9;
+
     transform: translateY(-1px);
+
 }
+
+
 
 .btn-next-level {
+
     background: linear-gradient(135deg, #328a81, #276b64);
+
     color: #fff;
+
 }
 
+
+
 .btn-home {
+
     background: rgba(255, 255, 255, 0.6);
+
     color: #6b4a2a;
+
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
+
+}
+
+
+
+.game-hud-sticky {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto 12px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.game-hud-sticky .game-hud {
+    display: flex;
+    flex: 0 0 auto;
+    width: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.game-hud-sticky .hud-level {
+    width: 115px;
+    min-width: 115px;
+    padding: 12px;
+    text-align: center;
+}
+
+.game-hud-sticky .hud-level h2 {
+    margin: 4px 0 0;
+    font-size: 24px;
+}
+
+.game-hud-sticky .hud-order {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 350px;
+    width: 350px;
+    max-width: 55%;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 16px;
+}
+
+.game-hud-sticky .hud-order-info,
+.game-hud-sticky .hud-order-timer {
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+}
+
+.game-hud-bottom {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    margin: 10px auto 16px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.game-hud-bottom .hud-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 145px;
+    max-width: 230px;
+    margin: 0;
+    padding: 10px 18px;
+    text-align: center;
+}
+
+.game-hud-bottom .hud-label {
+    font-size: 12px;
+    margin: 0 0 4px;
+}
+
+.game-hud-bottom #scoreDisplay {
+    font-size: 26px;
+    line-height: 1.2;
+}
+
+.game-hud-bottom .level-timer {
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .game-hud-sticky {
+        gap: 8px;
+    }
+
+    .game-hud-sticky .hud-level {
+        width: 75px;
+        min-width: 75px;
+        padding: 8px;
+    }
+
+    .game-hud-sticky .hud-level h2 {
+        font-size: 18px;
+    }
+
+    .game-hud-sticky .hud-order {
+        flex: 1 1 auto;
+        max-width: none;
+        min-width: 0;
+        padding: 8px;
+    }
+
+    .game-hud-bottom .hud-section {
+        min-width: 0;
+        padding: 8px;
+    }
+
+    .game-hud-bottom #scoreDisplay,
+    .game-hud-bottom .level-timer {
+        font-size: 20px;
+    }
 }
