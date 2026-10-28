@@ -1,0 +1,814 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <title>Kitchen Chaos — Control</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: system-ui, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #101019;
+            color: #fff;
+        }
+
+        .shell {
+            min-height: 100dvh;
+            padding: 12px;
+            background: radial-gradient(circle at 50% 0%, #493024, #15151d 60%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(14px, 2.5vw, 23px);
+            color: #ffcd9b;
+        }
+
+        #connectionStatus {
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 99px;
+            background: #44342e;
+            padding: 6px 10px;
+            color: #ffcf91;
+        }
+
+        .layout {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(170px, 1fr) minmax(240px, 1.7fr) minmax(145px, .9fr);
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .panel {
+            background: rgba(21, 20, 31, .93);
+            border: 1px solid #514139;
+            border-radius: 18px;
+            padding: 12px;
+            min-width: 0;
+        }
+
+        .controls,
+        .action-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: clamp(12px, 1.6vw, 17px);
+            color: #ffd1a4;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(45px, 1fr));
+            gap: 6px;
+            width: min(100%, 220px);
+            touch-action: none;
+        }
+
+        .control {
+            aspect-ratio: 1;
+            padding: 0;
+            border: 2px solid #75718b;
+            background: #373747;
+            color: white;
+            border-radius: 15px;
+            font-size: clamp(24px, 4vw, 40px);
+            font-weight: bold;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: pointer;
+        }
+
+        .control.pressed {
+            background: #846447;
+            transform: scale(.96);
+        }
+
+        .control.up {
+            grid-column: 2;
+        }
+
+        .control.left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .control.down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .control.right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: 1.25fr .8fr 1fr;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #ddad85;
+            border-radius: 12px;
+            color: #25170f;
+        }
+
+        #avatar {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 11px;
+            opacity: .8;
+        }
+
+        .summary strong {
+            font-size: clamp(12px, 1.8vw, 18px);
+        }
+
+        .section-heading {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffd8aa;
+        }
+
+        #ingredients {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            overflow: auto;
+            min-height: 70px;
+            align-content: flex-start;
+        }
+
+        .ingredient {
+            border: 2px solid #686473;
+            border-radius: 10px;
+            background: #2e2c3b;
+            color: #fff;
+            padding: 9px;
+            min-width: 95px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .ingredient[aria-pressed="true"] {
+            border-color: #3fd8b4;
+            background: #17594f;
+        }
+
+        .ingredient small {
+            display: block;
+            margin-top: 4px;
+            color: #e9cc9f;
+        }
+
+        #teammates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+            overflow: auto;
+        }
+
+        .teammate {
+            background: #30303b;
+            border-radius: 8px;
+            padding: 7px 10px;
+        }
+
+        #interact {
+            width: min(100%, 155px);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 5px solid #1ebcaa;
+            color: white;
+            background: linear-gradient(145deg, #219c91, #0b756e);
+            font-weight: 900;
+            font-size: clamp(15px, 2.6vw, 23px);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: pointer;
+        }
+
+        #interact.pressed {
+            filter: brightness(1.3);
+            transform: scale(.96);
+        }
+
+        #pauseBtn {
+            width: min(100%, 155px);
+            padding: 12px 0;
+            border-radius: 14px;
+            border: 3px solid #e94560;
+            color: white;
+            background: linear-gradient(145deg, #c0394f, #8b1a2e);
+            font-weight: 900;
+            font-size: clamp(13px, 2vw, 18px);
+            letter-spacing: 1px;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #pauseBtn.active {
+            background: linear-gradient(145deg, #43a87a, #1e6b4a);
+            border-color: #43e97b;
+        }
+
+        .note {
+            font-size: 11px;
+            opacity: .75;
+            text-align: center;
+        }
+
+        #feedback {
+            font-size: 11px;
+            color: #d2bca8;
+            text-align: center;
+        }
+
+        .pairing-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            background: #25212c;
+            border: 1px solid #71533e;
+            border-radius: 14px;
+        }
+
+        .pairing-panel label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        #pairingCode {
+            width: 160px;
+            padding: 10px;
+            border: 1px solid #b78a63;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        #pairingButton {
+            padding: 11px 15px;
+            background: #198e81;
+            color: white;
+            border: 0;
+            border-radius: 9px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #pairingMessage {
+            font-size: 12px;
+            color: #ffd1a4;
+        }
+
+        @media (orientation: portrait) {
+            .shell::before {
+                content: 'Gira el celular horizontalmente para jugar';
+                display: block;
+                text-align: center;
+                background: #865a2d;
+                padding: 8px;
+                border-radius: 10px;
+                font-size: 13px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .controls,
+            .action-panel {
+                min-height: 180px;
+            }
+        }
+
+        @media (max-height: 420px) {
+            .shell {
+                padding: 7px;
+                gap: 5px;
+            }
+
+            .panel {
+                padding: 8px;
+            }
+
+            .layout {
+                gap: 6px;
+            }
+
+            .summary {
+                padding: 5px;
+            }
+
+            .dpad {
+                width: min(100%, 170px);
+            }
+
+            #interact {
+                width: min(100%, 125px);
+            }
+
+            .pairing-panel {
+                padding: 6px;
+            }
+        }
+    .control,
+    #interact,
+    .ingredient,
+    .dpad {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: none;
+    }
+
+    .control,
+    #interact,
+    .ingredient {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    </style>
+</head>
+
+<body>
+    <main class="shell">
+        <header>
+            <h1>🍳 KITCHEN CHAOS — CONTROL</h1>
+            <span id="connectionStatus">Sin vincular</span>
+        </header>
+
+        <div id="pairingPanel" class="pairing-panel">
+            <label for="pairingCode">Código de vinculación</label>
+
+            <input
+                id="pairingCode"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                placeholder="Escribe los 6 dígitos"
+                autocomplete="off"
+            >
+
+            <button id="pairingButton" type="button">
+                Conectar celular
+            </button>
+
+            <span id="pairingMessage">
+                Genera el código desde Kitchen Chaos en tu computador.
+            </span>
+        </div>
+
+        <div class="layout">
+            <section class="panel controls" aria-label="Movimiento">
+                <h2>MOVIMIENTO</h2>
+
+                <div class="dpad">
+                    <button class="control up" data-direction="up" aria-label="Arriba">↑</button>
+                    <button class="control left" data-direction="left" aria-label="Izquierda">←</button>
+                    <button class="control down" data-direction="down" aria-label="Abajo">↓</button>
+                    <button class="control right" data-direction="right" aria-label="Derecha">→</button>
+                </div>
+            </section>
+
+            <section class="panel stats">
+                <div class="summary">
+                    <div>
+                        <span class="stat-label">Jugador</span>
+                        <img id="avatar" alt="" hidden>
+                        <strong id="playerName">Sin vincular</strong>
+                    </div>
+
+                    <div>
+                        <span class="stat-label">Puntos</span>
+                        <strong id="score">—</strong>
+                    </div>
+
+                    <div>
+                        <span class="stat-label">Mi plato</span>
+                        <strong id="plateState">Sin plato</strong>
+                    </div>
+                </div>
+
+                <div class="section-heading">MIS INGREDIENTES</div>
+
+                <div id="ingredients">
+                    <span class="note">Se mostrarán al conectar la partida.</span>
+                </div>
+
+                <div class="section-heading">COMPAÑEROS</div>
+
+                <div id="teammates">
+                    <span class="note">Sin datos de compañeros.</span>
+                </div>
+            </section>
+
+            <section class="panel action-panel">
+                <button id="interact" aria-label="Agarrar o interactuar">
+                    &#x270B;<br>AGARRAR
+                </button>
+
+                <button id="pauseBtn" aria-label="Pausar o reanudar">
+                    &#x23F8; PAUSA
+                </button>
+
+                <h2>INTERACTUAR</h2>
+                <div class="note">Equivale a Espacio</div>
+
+                <div id="feedback">
+                    Primero vincularemos este control con tu personaje.
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+    <script>
+        const directionButtons = document.querySelectorAll('[data-direction]');
+        const interactButton = document.getElementById('interact');
+        const feedback = document.getElementById('feedback');
+
+        const mobileConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/gamehub")
+            .withAutomaticReconnect()
+            .build();
+
+        const pairingPanel = document.getElementById("pairingPanel");
+        const pairingCode = document.getElementById("pairingCode");
+        const pairingButton = document.getElementById("pairingButton");
+        const pairingMessage = document.getElementById("pairingMessage");
+        const connectionStatus = document.getElementById("connectionStatus");
+
+        let mobileLinked = false;
+        let linkedRoomCode = null;
+
+        mobileConnection.on("MobileTeammatesUpdated", function (teammates) {
+            const container = document.getElementById("teammates");
+            container.innerHTML = "";
+            if (!teammates || teammates.length === 0) {
+                container.textContent = "No hay compañeros conectados.";
+                return;
+            }
+            const validAvatars = ["vaca", "nutria", "pinguino", "gato", "panda", "perro", "aguila", "dragon"];
+            teammates.forEach(function (teammate) {
+                const item = document.createElement("div");
+                item.style.cssText = "display:flex;align-items:center;gap:10px;padding:8px;";
+                const avatar = document.createElement("img");
+                const avatarId = validAvatars.includes(teammate.avatarId) ? teammate.avatarId : "vaca";
+                avatar.src = "images/characters/" + avatarId + ".webp";
+                avatar.alt = "";
+                avatar.style.cssText = "width:42px;height:42px;object-fit:contain;border-radius:50%;";
+                const name = document.createElement("strong");
+                name.textContent = teammate.name;
+                item.appendChild(avatar);
+                item.appendChild(name);
+                container.appendChild(item);
+            });
+        });
+
+
+        mobileConnection.on("MobileScoreUpdated", function (score) {
+            document.getElementById("score").textContent = score;
+        });
+        
+        mobileConnection.on("MobilePlateUpdated", function (state) {
+            const plateState = document.getElementById("plateState");
+
+            if (state === "clean") {
+                plateState.textContent = "🍽️ Plato limpio";
+            } else if (state === "food") {
+                plateState.textContent = "🍛 Plato preparado";
+            } else if (state === "dirty") {
+                plateState.textContent = "🥣 Plato sucio";
+            } else {
+                plateState.textContent = "Sin plato";
+            }
+        });
+
+        mobileConnection.on("MobileInventoryUpdated", function (ingredients) {
+            const container = document.getElementById("ingredients");
+            container.innerHTML = "";
+
+            if (!Array.isArray(ingredients) || ingredients.length === 0) {
+                const message = document.createElement("span");
+                message.className = "note";
+                message.textContent = "No tienes ingredientes todavía.";
+                container.appendChild(message);
+                return;
+            }
+
+            ingredients.forEach(function (ingredient) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "ingredient";
+                button.setAttribute("aria-pressed", String(ingredient.selected));
+
+                const name = document.createElement("strong");
+                name.textContent = ingredient.name;
+
+                const state = document.createElement("small");
+                state.textContent = ingredient.state;
+
+                button.appendChild(name);
+                button.appendChild(state);
+
+                button.addEventListener("click", function () {
+                    if (!mobileLinked ||
+                        mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                        feedback.textContent = "El control no está vinculado.";
+                        return;
+                    }
+
+                    const selected = button.getAttribute("aria-pressed") !== "true";
+
+                    mobileConnection.invoke("SelectMobileIngredient", ingredient.id, selected)
+                        .then(function () {
+                            feedback.textContent = selected
+                                ? ingredient.name + " seleccionado"
+                                : ingredient.name + " deseleccionado";
+                        })
+                        .catch(function (error) {
+                            feedback.textContent = error.message;
+                        });
+                });
+
+                container.appendChild(button);
+
+            });
+        });
+
+
+        mobileConnection.on("MobileControlLinked", function (data) {
+            mobileLinked = true;
+            linkedRoomCode = data.roomCode;
+
+            connectionStatus.textContent = "Conectado";
+            connectionStatus.style.color = "#45e0a4";
+
+            document.getElementById("playerName").textContent = data.playerName;
+
+            const avatar = document.getElementById("avatar");
+            avatar.src = "images/characters/" + data.avatarId + ".webp";
+            avatar.hidden = false;
+
+            pairingPanel.style.display = "none";
+            feedback.textContent = "Celular vinculado correctamente.";
+        });
+
+        mobileConnection.on("MobileControlUnlinked", function () {
+            mobileLinked = false;
+            linkedRoomCode = null;
+            mobilePaused = false;
+            pauseBtn.classList.remove('active');
+            pauseBtn.textContent = '\u23F8 PAUSA';
+            resetMobileControls();
+            connectionStatus.textContent = "Sin vincular";
+            connectionStatus.style.color = "#ffcf91";
+            pairingPanel.style.display = "flex";
+            pairingMessage.textContent = "Genera un nuevo código en el computador.";
+            document.getElementById("playerName").textContent = "Sin vincular";
+            document.getElementById("avatar").hidden = true;
+            document.getElementById("score").textContent = "—";
+            document.getElementById("plateState").textContent = "Sin plato";
+            document.getElementById("ingredients").textContent = "Sin datos de ingredientes.";
+            document.getElementById("teammates").textContent = "Sin datos de compañeros.";
+            feedback.textContent = "Este celular fue desvinculado.";
+        });
+
+        mobileConnection.onreconnecting(function () {
+            mobileLinked = false;
+            resetMobileControls();
+            connectionStatus.textContent = "Reconectando";
+            connectionStatus.style.color = "#ffcf91";
+            pairingPanel.style.display = "flex";
+            pairingMessage.textContent = "Se perdió la conexión con el servidor.";
+            feedback.textContent = "Esperando reconexión...";
+        });
+
+        mobileConnection.onreconnected(function () {
+            mobileLinked = false;
+            resetMobileControls();
+            connectionStatus.textContent = "Sin vincular";
+            connectionStatus.style.color = "#ffcf91";
+            pairingPanel.style.display = "flex";
+            pairingMessage.textContent = "Genera un nuevo código en el computador.";
+            feedback.textContent = "Conexión recuperada. Vincula nuevamente el celular.";
+        });
+
+        mobileConnection.onclose(function () {
+            mobileLinked = false;
+            resetMobileControls();
+            connectionStatus.textContent = "Desconectado";
+            connectionStatus.style.color = "#ff7676";
+            pairingPanel.style.display = "flex";
+            pairingMessage.textContent = "Sin conexión con el servidor. Recarga la página para intentar nuevamente.";
+            feedback.textContent = "El control está desconectado.";
+        });
+
+        mobileConnection.start()
+            .then(function () {
+                pairingMessage.textContent = "Introduce el código generado en el computador.";
+            })
+            .catch(function (error) {
+                pairingMessage.textContent = error.message;
+            });
+
+        pairingButton.addEventListener("click", async function () {
+            const code = pairingCode.value.trim();
+
+            if (!/^\d{6}$/.test(code)) {
+                pairingMessage.textContent = "Debes escribir un código de seis dígitos.";
+                return;
+            }
+
+            if (mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                pairingMessage.textContent = "Todavía no hay conexión con el servidor.";
+                return;
+            }
+
+            pairingButton.disabled = true;
+            pairingMessage.textContent = "Vinculando...";
+
+            try {
+                await mobileConnection.invoke("LinkMobileControl", code);
+                pairingMessage.textContent = "";
+            } catch (error) {
+                pairingMessage.textContent = error.message;
+            } finally {
+                pairingButton.disabled = false;
+            }
+        });
+
+        const activeDirections = new Set();
+
+        function resetMobileControls() {
+            activeDirections.clear();
+            directionButtons.forEach(function (button) {
+                button.classList.remove("pressed");
+            });
+            interactButton.classList.remove("pressed");
+        }
+
+        function setDirection(button, active) {
+            const direction = button.dataset.direction;
+
+            if (active) {
+                activeDirections.add(direction);
+            } else {
+                activeDirections.delete(direction);
+            }
+
+            button.classList.toggle("pressed", active);
+
+            if (!mobileLinked ||
+                mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                resetMobileControls();
+                feedback.textContent = "El control no está vinculado.";
+                return;
+            }
+
+            mobileConnection.invoke("SendMobileDirection", direction, active)
+                .catch(function (error) {
+                    feedback.textContent = error.message;
+                });
+
+            feedback.textContent = active
+                ? "Moviendo: " + direction
+                : "Control conectado";
+        }
+
+        directionButtons.forEach(button => {
+            button.addEventListener('pointerdown', event => {
+                event.preventDefault();
+                button.setPointerCapture(event.pointerId);
+                setDirection(button, true);
+            });
+
+            ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(name => {
+                button.addEventListener(name, () => setDirection(button, false));
+            });
+        });
+
+        interactButton.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            interactButton.setPointerCapture(event.pointerId);
+            interactButton.classList.add('pressed');
+
+            if (!mobileLinked ||
+                mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                feedback.textContent = "El control no está vinculado.";
+                return;
+            }
+
+            mobileConnection.invoke("SendMobileInteraction")
+                .then(function () {
+                    feedback.textContent = "Interacción enviada";
+                })
+                .catch(function (error) {
+                    feedback.textContent = error.message;
+                });
+        });
+
+        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(name => {
+            interactButton.addEventListener(name, () => {
+                interactButton.classList.remove('pressed');
+            });
+        });
+
+        let mobilePaused = false;
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        pauseBtn.addEventListener('click', function () {
+            if (!mobileLinked ||
+                mobileConnection.state !== signalR.HubConnectionState.Connected) {
+                feedback.textContent = 'El control no esta vinculado.';
+                return;
+            }
+            mobilePaused = !mobilePaused;
+            pauseBtn.classList.toggle('active', mobilePaused);
+            pauseBtn.textContent = mobilePaused ? '\u25B6 REANUDAR' : '\u23F8 PAUSA';
+            mobileConnection.invoke(mobilePaused ? 'PauseGame' : 'ResumeGame',
+                linkedRoomCode).catch(function (e) { feedback.textContent = e.message; });
+        });
+
+        mobileConnection.on('GamePaused', function () {
+            mobilePaused = true;
+            pauseBtn.classList.add('active');
+            pauseBtn.textContent = '\u25B6 REANUDAR';
+        });
+
+        mobileConnection.on('GameResumed', function () {
+            mobilePaused = false;
+            pauseBtn.classList.remove('active');
+            pauseBtn.textContent = '\u23F8 PAUSA';
+        });
+
+        window.addEventListener('blur', () => {
+            directionButtons.forEach(button => setDirection(button, false));
+            interactButton.classList.remove('pressed');
+        });
+
+        document.querySelectorAll(".control, #interact, #ingredients").forEach(function (element) {
+            element.addEventListener("contextmenu", function (event) {
+                event.preventDefault();
+            });
+        });
+    </script>
+</body>
+
+</html>

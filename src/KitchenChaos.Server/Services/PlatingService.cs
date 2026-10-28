@@ -1,0 +1,283 @@
+using System.Collections.Concurrent;
+using KitchenChaos.Server.Models;
+
+namespace KitchenChaos.Server.Services;
+
+public class PlateResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public Plate? Plate { get; set; }
+}
+
+public class PlatingService
+{
+    private readonly PreparationService _preparationService;
+    private readonly OrderService _orderService;
+
+    private readonly ConcurrentDictionary<string, List<Plate>> _platesByRoom = new();
+
+    public PlatingService(
+        PreparationService preparationService,
+        OrderService orderService)
+    {
+        _preparationService = preparationService;
+        _orderService = orderService;
+    }
+
+    public PlateResult TakePlate(string roomCode, string connectionId)
+    {
+        var plates = _platesByRoom.GetOrAdd(
+            roomCode,
+            _ => new List<Plate>());
+
+        lock (plates)
+        {
+            if (plates.Any(p => p.HolderConnectionId == connectionId))
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Ya tienes un plato en tus manos."
+                };
+            }
+
+            var plate = plates.FirstOrDefault(
+                p => p.State == PlateState.Available);
+
+            if (plate is null)
+            {
+                plate = new Plate();
+                plates.Add(plate);
+            }
+
+            plate.State = PlateState.Carried;
+            plate.HolderConnectionId = connectionId;
+
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
+    }
+
+    public PlateResult PlateDish(
+        string roomCode,
+        List<string> ingredientIds,
+        string connectionId)
+    {
+        var plates = _platesByRoom.GetOrAdd(
+            roomCode,
+            _ => new List<Plate>());
+
+        lock (plates)
+        {
+            var carriedPlate = plates.FirstOrDefault(
+                p => p.HolderConnectionId == connectionId &&
+                    p.State == PlateState.Carried);
+
+            if (carriedPlate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Primero debes recoger un plato vacío."
+                };
+            }
+        }
+
+        var order = _orderService.GetActiveOrder(roomCode);
+
+        if (order is null)
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "No hay un pedido activo."
+            };
+        }
+
+        // AB#76: los ingredientes son de la sala, no de un jugador especifico.
+        var ingredients = _preparationService.GetRoomIngredients(
+            roomCode,
+            ingredientIds);
+
+        if (ingredients.Count != ingredientIds.Distinct().Count())
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "Uno o más ingredientes no pertenecen al jugador."
+            };
+        }
+
+        if (ingredients.Any(i => i.State == IngredientState.Crudo ||
+                                 i.State == IngredientState.Cocinando ||
+                                 i.State == IngredientState.Quemado))
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "Hay ingredientes que todavía no están listos para emplatar."
+            };
+        }
+
+        var selectedNames = ingredients
+            .Select(i => i.Name)
+            .OrderBy(x => x)
+            .ToList();
+
+        var requiredNames = order.RequiredIngredients
+            .OrderBy(x => x)
+            .ToList();
+
+        if (!selectedNames.SequenceEqual(requiredNames))
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "Los ingredientes no coinciden con el pedido actual."
+            };
+        }
+
+        lock (plates)
+        {
+            var plate = plates.FirstOrDefault(
+                p => p.HolderConnectionId == connectionId &&
+                    p.State == PlateState.Carried);
+
+            if (plate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "Primero debes recoger un plato vacío."
+                };
+            }
+
+            var removed = _preparationService.RemoveRoomIngredients(
+                roomCode,
+                ingredientIds);
+
+            if (!removed)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "No fue posible consumir los ingredientes seleccionados."
+                };
+            }
+
+            plate.State = PlateState.Ready;
+            plate.DishName = order.DishName;
+            plate.Ingredients = selectedNames;
+
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
+    }
+
+    public PlateResult TakePlateForDelivery(string roomCode, string plateId)
+    {
+        if (!_platesByRoom.TryGetValue(roomCode, out var plates))
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "No hay platos en esta sala."
+            };
+        }
+
+        lock (plates)
+        {
+            var plate = plates.FirstOrDefault(p => p.Id == plateId);
+
+            if (plate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "El plato no existe."
+                };
+            }
+
+            if (plate.State != PlateState.Ready)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "El plato no está listo para entregar."
+                };
+            }
+
+            plate.State = PlateState.Dirty;
+
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
+    }
+
+    public PlateResult WashPlate(string roomCode, string plateId)
+    {
+        if (!_platesByRoom.TryGetValue(roomCode, out var plates))
+        {
+            return new PlateResult
+            {
+                Success = false,
+                Error = "No hay platos en esta sala."
+            };
+        }
+
+        lock (plates)
+        {
+            var plate = plates.FirstOrDefault(p => p.Id == plateId);
+
+            if (plate is null)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "El plato no existe."
+                };
+            }
+
+            if (plate.State != PlateState.Dirty)
+            {
+                return new PlateResult
+                {
+                    Success = false,
+                    Error = "El plato no está sucio."
+                };
+            }
+
+            plate.State = PlateState.Available;
+            plate.HolderConnectionId = null;
+            plate.DishName = null;
+            plate.Ingredients.Clear();
+
+            return new PlateResult
+            {
+                Success = true,
+                Plate = plate
+            };
+        }
+    }
+
+    public Plate? GetPlate(string roomCode, string plateId)
+    {
+        if (!_platesByRoom.TryGetValue(roomCode, out var plates))
+            return null;
+
+        lock (plates)
+        {
+            return plates.FirstOrDefault(p => p.Id == plateId);
+        }
+    }
+}
