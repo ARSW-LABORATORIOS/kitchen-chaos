@@ -6,6 +6,7 @@
 
 Juego cooperativo de cocina 2D en tiempo real — proyecto de ARSW enfocado en concurrencia y sincronización multijugador.
 
+
 **Release 1 · 17 de octubre de 2026** · .NET 8 · ASP.NET Core SignalR
 
 ## Contenido
@@ -355,3 +356,4 @@ Azure DevOps enlaza el commit con su historia automáticamente.
 ## Uso de herramientas de IA
 
 Usamos **Claude** y **Amazon Q** como apoyo para construir y documentar el proyecto. Todo el código y el contenido generado con ayuda de IA fue revisado y ajustado por el equipo antes de incluirlo; la responsabilidad sobre las decisiones de arquitectura y el resultado final es nuestra.
+
