@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using KitchenChaos.Server.Hubs;
 using KitchenChaos.Server.Models;
+using KitchenChaos.Server.Observability;
 using Microsoft.AspNetCore.SignalR;
 
 namespace KitchenChaos.Server.Services;
@@ -114,11 +115,15 @@ public class PreparationService
         lock (station)
         {
             if (!station.IsAvailable)
+            {
+                GameMetrics.StationTakes.WithLabels("conflict").Inc();
                 return new TakeIngredientResult { Success = false, Error = "Otro jugador ya tomó este ingrediente." };
+            }
 
             station.IsAvailable = false;
         }
 
+        GameMetrics.StationTakes.WithLabels("ok").Inc();
         _ = RestockStationAsync(roomCode, station);
 
         var definition = GetDefinition(station.IngredientName);
@@ -161,6 +166,7 @@ public class PreparationService
             ingredient.State = IngredientState.Picado;
         }
 
+        GameMetrics.IngredientEvents.WithLabels("chopped").Inc();
         return new IngredientActionResult { Success = true };
     }
 
@@ -193,6 +199,7 @@ public class PreparationService
             ingredient.State = IngredientState.Cocinando;
         }
 
+        GameMetrics.IngredientEvents.WithLabels("cooked").Inc();
         _ = RunCookingTimerAsync(roomCode, ingredient);
 
         return new IngredientActionResult { Success = true };
@@ -227,6 +234,7 @@ public class PreparationService
             ingredient.State = IngredientState.Listo;
         }
 
+        GameMetrics.IngredientEvents.WithLabels("ready").Inc();
         return new IngredientActionResult
         {
             Success = true
@@ -296,6 +304,7 @@ public class PreparationService
 
             ingredient.State = IngredientState.Quemado;
         }
+        GameMetrics.IngredientEvents.WithLabels("burned").Inc();
         await BroadcastIngredientUpdated(roomCode, ingredient);
     }
 

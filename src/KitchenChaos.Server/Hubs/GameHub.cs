@@ -1,3 +1,4 @@
+using KitchenChaos.Server.Observability;
 using KitchenChaos.Server.Services;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
@@ -159,6 +160,8 @@ public class GameHub : Hub
 
             return;
         }
+
+        GameMetrics.GamesStarted.WithLabels(level.ToString()).Inc();
 
         // Todos los jugadores de la sala reciben el mismo evento
         await Clients.Group(roomCode).SendAsync(
@@ -751,7 +754,13 @@ public class GameHub : Hub
         {
             await Clients.Group(room.Code)
                 .SendAsync("PlayerLeft", new { ConnectionId = connectionId });
-            if (room.Players.Count > 0)
+            if (room.Players.Count == 0)
+            {
+                // La sala ya no existe: sin esto sus temporizadores siguen corriendo hasta 4 min
+                // y generan pedidos vencidos de una sala fantasma.
+                _timerService.StopLevel(room.Code);
+            }
+            else
             {
                 var players = room.Players.Select(p => new
                 {

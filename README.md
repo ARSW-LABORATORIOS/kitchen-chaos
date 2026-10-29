@@ -17,10 +17,11 @@ Juego cooperativo de cocina 2D en tiempo real — proyecto de ARSW enfocado en c
 4. [Arquitectura](#arquitectura)
 5. [Tecnologías](#tecnologías)
 6. [Instalación y ejecución](#instalación-y-ejecución)
-7. [Estructura del repositorio](#estructura-del-repositorio)
-8. [Organización del trabajo](#organización-del-trabajo)
-9. [Equipo](#equipo)
-10. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
+7. [Observabilidad y pruebas de carga](#observabilidad-y-pruebas-de-carga)
+8. [Estructura del repositorio](#estructura-del-repositorio)
+9. [Organización del trabajo](#organización-del-trabajo)
+10. [Equipo](#equipo)
+11. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
 
 ---
 
@@ -215,6 +216,8 @@ El proceso de una partida entre los jugadores, el servidor y el entorno de la co
 | Frontend | HTML, CSS y JavaScript | Sin framework: una página para jugar (`index.html`) y otra para el control móvil (`control.html`) |
 | Datos | Azure Cosmos DB | Perfiles de jugador (SDK `Microsoft.Azure.Cosmos` 3.38.1); emulador local en Docker |
 | Contenedores | Docker | `Dockerfile` en dos etapas y `docker-compose.yml` para el emulador de Cosmos |
+| Observabilidad | prometheus-net, Prometheus y Grafana | El juego expone `/metrics`; Prometheus las guarda y Grafana las dibuja en un tablero ya configurado |
+| Pruebas de carga | k6 | Simula salas de dos jugadores por SignalR (carga, estrés, pico y duración) |
 | Código | Git y GitHub | Ramas `feature/*`, pull requests a `develop` y commits con el número de historia |
 | Gestión | Azure DevOps | Boards (épicas, features e historias), sprints semanales y Wiki |
 | Tipografías | Google Fonts | Fraunces, Source Sans 3 e IBM Plex Mono |
@@ -289,6 +292,65 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 
 ---
 
+## Observabilidad y pruebas de carga
+
+El servidor expone sus métricas en `/metrics` (formato Prometheus) y una ruta `/ready` para saber si responde. Prometheus las lee cada 5 segundos, Grafana las dibuja y k6 genera carga para ver cómo reacciona el juego.
+
+### Qué se mide
+
+- **Servicio:** si Prometheus lee el juego, si responde `/ready` (sonda de disponibilidad) y el porcentaje de disponibilidad en 5 minutos.
+- **Rendimiento:** promedio y P95 de cada llamada al `GameHub`, llamadas por segundo, porcentaje de errores y CPU del proceso. Todas las llamadas al hub se miden solas con un filtro de SignalR (`MetricsHubFilter`).
+- **Concurrencia:** `kc_station_takes_total{result="conflict"}` cuenta las veces que dos jugadores quisieron la misma estación y el `lock` dejó pasar solo a uno. Algo parecido se mide con `kc_room_joins_total{result="full"}` para el cupo de la sala.
+- **Juego:** jugadores conectados, salas activas, partidas iniciadas, pedidos entregados y vencidos, pasos de cocina y platos emplatados.
+
+Las métricas propias están todas en `src/KitchenChaos.Server/Observability/GameMetrics.cs`. Si agregas una acción nueva al juego, el hub la mide sola; si quieres una métrica propia, súmala ahí.
+
+### Levantar Prometheus y Grafana
+
+Con Docker Desktop abierto y el juego corriendo (`dotnet run`, puerto 5129):
+
+```bash
+cd observability
+docker compose up -d
+```
+
+- Grafana: `http://localhost:3000` (usuario `admin`, contraseña `admin`). El tablero **Kitchen Chaos Observabilidad** ya aparece configurado.
+- Prometheus: `http://localhost:9090`.
+- Para apagar: `docker compose down` (el tablero no se pierde, está guardado como archivo).
+
+Si cambias el tablero desde Grafana, expórtalo (`Share → Export → JSON`) y reemplaza `observability/grafana/dashboards/kitchen-chaos.json`; si no, el cambio se pierde al recargarlo.
+
+### Con el juego también en Docker
+
+Para medir sin pasar por la red de Docker Desktop hacia tu computador, el juego puede correr dentro de Docker, en la misma red que Prometheus y k6:
+
+```bash
+cd observability
+docker compose -f docker-compose.yml -f docker-compose.game.yml up -d --build
+```
+
+El juego queda en `http://localhost:5130` y Grafana en `http://localhost:3000`.
+
+### Pruebas de carga con k6
+
+El script está en `tests/load/kitchen-chaos.js` y tiene cinco escenarios: `humo`, `carga`, `estres`, `pico` y `duracion`. Cada iteración simula una sala de dos jugadores que piden **la misma estación a la vez**, y la prueba exige que gane exactamente uno. Los umbrales son p95 menor a 500 ms, errores menores al 1 % y un solo ganador por estación.
+
+Los comandos de cada escenario, con el juego en tu computador o en Docker, están en [tests/load/README.md](tests/load/README.md).
+
+### Resultados de las pruebas
+
+| Escenario | Resultado |
+|---|---|
+| `carga` (2 salas por segundo, 1 min) | 118 salas, 0 errores, p95 de 31 ms, un solo ganador en todas |
+| `pico` (hasta 25 salas por segundo, juego en el computador) | 378 salas, 0 errores del hub, p95 de 20 ms, un solo ganador en todas; 2 conexiones expiraron y k6 no alcanzó a iniciar 47 salas |
+| `estres` (hasta 12 salas por segundo, juego en Docker) | 929 salas, 0 fallos, p95 de 4 ms, un solo ganador en todas |
+
+Con el juego corriendo en el computador y k6 en Docker, el estrés ya fallaba con 12 salas por segundo (33 de unas 915 salas, por `handshake` sin respuesta). El servidor no registró errores y, con el juego y k6 en la misma red de Docker, esos fallos desaparecieron, así que el límite estaba en la red de Docker Desktop hacia el computador y no en el juego.
+
+Las pruebas también encontraron un error real: al quedar una sala vacía, el servidor no paraba sus temporizadores y seguían generando pedidos vencidos de una sala que ya no existía (hasta unos 2000 por minuto bajo carga). Ya está corregido en `GameHub.OnDisconnectedAsync`.
+
+---
+
 ## Estructura del repositorio
 
 ```
@@ -299,6 +361,7 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 │   ├── Models/                    sala, jugador, ingrediente, pedido, plato, receta, perfil
 │   ├── Services/                  lógica del juego (8 servicios)
 │   ├── Repositories/              acceso a Cosmos DB
+│   ├── Observability/             métricas del juego (GameMetrics) y filtro que mide el hub
 │   ├── wwwroot/
 │   │   ├── index.html             pantalla del juego
 │   │   ├── control.html           control desde el celular
@@ -306,6 +369,8 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 │   │   └── images/                mapas de los niveles, personajes y logo
 │   ├── Program.cs                 configuración del servidor
 │   └── appsettings.json
+├── observability/                 Prometheus, Grafana, sonda de disponibilidad y tablero (JSON)
+├── tests/load/                    pruebas de carga con k6
 ├── tools/wall-painter.html        herramienta para pintar paredes de los mapas
 ├── Dockerfile
 ├── docker-compose.yml             emulador de Cosmos DB
