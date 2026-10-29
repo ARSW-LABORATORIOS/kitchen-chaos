@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using KitchenChaos.Server.Models;
+using KitchenChaos.Server.Observability;
 
 namespace KitchenChaos.Server.Services;
 
@@ -36,6 +37,7 @@ public class RoomService
         room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName, AvatarId = avatarId });
 
         _rooms[code] = room;
+        GameMetrics.RoomsCreated.Inc();
         return room;
     }
 
@@ -43,6 +45,7 @@ public class RoomService
     {
         if (!_rooms.TryGetValue(code, out var room))
         {
+            GameMetrics.RoomJoins.WithLabels("not_found").Inc();
             return new JoinRoomResult { Success = false, Error = "El código de sala no existe." };
         }
 
@@ -52,12 +55,14 @@ public class RoomService
         {
             if (room.Players.Count >= MaxPlayers)
             {
+                GameMetrics.RoomJoins.WithLabels("full").Inc();
                 return new JoinRoomResult { Success = false, Error = "La sala ya está llena (4/4)." };
             }
 
             room.Players.Add(new Player { ConnectionId = connectionId, Name = playerName, AvatarId = avatarId });
         }
 
+        GameMetrics.RoomJoins.WithLabels("ok").Inc();
         return new JoinRoomResult { Success = true, Room = room };
     }
 
@@ -126,6 +131,9 @@ public class RoomService
             room.Level = level;
         }
     }
+
+    /// <summary>Cantidad de salas activas (para observabilidad).</summary>
+    public int RoomCount => _rooms.Count;
 
     public Room? GetRoom(string code) =>
         _rooms.TryGetValue(code, out var room) ? room : null;

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using KitchenChaos.Server.Hubs;
+using KitchenChaos.Server.Observability;
 
 namespace KitchenChaos.Server.Services;
 
@@ -160,6 +161,8 @@ public class TimerService
             state.Score -= OrderExpiredPenalty;
             ResetOrderTimer(roomCode, state);
         }
+
+        GameMetrics.OrdersExpired.Inc();
 
         // Genera pedido nuevo automáticamente
         var next = _orderService.GenerateOrder(roomCode);

@@ -1,0 +1,25 @@
+# Igual que prometheus.yml, pero con el juego corriendo dentro de Docker (servicio "game", puerto 8080).
+# Los nombres de los jobs (app, probe) son los mismos, así el tablero de Grafana funciona sin cambios.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["game:8080"]
+
+  - job_name: probe
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://game:8080/ready"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

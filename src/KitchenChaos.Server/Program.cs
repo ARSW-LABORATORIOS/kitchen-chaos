@@ -1,11 +1,15 @@
 using Microsoft.Azure.Cosmos;
 using KitchenChaos.Server.Hubs;
+using KitchenChaos.Server.Observability;
 using KitchenChaos.Server.Repositories;
 using KitchenChaos.Server.Services;
+using Microsoft.AspNetCore.SignalR;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR();
+// El filtro mide cada llamada del GameHub (duración, conteo y errores) sin tocar los métodos.
+builder.Services.AddSignalR(options => options.AddFilter<MetricsHubFilter>());
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<PreparationService>();
 builder.Services.AddSingleton<OrderService>();
@@ -58,9 +62,19 @@ catch (Exception ex)
     app.Logger.LogWarning("Cosmos DB no disponible, los perfiles de jugador no funcionarán: {Message}", ex.Message);
 }
 
+// Observabilidad: la cantidad de salas se lee justo antes de cada lectura de /metrics.
+Metrics.DefaultRegistry.AddBeforeCollectCallback(() =>
+    GameMetrics.ActiveRooms.Set(app.Services.GetRequiredService<RoomService>().RoomCount));
+
+app.UseHttpMetrics();
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapHub<GameHub>("/gamehub");
+
+// /metrics lo lee Prometheus; /ready lo consulta la sonda de disponibilidad.
+app.MapMetrics();
+app.MapGet("/ready", () => Results.Ok(new { status = "ready" }));
 
 app.Run();
