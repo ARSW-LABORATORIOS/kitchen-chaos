@@ -39,6 +39,12 @@
             overflow-x: hidden;
         }
 
+        body.in-game {
+            overflow: hidden;
+            padding: 0;
+            align-items: flex-start;
+        }
+
         .container {
             width: 90%;
             max-width: 650px;
@@ -85,7 +91,7 @@
             -webkit-backdrop-filter: none;
             border: none;
             box-shadow: none;
-            padding: 16px 6vw;
+            padding: 46px 6vw 16px;
             width: 100vw;
             max-width: 100vw;
             margin-left: calc(-50vw + 50%);
@@ -252,9 +258,9 @@
         }
 
         .player-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
             background: #fff;
             border: 2px solid var(--copper);
             object-fit: contain;
@@ -347,6 +353,22 @@
             border-radius: 6px;
             font-size: 13px;
             margin: 0 2px;
+        }
+
+        .ingredient-emoji-bubble {
+            position: absolute;
+            z-index: 15;
+            font-size: clamp(14px, 2vw, 24px);
+            line-height: 1;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            transition: left 0.08s linear, top 0.08s linear;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+            animation: emojiBounce 0.3s ease-out;
+        }
+        @keyframes emojiBounce {
+            from { transform: translate(-50%, -80%) scale(0.6); opacity: 0; }
+            to   { transform: translate(-50%, -100%) scale(1); opacity: 1; }
         }
 
         #connectionStatus {
@@ -548,6 +570,85 @@
         .btn-resume  { background: linear-gradient(135deg,#43e97b,#38f9d7); color:#0f3460; }
         .btn-restart { background: linear-gradient(135deg,#f7971e,#ffd200); color:#1a1a2e; }
         .btn-menu    { background: rgba(255,255,255,0.12); color:#fff; border: 1.5px solid rgba(255,255,255,0.25) !important; }
+
+        /* ===== Modal instrucciones de nivel ===== */
+        .level-intro-overlay {
+            position: fixed; inset: 0; z-index: 250;
+            background: rgba(0,0,0,0.72);
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .level-intro-modal {
+            background: linear-gradient(160deg, #fff8e7 0%, #ffe0b2 60%, #ffccbc 100%);
+            border-radius: 28px; padding: 36px 34px 28px;
+            text-align: center; max-width: 480px; width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 4px #f4a261;
+            animation: modalPop 0.35s cubic-bezier(.34,1.56,.64,1);
+        }
+        .level-intro-modal h2 {
+            font-size: 26px; margin-bottom: 4px; color: #b2582c;
+            font-family: var(--font-title); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .level-intro-dish {
+            font-size: 42px; margin: 8px 0 4px;
+        }
+        .level-intro-subtitle {
+            font-size: 13px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; color: #e76f51; margin-bottom: 16px;
+        }
+        .level-intro-ingredients {
+            list-style: none; padding: 0; margin: 0 0 20px;
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+        }
+        .level-intro-ingredients li {
+            background: rgba(255,255,255,0.65); border-radius: 999px;
+            padding: 6px 14px; font-size: 14px; font-weight: 600; color: #2a1a0f;
+            border: 1.5px solid rgba(178,88,44,0.25);
+        }
+        .btn-intro-continue {
+            background: linear-gradient(135deg,#f4a261,#e76f51); color:#fff;
+            border: none; border-radius: 999px; padding: 14px 36px;
+            font-size: 16px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; width: 100%;
+            transition: transform 0.15s, opacity 0.15s;
+            box-shadow: 0 4px 14px rgba(231,111,81,0.45);
+        }
+        .btn-intro-continue:hover { transform: translateY(-2px); opacity: 0.92; }
+
+        /* ===== Modal evento especial ===== */
+        .special-event-overlay {
+            position: fixed; inset: 0; z-index: 260;
+            background: rgba(0,0,0,0.0);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+        .special-event-modal {
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d0a0a 100%);
+            border: 3px solid #e94560;
+            border-radius: 28px; padding: 36px 40px;
+            text-align: center; max-width: 460px; width: 92%;
+            box-shadow: 0 0 60px rgba(233,69,96,0.6), 0 20px 60px rgba(0,0,0,0.5);
+            animation: eventPop 0.4s cubic-bezier(.34,1.56,.64,1);
+            color: #fff;
+        }
+        @keyframes eventPop {
+            from { transform: scale(0.7) rotate(-4deg); opacity: 0; }
+            to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+        }
+        .special-event-icon { font-size: 56px; margin-bottom: 10px; display: block; }
+        .special-event-modal h2 {
+            font-size: 28px; color: #ff6b6b;
+            font-family: var(--font-title); text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 8px;
+        }
+        .special-event-desc {
+            font-size: 16px; color: #ffe0c0; line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .special-event-countdown {
+            font-size: 48px; font-weight: 900; color: #e94560;
+            font-family: var(--font-mono); display: block;
+        }
     </style>
 </head>
 
@@ -670,6 +771,20 @@
 
             <p id="startGameMessage"></p>
 
+            <div id="mobileControlPanel" style="display:none; text-align: center; margin: 0 0 15px;">
+                <button id="generateControlCodeButton" type="button"
+                    style="width: auto; margin: 0 auto; padding: 10px 20px; justify-content: center;">
+                    📱 Vincular celular
+                </button>
+
+                <p id="mobileControlCodeDisplay" style="display: none; margin-top: 10px;">
+                    Código para tu celular:
+                    <strong id="mobileControlCode"></strong>
+                </p>
+
+                <p id="mobileControlStatus" style="margin-top: 8px; font-size: 14px; color: #6b4a2a;"></p>
+            </div>
+
             <button id="leaveRoomButton">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -709,20 +824,6 @@
 
                 </div>
 
-            </div>
-
-            <div id="mobileControlPanel" style="text-align: center; margin: 10px 0;">
-                <button id="generateControlCodeButton" type="button"
-                    style="width: auto; margin: 0 auto; padding: 10px 20px;">
-                    📱 Vincular celular
-                </button>
-
-                <p id="mobileControlCodeDisplay" style="display: none; margin-top: 10px;">
-                    Código para tu celular:
-                    <strong id="mobileControlCode"></strong>
-                </p>
-
-                <p id="mobileControlStatus" style="margin-top: 8px;"></p>
             </div>
 
             <div class="game-board-wrapper">
@@ -857,17 +958,17 @@
                 </div>
             </div>
 
-            <div class="stations-box">
+            <div class="stations-box" style="display:none">
                 <h3>Estaciones</h3>
                 <div id="stationsList"></div>
             </div>
 
-            <div class="ingredients-box">
+            <div class="ingredients-box" style="display:none">
                 <h3>Mis ingredientes</h3>
                 <div id="myIngredientsList"></div>
             </div>
 
-            <div class="plate-box">
+            <div class="plate-box" style="display:none">
                 <h3>Mi plato</h3>
 
                 <div id="plateVisual" class="plate-visual plate-clean">
@@ -974,12 +1075,434 @@
         });
 
 
-        let currentRoomCode = null;
+        const INGREDIENT_EMOJIS = {
+            "leche": "🥛", "arroz": "🍚", "leche condensada": "🍯", "uvas pasas": "🍇",
+            "tomate": "🍅", "lechuga": "🥬", "cebolla": "🧅", "pepino": "🥒",
+            "salchicha": "🌭", "papa": "🥔", "pollo": "🍗", "queso": "🧀",
+            "salsa roja": "🍅", "salsa blanca": "🫙",
+            "frijol": "🫘", "carne": "🥩", "platano": "🍌", "aguacate": "🥑",
+            "chicharron": "🥓", "huevo": "🥚"
+        };
+
+        function getIngredientEmoji(name) {
+            return INGREDIENT_EMOJIS[(name || "").toLowerCase()] || "🍽️";
+        }
+
+        function updateMyEmojiHead() {
+            const board = document.querySelector(".game-board");
+            if (!board) return;
+
+            let bubble = document.getElementById("myEmojiHead");
+            const keys = Object.keys(myIngredients);
+
+            if (keys.length === 0) {
+                if (bubble) bubble.style.display = "none";
+                return;
+            }
+
+            if (!bubble) {
+                bubble = document.createElement("div");
+                bubble.id = "myEmojiHead";
+                bubble.className = "ingredient-emoji-bubble";
+                board.appendChild(bubble);
+            }
+
+            const firstIngredient = myIngredients[keys[0]];
+            const emoji = getIngredientEmoji(firstIngredient.name);
+            const extra = keys.length > 1 ? " +" + (keys.length - 1) : "";
+            bubble.textContent = emoji + extra;
+            bubble.style.display = "block";
+            bubble.style.left = myPosition.x + "%";
+            bubble.style.top = (myPosition.y - 9) + "%";
+        }
+
+
+        const LEVEL_INFO = {
+            1: {
+                dish: "Arroz con leche",
+                emoji: "🍚",
+                ingredients: [
+                    { emoji: "🥛", name: "Leche", action: "Hervir" },
+                    { emoji: "🍚", name: "Arroz", action: "Hervir" },
+                    { emoji: "🍯", name: "Leche condensada", action: "Agregar directo" },
+                    { emoji: "🍇", name: "Uvas pasas", action: "Agregar directo" }
+                ]
+            },
+            2: {
+                dish: "Ensalada",
+                emoji: "🥗",
+                ingredients: [
+                    { emoji: "🍅", name: "Tomate", action: "Picar" },
+                    { emoji: "🥬", name: "Lechuga", action: "Picar" },
+                    { emoji: "🧅", name: "Cebolla", action: "Picar" },
+                    { emoji: "🥒", name: "Pepino", action: "Picar" }
+                ]
+            },
+            3: {
+                dish: "Salchipapa",
+                emoji: "🍟",
+                ingredients: [
+                    { emoji: "🌭", name: "Salchicha", action: "Freír" },
+                    { emoji: "🥔", name: "Papa", action: "Freír" },
+                    { emoji: "🍗", name: "Pollo", action: "Freír" },
+                    { emoji: "🧀", name: "Queso", action: "Agregar directo" },
+                    { emoji: "🍅", name: "Salsa roja", action: "Agregar directo" },
+                    { emoji: "🪫", name: "Salsa blanca", action: "Agregar directo" }
+                ]
+            },
+            4: {
+                dish: "Bandeja paisa",
+                emoji: "🍽️",
+                ingredients: [
+                    { emoji: "🫘", name: "Frijoles", action: "Hervir" },
+                    { emoji: "🥩", name: "Carne", action: "Freír" },
+                    { emoji: "🍚", name: "Arroz", action: "Hervir" },
+                    { emoji: "🍌", name: "Plátano", action: "Freír" },
+                    { emoji: "🥚", name: "Huevo", action: "Freír" },
+                    { emoji: "🥑", name: "Aguacate", action: "Agregar directo" },
+                    { emoji: "🥓", name: "Chicharrón", action: "Freír" }
+                ]
+            }
+        };
+
+        function showLevelIntroModal(level, roomCode) {
+            const existing = document.getElementById('levelIntroOverlay');
+            if (existing) existing.remove();
+
+            const info = LEVEL_INFO[level];
+            if (!info) {
+                if (isHost) connection.invoke('StartTimer', roomCode).catch(console.error);
+                return;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.id = 'levelIntroOverlay';
+            overlay.className = 'level-intro-overlay';
+
+            const items = info.ingredients.map(function(ing) {
+                return '<li>' + ing.emoji + ' <strong>' + ing.name + '</strong> — ' + ing.action + '</li>';
+            }).join('');
+
+            overlay.innerHTML =
+                '<div class="level-intro-modal">' +
+                '<div class="level-intro-dish">' + info.emoji + '</div>' +
+                '<h2>Nivel ' + level + '</h2>' +
+                '<div class="level-intro-subtitle">' + info.dish + '</div>' +
+                '<ul class="level-intro-ingredients">' + items + '</ul>' +
+                '<button class="btn-intro-continue" id="btnIntroContinue">▶ ¡A cocinar!</button>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            document.getElementById('btnIntroContinue').addEventListener('click', function() {
+                overlay.remove();
+                if (isHost) connection.invoke('StartTimer', roomCode).catch(console.error);
+            });
+        }
+
         let isHost = false;
         let myPlayerName = null;
-        let myPlayerIndex = 0; // AB#81: posicin en la lista de jugadores, usada para el punto de spawn
+        let myPlayerIndex = 0;
         let myIngredients = {};
         let currentLevel = 1;
+
+        // Evento especial nivel 1: controles invertidos
+        let controlsInverted = false;
+        let specialEventTriggered = false;
+        let specialEventEndTimeout = null;
+
+        // Evento especial nivel 3: apagón
+        let blackoutActive = false;
+        let blackoutTimeout = null;
+        let lastBlackoutSecond = -1;
+
+        // Evento especial nivel 4: ola
+        let lastWaveMinute = -1;
+
+        function updateBlackoutClip() {
+            if (!blackoutActive) return;
+            const overlay = document.getElementById('blackoutOverlay');
+            if (!overlay) return;
+
+            const board = document.querySelector('.game-board');
+            const bw = board.offsetWidth;
+            const bh = board.offsetHeight;
+            // Radio del círculo de luz en píxeles (16% del ancho del tablero)
+            const r = bw * 0.16;
+
+            // Recopilar posiciones de todos los jugadores
+            const positions = [{ x: myPosition.x, y: myPosition.y }];
+            Object.values(otherPlayers).forEach(function(p) {
+                positions.push({ x: p.x, y: p.y });
+            });
+
+            // SVG path: rect grande que cubre todo, con círculos recortados (even-odd)
+            const W = bw, H = bh;
+            let path = 'M0 0 L' + W + ' 0 L' + W + ' ' + H + ' L0 ' + H + ' Z';
+            positions.forEach(function(pos) {
+                const cx = (pos.x / 100) * W;
+                const cy = (pos.y / 100) * H;
+                // Aproximación de círculo con bezier (SVG circle en clip-path no funciona en todos los browsers)
+                const k = r * 0.5523;
+                path += ' M' + (cx - r) + ' ' + cy +
+                    ' C' + (cx - r) + ' ' + (cy - k) + ' ' + (cx - k) + ' ' + (cy - r) + ' ' + cx + ' ' + (cy - r) +
+                    ' C' + (cx + k) + ' ' + (cy - r) + ' ' + (cx + r) + ' ' + (cy - k) + ' ' + (cx + r) + ' ' + cy +
+                    ' C' + (cx + r) + ' ' + (cy + k) + ' ' + (cx + k) + ' ' + (cy + r) + ' ' + cx + ' ' + (cy + r) +
+                    ' C' + (cx - k) + ' ' + (cy + r) + ' ' + (cx - r) + ' ' + (cy + k) + ' ' + (cx - r) + ' ' + cy + ' Z';
+            });
+
+            // Usar SVG clipPath inline
+            let svg = document.getElementById('blackoutClipSvg');
+            if (!svg) {
+                svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'blackoutClipSvg';
+                svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                clip.id = 'blackoutClip';
+                clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+                const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathEl.id = 'blackoutClipPath';
+                pathEl.setAttribute('fill-rule', 'evenodd');
+                clip.appendChild(pathEl);
+                defs.appendChild(clip);
+                svg.appendChild(defs);
+                document.querySelector('.game-board').appendChild(svg);
+            }
+            document.getElementById('blackoutClipPath').setAttribute('d', path);
+            overlay.style.clipPath = 'url(#blackoutClip)';
+            overlay.style.webkitClipPath = 'url(#blackoutClip)';
+        }
+
+        function setLightsVisible(visible) {
+            document.querySelectorAll('.player-light').forEach(function(l) {
+                l.style.display = visible ? 'block' : 'none';
+            });
+        }
+
+        function triggerBlackout() {
+            if (blackoutActive) return;
+            blackoutActive = true;
+            let overlay = document.getElementById('blackoutOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'blackoutOverlay';
+                overlay.style.cssText = 'position:absolute;inset:0;background:#000;z-index:50;border-radius:18px;';
+                document.querySelector('.game-board').appendChild(overlay);
+            }
+            overlay.style.clipPath = '';
+            overlay.style.webkitClipPath = '';
+            overlay.style.display = 'block';
+            document.querySelector('.game-board').classList.add('blackout-active');
+            updateBlackoutClip();
+            setLightsVisible(true);
+            if (blackoutTimeout) clearTimeout(blackoutTimeout);
+            blackoutTimeout = setTimeout(function() {
+                blackoutActive = false;
+                const el = document.getElementById('blackoutOverlay');
+                if (el) {
+                    el.style.clipPath = '';
+                    el.style.webkitClipPath = '';
+                    el.style.display = 'none';
+                }
+                document.querySelector('.game-board').classList.remove('blackout-active');
+                setLightsVisible(false);
+            }, 3000);
+        }
+
+        function triggerWave() {
+            // Overlay fijo sobre toda la pantalla (igual que el apagón pero azul)
+            var existing = document.getElementById('waveOverlay');
+            if (existing) existing.remove();
+
+            var overlay = document.createElement('div');
+            overlay.id = 'waveOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:260;overflow:hidden;pointer-events:none;';
+            document.body.appendChild(overlay);
+
+            // Fondo azul marino
+            var bg = document.createElement('div');
+            bg.style.cssText = 'position:absolute;inset:0;background:#023e8a;opacity:0;transition:opacity 0.3s;';
+            overlay.appendChild(bg);
+            setTimeout(function() { bg.style.opacity = '1'; }, 10);
+
+            // Tres capas de olas SVG que suben desde abajo
+            var waveColors = ['#0077b6','#0096c7','#48cae4'];
+            var waveDelays = [0, 150, 300];
+            var waveOffsets = [65, 55, 45]; // % desde arriba donde empieza la cresta
+            waveColors.forEach(function(color, i) {
+                var svgNS = 'http://www.w3.org/2000/svg';
+                var svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('viewBox', '0 0 1440 200');
+                svg.setAttribute('preserveAspectRatio', 'none');
+                svg.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:' + (100 - waveOffsets[i]) + '%;transform:translateY(100%);transition:transform 0.7s ' + waveDelays[i] + 'ms cubic-bezier(0.25,0.46,0.45,0.94);';
+                // Path de ola sinusoidal
+                var d = 'M0 80';
+                for (var x = 0; x <= 1440; x += 20) {
+                    var y = 80 + Math.sin(x * 0.008) * 30 + Math.sin(x * 0.02) * 15;
+                    d += ' L' + x + ' ' + y;
+                }
+                d += ' L1440 200 L0 200 Z';
+                var path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('fill', color);
+                svg.appendChild(path);
+                overlay.appendChild(svg);
+                setTimeout(function(s) { s.style.transform = 'translateY(0)'; }, waveDelays[i] + 10, svg);
+            });
+
+            // Texto centrado
+            var txt = document.createElement('div');
+            txt.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);transition:transform 0.4s 0.5s cubic-bezier(.34,1.56,.64,1);color:#fff;font-family:Fraunces,Georgia,serif;font-size:clamp(24px,5vw,52px);font-weight:700;text-transform:uppercase;letter-spacing:3px;text-shadow:0 2px 16px rgba(0,0,80,0.7);white-space:nowrap;z-index:1;';
+            txt.textContent = '\uD83C\uDF0A \u00A1Ola gigante!';
+            overlay.appendChild(txt);
+            setTimeout(function() { txt.style.transform = 'translate(-50%,-50%) scale(1)'; }, 10);
+
+            // Descartar ingredientes
+            var ids = Object.keys(myIngredients);
+            ids.forEach(function(id) {
+                if (currentRoomCode) {
+                    connection.invoke('DiscardIngredient', currentRoomCode, id)
+                        .catch(function(err) { console.error(err); });
+                }
+            });
+            myIngredients = {};
+            selectedIngredientIds.clear();
+            renderMyIngredients();
+            updateMyEmojiHead();
+
+            // Fade out y eliminar
+            setTimeout(function() {
+                overlay.style.transition = 'opacity 0.5s';
+                overlay.style.opacity = '0';
+                setTimeout(function() { overlay.remove(); }, 500);
+            }, 2500);
+        }
+
+        function showSpecialEventModal(onDone) {
+            const existing = document.getElementById('specialEventOverlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'specialEventOverlay';
+            overlay.className = 'special-event-overlay';
+            overlay.innerHTML =
+                '<div class="special-event-modal">' +
+                '<span class="special-event-icon">\uD83C\uDF00</span>' +
+                '<h2>\u00A1Evento especial!</h2>' +
+                '<div class="special-event-desc">\u00A1Los controles se han invertido!<br>' +
+                '\u2191 = \u2193 &nbsp; \u2193 = \u2191 &nbsp; \u2190 = \u2192 &nbsp; \u2192 = \u2190<br>' +
+                '<strong>Dura 1 minuto. \u00A1Buena suerte!</strong></div>' +
+                '<span class="special-event-countdown" id="specialEventCountdown">5</span>' +
+                '</div>';
+            document.body.appendChild(overlay);
+
+            let secs = 5;
+            const tick = setInterval(function() {
+                secs--;
+                const el = document.getElementById('specialEventCountdown');
+                if (el) el.textContent = secs;
+                if (secs <= 0) {
+                    clearInterval(tick);
+                    overlay.remove();
+                    if (onDone) onDone();
+                }
+            }, 1000);
+        }
+
+        function triggerSpecialEvent() {
+            if (specialEventTriggered) return;
+            specialEventTriggered = true;
+            showSpecialEventModal(function() {
+                controlsInverted = true;
+                specialEventEndTimeout = setTimeout(function() {
+                    controlsInverted = false;
+                }, 60000);
+            });
+        }
+
+        // ===== Autos nivel 2 =====
+        const CARS_CONFIG = [
+            { id: 'car0', x: 42,   y: 105, dir: -1, speed: 35, img: 'images/taxi-espalda.png' },
+            { id: 'car1', x: 42,   y: 140, dir: -1, speed: 28, img: 'images/sitp-espalda.png' },
+            { id: 'car3', x: 48.5, y: -10, dir:  1, speed: 32, img: 'images/taxi-frente.png'  },
+            { id: 'car4', x: 48.5, y: -45, dir:  1, speed: 42, img: 'images/sitp-frente.png'  },
+        ];
+        let carsState = [];
+        let carAnimFrame = null;
+        let lastCarFrameTime = null;
+
+        function initCars() {
+            document.querySelectorAll('.road-car').forEach(function(el) { el.remove(); });
+            const board = document.querySelector('.game-board');
+            carsState = CARS_CONFIG.map(function(cfg) {
+                const el = document.createElement('img');
+                el.className = 'road-car';
+                el.src = cfg.img;
+                el.alt = '';
+                el.style.transform = 'translate(-50%, -50%)';
+                board.appendChild(el);
+                return { x: cfg.x, y: cfg.y, dir: cfg.dir, speed: cfg.speed, el: el };
+            });
+        }
+
+        function stepCars(delta) {
+            if (currentLevel !== 2 || isPaused) return;
+            carsState.forEach(function(car) {
+                car.y += car.dir * car.speed * delta;
+                if (car.dir === -1 && car.y < -12) car.y = 105;
+                if (car.dir ===  1 && car.y > 105) car.y = -12;
+                car.el.style.left = car.x + '%';
+                car.el.style.top  = car.y + '%';
+                // Colision: empuja al jugador hacia el centro
+                const dx = Math.abs(car.x - myPosition.x);
+                const dy = Math.abs(car.y - myPosition.y);
+                if (dx < 4 && dy < 7) {
+                    const push = car.x < 50 ? 7 : -7;
+                    const newX = Math.max(2, Math.min(98, myPosition.x + push));
+                    // Solo mover si la nueva posicion no es una pared
+                    if (!wouldCollide(newX, myPosition.y)) {
+                        myPosition.x = newX;
+                    } else {
+                        // Intentar empuje menor hasta encontrar celda libre
+                        for (let p = 1; p <= 7; p++) {
+                            const tryX = Math.max(2, Math.min(98, myPosition.x + (push > 0 ? p : -p)));
+                            if (!wouldCollide(tryX, myPosition.y)) {
+                                myPosition.x = tryX;
+                                break;
+                            }
+                        }
+                    }
+                    renderMyPlayerPosition();
+                    if (currentRoomCode) {
+                        connection.invoke('MovePlayer', currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
+                            .catch(function(err) { console.error(err); });
+                    }
+                }
+            });
+        }
+
+        function carsLoop(timestamp) {
+            if (lastCarFrameTime === null) lastCarFrameTime = timestamp;
+            const delta = (timestamp - lastCarFrameTime) / 1000;
+            lastCarFrameTime = timestamp;
+            stepCars(delta);
+            carAnimFrame = requestAnimationFrame(carsLoop);
+        }
+
+        function startCars() {
+            if (carAnimFrame) { cancelAnimationFrame(carAnimFrame); carAnimFrame = null; }
+            lastCarFrameTime = null;
+            initCars();
+            carAnimFrame = requestAnimationFrame(carsLoop);
+        }
+
+        function stopCars() {
+            if (carAnimFrame) { cancelAnimationFrame(carAnimFrame); carAnimFrame = null; }
+            document.querySelectorAll('.road-car').forEach(function(el) { el.remove(); });
+            carsState = [];
+        }
+        // ===== Fin autos nivel 2 =====
 
         // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el men
         // y el servidor lo reparte a todos, para que nadie vea un avatar distinto al elegido.
@@ -1022,6 +1545,7 @@
         function showWaitingRoom() {
             document.querySelector(".menu").style.display = "none";
             document.querySelector(".waiting-room").style.display = "block";
+            document.getElementById("mobileControlPanel").style.display = "block";
         }
 
         // ===================== AB#81 - Movimiento, colisin y personajes =====================
@@ -1470,6 +1994,14 @@
                 document.querySelector(".game-board").appendChild(sprite);
             }
             sprite.src = avatarPathForId(mySelectedAvatarId);
+
+            let light = document.getElementById("myPlayerLight");
+            if (!light) {
+                light = document.createElement("div");
+                light.id = "myPlayerLight";
+                light.className = "player-light";
+                document.querySelector(".game-board").appendChild(light);
+            }
             return sprite;
         }
 
@@ -1518,11 +2050,24 @@
             sprite.style.top = myPosition.y + "%";
             sprite.style.transform =
                 "translate(-50%, -70%) scaleX(" + (myFacingLeft ? -1 : 1) + ")";
+
+            const light = document.getElementById("myPlayerLight");
+            if (light) {
+                light.style.left = myPosition.x + "%";
+                light.style.top = myPosition.y + "%";
+            }
+            updateBlackoutClip();
             const carriedPlate = document.getElementById("myCarriedPlate");
 
             if (carriedPlate) {
                 carriedPlate.style.left = myPosition.x + "%";
                 carriedPlate.style.top = (myPosition.y - 7) + "%";
+            }
+
+            const emojiHead = document.getElementById("myEmojiHead");
+            if (emojiHead && emojiHead.style.display !== "none") {
+                emojiHead.style.left = myPosition.x + "%";
+                emojiHead.style.top = (myPosition.y - 9) + "%";
             }
         }
 
@@ -1542,10 +2087,19 @@
 
             sprite.style.left = pos.x + "%";
             sprite.style.top = pos.y + "%";
-
-            // Mismo ancla que el propio jugador (centrado en los "pies"), si no
-            // el sprite del otro se posiciona desde la esquina y se ve corrido.
             sprite.style.transform = "translate(-50%, -70%) scaleX(" + (pos.facingLeft ? -1 : 1) + ")";
+
+            let light = document.getElementById("light-" + connectionId);
+            if (!light) {
+                light = document.createElement("div");
+                light.id = "light-" + connectionId;
+                light.className = "player-light";
+                document.querySelector(".game-board").appendChild(light);
+            }
+            light.style.left = pos.x + "%";
+            light.style.top = pos.y + "%";
+            light.style.display = blackoutActive ? 'block' : 'none';
+            updateBlackoutClip();
             const plateId = "carried-plate-" + connectionId;
             let plate = document.getElementById(plateId);
             const plateState = otherPlayerPlateStates[connectionId];
@@ -1595,10 +2149,22 @@
                 let dx = 0;
                 let dy = 0;
 
-                if (pressedKeys["arrowup"] || pressedKeys["w"] || mobilePressedKeys["arrowup"]) dy -= 1;
-                if (pressedKeys["arrowdown"] || pressedKeys["s"] || mobilePressedKeys["arrowdown"]) dy += 1;
-                if (pressedKeys["arrowleft"] || pressedKeys["a"] || mobilePressedKeys["arrowleft"]) dx -= 1;
-                if (pressedKeys["arrowright"] || pressedKeys["d"] || mobilePressedKeys["arrowright"]) dx += 1;
+                const up    = pressedKeys["arrowup"]    || pressedKeys["w"] || mobilePressedKeys["arrowup"];
+                const down  = pressedKeys["arrowdown"]  || pressedKeys["s"] || mobilePressedKeys["arrowdown"];
+                const left  = pressedKeys["arrowleft"]  || pressedKeys["a"] || mobilePressedKeys["arrowleft"];
+                const right = pressedKeys["arrowright"] || pressedKeys["d"] || mobilePressedKeys["arrowright"];
+
+                if (controlsInverted) {
+                    if (down)  dy -= 1;
+                    if (up)    dy += 1;
+                    if (right) dx -= 1;
+                    if (left)  dx += 1;
+                } else {
+                    if (up)    dy -= 1;
+                    if (down)  dy += 1;
+                    if (left)  dx -= 1;
+                    if (right) dx += 1;
+                }
 
                 if (dx !== 0 || dy !== 0) {
 
@@ -1678,6 +2244,8 @@
             delete otherPlayers[data.connectionId];
             const sprite = document.getElementById("player-" + data.connectionId);
             if (sprite) sprite.remove();
+            const light = document.getElementById("light-" + data.connectionId);
+            if (light) light.remove();
             delete otherPlayerPlateStates[data.connectionId];
 
             const carriedPlate = document.getElementById(
@@ -2115,6 +2683,7 @@
                 cookMethod: ingredient.cookMethod
             };
             renderMyIngredients();
+            updateMyEmojiHead();
 
         });
 
@@ -2138,6 +2707,7 @@
             delete myIngredients[update.id];
             selectedIngredientIds.delete(update.id);
             renderMyIngredients();
+            updateMyEmojiHead();
 
         });
 
@@ -2347,7 +2917,11 @@
 
             document.querySelector(".subtitle").style.display = "none";
 
+            document.getElementById("mobileControlPanel").style.display = "none";
+
             document.getElementById("gameScreen").style.display = "block";
+
+            document.body.classList.add("in-game");
 
             document.getElementById("gameScreen")
                 .querySelector("h2")
@@ -2367,6 +2941,19 @@
             currentLevel = gameInfo.level;
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
             isPaused = false;
+            controlsInverted = false;
+            specialEventTriggered = false;
+            if (specialEventEndTimeout) { clearTimeout(specialEventEndTimeout); specialEventEndTimeout = null; }
+            const existingEvent = document.getElementById('specialEventOverlay');
+            if (existingEvent) existingEvent.remove();
+            blackoutActive = false;
+            lastBlackoutSecond = -1;
+            if (blackoutTimeout) { clearTimeout(blackoutTimeout); blackoutTimeout = null; }
+            lastWaveMinute = -1;
+            const existingBlackout = document.getElementById('blackoutOverlay');
+            if (existingBlackout) existingBlackout.style.display = 'none';
+            document.querySelector('.game-board').classList.remove('blackout-active');
+            setLightsVisible(false);
             hidePauseModal();
             myPosition = pickSpawnPoint(gameInfo.level, myPlayerIndex);
             myFacingLeft = false;
@@ -2383,6 +2970,8 @@
 
             currentPlateId = null;
             updateCarriedPlate(null);
+            myIngredients = {};
+            updateMyEmojiHead();
             ensureMyPlayerSprite();
             renderMyPlayerPosition();
 
@@ -2390,6 +2979,14 @@
             // para que los dems te vean aparecer desde el primer momento.
             connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
+
+            showLevelIntroModal(gameInfo.level, gameInfo.roomCode);
+
+            if (gameInfo.level === 2) {
+                startCars();
+            } else {
+                stopCars();
+            }
 
         });
 
@@ -2582,6 +3179,7 @@
 
             selectedIngredientIds.clear();
             renderMyIngredients();
+            updateMyEmojiHead();
 
             document.getElementById("plateStatus").textContent =
                 "Plato listo: " + plate.dishName;
@@ -2628,6 +3226,26 @@
             const sec = s % 60;
             document.getElementById("levelTimerDisplay").textContent =
                 min + ":" + (sec < 10 ? "0" : "") + sec;
+
+            // Evento especial nivel 1: se dispara cuando queda 1 minuto transcurrido (s === 180 de 240 total)
+            if (currentLevel === 1 && s === 180) {
+                triggerSpecialEvent();
+            }
+
+            // Evento especial nivel 3: apagón cada 15 segundos
+            if (currentLevel === 3 && s > 0 && s % 15 === 0 && s !== lastBlackoutSecond) {
+                lastBlackoutSecond = s;
+                triggerBlackout();
+            }
+
+            // Evento especial nivel 4: ola cada 45 segundos
+            if (currentLevel === 4 && s > 0 && s % 45 === 0) {
+                const waveMinute = Math.floor(s / 45);
+                if (waveMinute !== lastWaveMinute) {
+                    lastWaveMinute = waveMinute;
+                    triggerWave();
+                }
+            }
 
         });
 
