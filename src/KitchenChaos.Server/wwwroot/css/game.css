@@ -49,6 +49,98 @@
 
 }
 
+/* Autos nivel 2 */
+.road-car {
+    position: absolute;
+    width: 5%;
+    height: auto;
+    z-index: 9;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+    will-change: top;
+    image-rendering: auto;
+}
+
+/* Apagón nivel 3: los sprites suben por encima del overlay negro durante el apagón */
+.blackout-active .player-sprite,
+.blackout-active .carried-plate,
+.blackout-active .ingredient-emoji-bubble {
+    z-index: 55;
+}
+
+/* Ola nivel 4 */
+#waveOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    border-radius: 18px;
+    overflow: hidden;
+    pointer-events: none;
+    display: none;
+}
+
+.wave-active .player-sprite,
+.wave-active .carried-plate,
+.wave-active .ingredient-emoji-bubble {
+    z-index: 55;
+}
+
+.wave-svg {
+    position: absolute;
+    width: 300%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    animation: waveSweep 1.8s ease-in-out forwards;
+}
+
+@keyframes waveSweep {
+    0%   { transform: translateX(-66%); }
+    60%  { transform: translateX(0%); }
+    100% { transform: translateX(0%); }
+}
+
+.wave-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(20px, 4vw, 42px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 12px rgba(0,0,80,0.7);
+    white-space: nowrap;
+    animation: waveTextPop 0.4s 0.5s cubic-bezier(.34,1.56,.64,1) both;
+    z-index: 56;
+}
+
+@keyframes waveTextPop {
+    from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+/* Círculo de luz: decorativo, da el halo cálido alrededor del personaje */
+.player-light {
+    position: absolute;
+    width: 32%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 55;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+        circle,
+        rgba(255, 220, 100, 0.35) 0%,
+        rgba(255, 180, 40, 0.18) 50%,
+        transparent 75%
+    );
+    transition: left 0.08s linear, top 0.08s linear;
+    display: none;
+}
+
 
 
 .game-board-image {
@@ -77,11 +169,11 @@
 
     cursor: pointer;
 
-    border: 2px solid red;
+    border: 2px solid rgba(255, 255, 255, 0.55);
 
     border-radius: 6px;
 
-    background: rgba(255, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.08);
 
     z-index: 20;
 
@@ -351,7 +443,7 @@
 
     font-size: 13px;
 
-    color: #666;
+    color: #1a1a1a;
 
 }
 
@@ -1845,7 +1937,7 @@
     gap: 16px;
     width: 100%;
     max-width: 100%;
-    margin: 10px auto 16px;
+    margin: 4px auto 16px;
     padding: 0;
     background: transparent;
     border: none;
