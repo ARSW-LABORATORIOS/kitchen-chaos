@@ -106,7 +106,7 @@ public class GameHub : Hub
 
         room.Level = nextLevel;
         _preparationService.ResetStations(roomCode);
-        _timerService.StartLevel(roomCode);
+        // El timer arranca cuando el cliente confirma haber leído las instrucciones (StartTimer)
 
         await Clients.Group(roomCode).SendAsync("GameStarted", new { RoomCode = roomCode, Level = nextLevel });
 
@@ -173,11 +173,9 @@ public class GameHub : Hub
             }
         );
 
-        // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
-        _timerService.StartLevel(roomCode);
-
         // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
         _preparationService.ResetStations(roomCode);
+        // El timer arranca cuando todos los clientes confirman haber leído las instrucciones (StartTimer)
 
         var order = _orderService.GenerateOrder(roomCode);
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
@@ -634,6 +632,14 @@ public class GameHub : Hub
         {
             await Clients.Caller.SendAsync("DiscardIngredientError", result.Error);
         }
+    }
+
+    /// <summary>El host confirma que leyó las instrucciones del nivel y arranca el timer.</summary>
+    public async Task StartTimer(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || room.HostConnectionId != Context.ConnectionId) return;
+        _timerService.StartLevel(roomCode);
     }
 
     public async Task GetCurrentOrder(string roomCode)
