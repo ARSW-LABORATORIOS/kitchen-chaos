@@ -3,3 +3,9 @@
 .git/
 .vscode/
 .idea/
+
+infra/
+tests/
+observability/
+docs/
+tools/

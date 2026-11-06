@@ -18,10 +18,11 @@ Juego cooperativo de cocina 2D en tiempo real — proyecto de ARSW enfocado en c
 5. [Tecnologías](#tecnologías)
 6. [Instalación y ejecución](#instalación-y-ejecución)
 7. [Observabilidad y pruebas de carga](#observabilidad-y-pruebas-de-carga)
-8. [Estructura del repositorio](#estructura-del-repositorio)
-9. [Organización del trabajo](#organización-del-trabajo)
-10. [Equipo](#equipo)
-11. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
+8. [Despliegue en Azure](#despliegue-en-azure)
+9. [Estructura del repositorio](#estructura-del-repositorio)
+10. [Organización del trabajo](#organización-del-trabajo)
+11. [Equipo](#equipo)
+12. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
 
 ---
 
@@ -84,7 +85,7 @@ Cada nivel dura **300 segundos** y el servidor calcula las estrellas según el p
 - Todos los niveles se pueden elegir desde el inicio (el desbloqueo por estrellas queda pendiente).
 - El perfil de jugador existe en el servidor (Cosmos DB), pero la pantalla del juego todavía no lo usa.
 - Si un jugador pierde la conexión, al volver entra como jugador nuevo y no recupera su lugar.
-- El juego corre en local; el despliegue en Azure no está incluido.
+- El despliegue en Azure se hace con Terraform (ver [Despliegue en Azure](#despliegue-en-azure)); es una versión mínima del diseño objetivo, sin Front Door, Application Gateway ni Azure Cache.
 - No hay pruebas automatizadas todavía.
 
 **Release 2 (Sprint 7, del 19 al 25 de octubre)**: despliegue en Azure, reconexión con estado, perfil de jugador en la pantalla, bloqueo con Azure Cache, pruebas de concurrencia y de carga, CI, nivel 5, y activar los obstáculos y la pausa real en el servidor.
@@ -194,7 +195,7 @@ Alrededor: **Azure Cache** toma los locks de estación (para que dos jugadores n
 | App Configuration y Key Vault | `appsettings.json` | Historia #10 |
 | Front Door, Application Gateway y red virtual | No | Historias #8 y #68 |
 | Azure Monitor | No | Historia #67 |
-| Terraform y pipeline de CI | No | Historias #66 y #68 |
+| Terraform y pipeline de CI | Terraform en `infra/` (Container Apps y Container Registry); sin pipeline de CI | Historias #66 y #68 |
 | Cosmos DB | Servidor listo; la pantalla aún no lo usa | Historias #12 y #13 |
 
 ### Flujo del juego
@@ -351,6 +352,40 @@ Las pruebas también encontraron un error real: al quedar una sala vacía, el se
 
 ---
 
+## Despliegue en Azure
+
+El juego corre en **Azure Container Apps** con una sola réplica. Todo se crea con Terraform desde la carpeta `infra/`:
+
+| Recurso | Para qué |
+|---|---|
+| Grupo de recursos | Agrupa todo; borrarlo borra todo |
+| Container Registry (Basic) | Guarda la imagen del juego (`Dockerfile`) |
+| Identidad con permiso `AcrPull` | La Container App baja la imagen sin contraseñas |
+| Log Analytics (tope de 0,5 GB al día) | Logs de la Container App |
+| Entorno y Container App | El juego, con 0,25 vCPU y 0,5 GiB, HTTPS y WebSocket |
+
+Los pasos (crear la base, subir la imagen, crear la Container App, actualizar y apagar) están en [infra/README.md](infra/README.md). Se aplica en dos pasos porque la Container App necesita que la imagen ya exista en el registro.
+
+### Decisiones
+
+- **Una sola réplica:** las salas y los locks viven en memoria, con dos réplicas no se compartirían. Cada despliegue nuevo corta las partidas en curso.
+- **`/metrics` con token:** si existe la variable `Metrics__Token`, `/metrics` exige `Authorization: Bearer <token>`. Terraform genera el token. Sin token (en local) sigue abierto.
+- **Certificado de Cosmos:** solo se acepta cualquier certificado cuando el endpoint es local (emulador). Con una cuenta real se valida normalmente.
+- **Carga más rápida:** los mapas y los autos pasaron de PNG a WebP (de 10 MB a 1,2 MB), el HTML se comprime (de 145 KB a 38 KB) y las imágenes se guardan un día en el navegador.
+- **Reconexión:** la pantalla del juego y el control del celular se reconectan si la conexión se cae (por ejemplo, un celular que cambia de aplicación). Esto permite crear o unirse a una sala sin recargar, pero no devuelve al jugador a una partida en curso.
+
+### Costo y límites
+
+- La suscripción es Azure for Students (sin tarjeta). Solo permite unas pocas regiones; esta cuenta usa `eastus`.
+- Un presupuesto mensual con alertas por correo avisa del gasto, pero **no apaga nada**. Para dejar de gastar: `terraform destroy` dentro de `infra/`.
+- Cada petición a Azure tarda cerca de 0,6 s más que en local, aunque el juego responde en menos de 1 ms. Por eso se redujeron los bytes y las peticiones.
+
+### Lo que no incluye
+
+Front Door, Application Gateway, Azure SignalR Service, Azure Cache, Key Vault, Azure Monitor y un pipeline de CI/CD. Siguen siendo parte del diseño objetivo.
+
+---
+
 ## Estructura del repositorio
 
 ```
@@ -369,6 +404,7 @@ Las pruebas también encontraron un error real: al quedar una sala vacía, el se
 │   │   └── images/                mapas de los niveles, personajes y logo
 │   ├── Program.cs                 configuración del servidor
 │   └── appsettings.json
+├── infra/                         Terraform del despliegue en Azure (Container Apps)
 ├── observability/                 Prometheus, Grafana, sonda de disponibilidad y tablero (JSON)
 ├── tests/load/                    pruebas de carga con k6
 ├── tools/wall-painter.html        herramienta para pintar paredes de los mapas
