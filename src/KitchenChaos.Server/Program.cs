@@ -90,7 +90,7 @@ app.UseStaticFiles(new StaticFileOptions
 
         ctx.Context.Response.Headers.CacheControl = extension switch
         {
-            ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg" or ".ico" => "public,max-age=86400",
+            ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg" or ".ico" or ".m4a" or ".mp3" => "public,max-age=86400",
             ".css" or ".js" => "public,max-age=300",
             _ => "no-cache"
         };

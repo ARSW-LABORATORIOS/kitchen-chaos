@@ -114,6 +114,7 @@ public class PlatingService
         }
 
         if (ingredients.Any(i => i.State == IngredientState.Crudo ||
+                                 i.State == IngredientState.Picando ||
                                  i.State == IngredientState.Cocinando ||
                                  i.State == IngredientState.Quemado))
         {
