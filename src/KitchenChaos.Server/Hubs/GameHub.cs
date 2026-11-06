@@ -233,14 +233,16 @@ public class GameHub : Hub
     public async Task ChopIngredient(string roomCode, string ingredientId)
     {
         var result = _preparationService.ChopIngredient(roomCode, ingredientId, Context.ConnectionId);
-
         if (!result.Success)
         {
             await Clients.Caller.SendAsync("ChopIngredientError", result.Error);
             return;
         }
-
-        await Clients.Caller.SendAsync("IngredientUpdated", new { Id = ingredientId, State = "Picado" });
+        await Clients.Caller.SendAsync("IngredientUpdated", new
+        {
+            Id = ingredientId,
+            State = "Picando"
+        });
     }
 
     // AB#21 - Cocinar un ingrediente picado (avanza solo con el tiempo)
