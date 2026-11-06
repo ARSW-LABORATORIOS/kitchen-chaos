@@ -26,7 +26,8 @@ public class IngredientActionResult
 /// AB#21: cocinar ingrediente (avanza solo con el tiempo, se quema si se deja demasiado).
 /// </summary>
 public class PreparationService
-{
+{   
+    private const int ChopSeconds = 2;
     private const int CookSeconds = 4;
     private const int BurnSeconds = 8;
     private const int RestockSeconds = 2;
@@ -154,19 +155,15 @@ public class PreparationService
         var ingredient = FindIngredient(roomCode, ingredientId, connectionId);
         if (ingredient is null)
             return new IngredientActionResult { Success = false, Error = "No tienes ese ingrediente." };
-
         lock (ingredient)
         {
             if (!ingredient.RequiresChop)
                 return new IngredientActionResult { Success = false, Error = "Este ingrediente no se pica." };
-
             if (ingredient.State != IngredientState.Crudo)
-                return new IngredientActionResult { Success = false, Error = "El ingrediente ya no está crudo." };
-
-            ingredient.State = IngredientState.Picado;
+                return new IngredientActionResult { Success = false, Error = "El ingrediente ya está siendo preparado o no está crudo." };
+            ingredient.State = IngredientState.Picando;
         }
-
-        GameMetrics.IngredientEvents.WithLabels("chopped").Inc();
+        _ = RunChoppingTimerAsync(roomCode, ingredient);
         return new IngredientActionResult { Success = true };
     }
 
@@ -282,6 +279,26 @@ public class PreparationService
             s.IngredientName,
             s.IsAvailable
         }));
+    }
+
+    private async Task RunChoppingTimerAsync(string roomCode, Ingredient ingredient)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(ChopSeconds));
+            lock (ingredient)
+            {
+                if (ingredient.State != IngredientState.Picando)
+                    return;
+                ingredient.State = IngredientState.Picado;
+            }
+            GameMetrics.IngredientEvents.WithLabels("chopped").Inc();
+            await BroadcastIngredientUpdated(roomCode, ingredient);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al finalizar el corte: {ex}");
+        }
     }
 
     private async Task RunCookingTimerAsync(string roomCode, Ingredient ingredient)

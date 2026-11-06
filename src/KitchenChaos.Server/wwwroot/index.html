@@ -829,6 +829,19 @@
             <div class="game-board-wrapper">
                 <div class="game-board level-1">
                     <img id="levelMap" src="images/niv1.webp" class="game-board-image" alt="Nivel 1">
+                    <div id="cookingProgressPanel" class="cooking-progress-panel" style="display: none;">
+                        <span id="cookingProgressTitle" style="display: none;"></span>
+                        <div class="cooking-progress-track">
+                            <div id="cookingProgressBar" class="cooking-progress-bar"></div>
+                        </div>
+                        <span id="cookingProgressTime">4.0s</span>
+                    </div>
+                    <div id="choppingProgressPanel" class="chopping-progress-panel" style="display: none;">
+                        <div class="cooking-progress-track">
+                            <div id="choppingProgressBar" class="chopping-progress-bar"></div>
+                        </div>
+                        <span id="choppingProgressTime">2.0s</span>
+                    </div>
                     <!-- Nivel 1: Arroz con leche -->
                     <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
                         <span class="station-label">Leche</span>
@@ -1864,29 +1877,56 @@
         function grabNearestStation() {
             const board = document.querySelector(".game-board");
             if (!board) return;
-
             const boardRect = board.getBoundingClientRect();
             const hotspots = Array.from(board.querySelectorAll(".station-hotspot"))
-                .filter(function(h) { return h.offsetParent !== null && !h.disabled && getComputedStyle(h).pointerEvents !== "none"; });
-
+                .filter(function (h) {
+                    return h.offsetParent !== null && !h.disabled &&
+                        getComputedStyle(h).pointerEvents !== "none";
+                });
+            const ingredientIds = Array.from(selectedIngredientIds);
+            if (ingredientIds.length === 1) {
+                const ingredient = myIngredients[ingredientIds[0]];
+                const canCook = ingredient && ingredient.requiresCook &&
+                    (ingredient.state === "Picado" ||
+                        (ingredient.state === "Crudo" && !ingredient.requiresChop) ||
+                        ingredient.state === "Cocinado");
+                if (canCook) {
+                    let closestCookStation = null;
+                    let closestCookDistance = Infinity;
+                    hotspots.filter(function (h) {
+                        return h.classList.contains("cook-station");
+                    }).forEach(function (station) {
+                        const rect = station.getBoundingClientRect();
+                        const left = (rect.left - boardRect.left) / boardRect.width * 100;
+                        const right = (rect.right - boardRect.left) / boardRect.width * 100;
+                        const top = (rect.top - boardRect.top) / boardRect.height * 100;
+                        const bottom = (rect.bottom - boardRect.top) / boardRect.height * 100;
+                        const dx = Math.max(left - myPosition.x, 0, myPosition.x - right);
+                        const dy = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
+                        const distance = Math.hypot(dx, dy);
+                        if (distance < closestCookDistance) {
+                            closestCookDistance = distance;
+                            closestCookStation = station;
+                        }
+                    });
+                    if (closestCookStation && closestCookDistance <= 5) {
+                        closestCookStation.click();
+                        return;
+                    }
+                }
+            }
             let nearest = null;
             let nearestDist = Infinity;
-
             hotspots.forEach(function (hotspot) {
                 const r = hotspot.getBoundingClientRect();
-                const centerXPercent = ((r.left + r.width / 2 - boardRect.left) / boardRect.width) * 100;
-                const centerYPercent = ((r.top + r.height / 2 - boardRect.top) / boardRect.height) * 100;
-
-                const dx = centerXPercent - myPosition.x;
-                const dy = centerYPercent - myPosition.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
+                const x = ((r.left + r.width / 2 - boardRect.left) / boardRect.width) * 100;
+                const y = ((r.top + r.height / 2 - boardRect.top) / boardRect.height) * 100;
+                const dist = Math.hypot(x - myPosition.x, y - myPosition.y);
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearest = hotspot;
                 }
             });
-
             if (nearest && nearestDist <= GRAB_REACH) {
                 nearest.click();
             }
@@ -1895,6 +1935,30 @@
         window.addEventListener("keydown", function (e) {
             const key = e.key.toLowerCase();
             pressedKeys[key] = true;
+
+            if (/^[1-9]$/.test(key) && !isTypingInField() && !e.repeat &&
+                getComputedStyle(document.getElementById("gameScreen")).display !== "none") {
+                const ingredientIds = Object.keys(myIngredients);
+                const ingredientIndex = Number(key) - 1;
+                if (ingredientIndex < ingredientIds.length) {
+                    e.preventDefault();
+                    const ingredientId = ingredientIds[ingredientIndex];
+                    if (e.shiftKey) {
+                        if (selectedIngredientIds.has(ingredientId)) {
+                            selectedIngredientIds.delete(ingredientId);
+                        } else {
+                            selectedIngredientIds.add(ingredientId);
+                        }
+                    } else {
+                        selectedIngredientIds.clear();
+                        selectedIngredientIds.add(ingredientId);
+                    }
+                    renderMyIngredients();
+                    const ingredient = myIngredients[ingredientId];
+                    document.getElementById("preparationError").textContent =
+                        "Seleccionado: " + ingredient.name + " (" + ingredient.state + ")";
+                }
+            }
 
             // Evita que las flechas/WASD hagan scroll de la pgina mientras se juega,
             // pero nunca cuando se est escribiendo en un input (nombre, cdigo de sala).
@@ -2303,6 +2367,8 @@
             true
         );
 
+        let lastCookingStation = null;
+
         function useCookStation() {
             const ingredientIds = Array.from(selectedIngredientIds);
 
@@ -2340,8 +2406,13 @@
         }
 
         document.querySelectorAll(".cook-station").forEach(function (station) {
-            station.addEventListener("click", useCookStation);
+            station.addEventListener("click", function () {
+                lastCookingStation = station;
+                useCookStation();
+            });
         });
+
+        let lastChopStation = null;
 
         function useChopStation() {
             const ingredientIds = Array.from(selectedIngredientIds);
@@ -2364,7 +2435,10 @@
         }
 
         document.querySelectorAll(".chop-station").forEach(function (station) {
-            station.addEventListener("click", useChopStation);
+            station.addEventListener("click", function () {
+                lastChopStation = station;
+                useChopStation();
+            });
         });
 
         function updatePlateVisual(state) {
@@ -2683,22 +2757,136 @@
                 requiresCook: ingredient.requiresCook,
                 cookMethod: ingredient.cookMethod
             };
+            selectedIngredientIds.clear();
+            selectedIngredientIds.add(ingredient.id);
             renderMyIngredients();
             updateMyEmojiHead();
 
         });
 
+        let choppingProgressInterval = null;
 
-        // AB#20 / AB#21 - Cambios de estado de un ingrediente (picado, cocinando, cocinado, quemado)
-        connection.on("IngredientUpdated", function (update) {
+        function hideChoppingProgress() {
+            clearInterval(choppingProgressInterval);
+            choppingProgressInterval = null;
+            document.getElementById("choppingProgressPanel").style.display = "none";
+        }
 
-            if (myIngredients[update.id]) {
+        function showChoppingProgress() {
+            clearInterval(choppingProgressInterval);
 
-                myIngredients[update.id].state = update.state;
-                renderMyIngredients();
+            const panel = document.getElementById("choppingProgressPanel");
+            const bar = document.getElementById("choppingProgressBar");
+            const time = document.getElementById("choppingProgressTime");
+            const duration = 2000;
+            const startedAt = Date.now();
 
+            if (lastChopStation) {
+                panel.style.left = (
+                    lastChopStation.offsetLeft +
+                    lastChopStation.offsetWidth / 2
+                ) + "px";
+                panel.style.top = (
+                    lastChopStation.offsetTop +
+                    lastChopStation.offsetHeight + 8
+                ) + "px";
             }
 
+            bar.style.width = "0%";
+            panel.style.display = "flex";
+
+            function updateProgress() {
+                const elapsed = Date.now() - startedAt;
+                const remaining = Math.max(0, duration - elapsed);
+
+                bar.style.width = Math.min(100, elapsed / duration * 100) + "%";
+                time.textContent = (remaining / 1000).toFixed(1) + "s";
+
+                if (remaining === 0) {
+                    clearInterval(choppingProgressInterval);
+                    choppingProgressInterval = null;
+                }
+            }
+
+            updateProgress();
+            choppingProgressInterval = setInterval(updateProgress, 100);
+        }
+
+        // AB#20 / AB#21 - Cambios de estado de un ingrediente (picado, cocinando, cocinado, quemado)
+        let cookingProgressInterval = null;
+
+        function hideCookingProgress() {
+            clearInterval(cookingProgressInterval);
+            cookingProgressInterval = null;
+            document.getElementById("cookingProgressPanel").style.display = "none";
+        }
+
+        function showCookingProgress(ingredientId, state) {
+            clearInterval(cookingProgressInterval);
+            const ingredient = myIngredients[ingredientId];
+            if (!ingredient) return;
+
+            const duration = 4000;
+            const startedAt = Date.now();
+            const panel = document.getElementById("cookingProgressPanel");
+            const title = document.getElementById("cookingProgressTitle");
+            const time = document.getElementById("cookingProgressTime");
+            const bar = document.getElementById("cookingProgressBar");
+
+            panel.style.display = "flex";
+            if (lastCookingStation) {
+                panel.style.left = (
+                    lastCookingStation.offsetLeft +
+                    lastCookingStation.offsetWidth / 2
+                ) + "px";
+                panel.style.top = (
+                    lastCookingStation.offsetTop +
+                    lastCookingStation.offsetHeight + 8
+                ) + "px";
+            }
+            title.textContent = state === "Cocinando"
+                ? "🍳 Cocinando " + ingredient.name
+                : "🔥 " + ingredient.name + " cocinado. Retíralo antes de que se queme";
+            bar.style.background = state === "Cocinando" ? "#2a9d8f" : "#e76f51";
+
+            function updateProgress() {
+                const elapsed = Date.now() - startedAt;
+                const remaining = Math.max(0, duration - elapsed);
+                const progress = Math.min(100, (elapsed / duration) * 100);
+
+                time.textContent = remaining > 0
+                    ? (remaining / 1000).toFixed(1) + "s"
+                    : "Esperando confirmación...";
+                bar.style.width = progress + "%";
+
+                if (remaining === 0) {
+                    clearInterval(cookingProgressInterval);
+                    cookingProgressInterval = null;
+                }
+            }
+
+            updateProgress();
+            cookingProgressInterval = setInterval(updateProgress, 100);
+        }
+
+        connection.on("IngredientUpdated", function (update) {
+            if (!myIngredients[update.id]) return;
+
+            myIngredients[update.id].state = update.state;
+            renderMyIngredients();
+            updateMyEmojiHead();
+
+            if (update.state === "Picando") {
+                showChoppingProgress();
+            } else if (update.state === "Picado") {
+                hideChoppingProgress();
+            }
+
+            if (update.state === "Cocinando" || update.state === "Cocinado") {
+                showCookingProgress(update.id, update.state);
+            } else if (update.state === "Listo" || update.state === "Quemado") {
+                hideCookingProgress();
+            }
         });
 
 
