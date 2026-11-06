@@ -1312,47 +1312,22 @@
         }
 
         function triggerWave() {
-            // Overlay fijo sobre toda la pantalla (igual que el apagón pero azul)
             var existing = document.getElementById('waveOverlay');
             if (existing) existing.remove();
 
+            // Imagen entra desde arriba hacia abajo, 90% opacidad para ver el mapa
             var overlay = document.createElement('div');
             overlay.id = 'waveOverlay';
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:260;overflow:hidden;pointer-events:none;';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:260;overflow:hidden;pointer-events:none;opacity:0.9;';
             document.body.appendChild(overlay);
 
-            // Fondo azul marino
-            var bg = document.createElement('div');
-            bg.style.cssText = 'position:absolute;inset:0;background:#023e8a;opacity:0;transition:opacity 0.3s;';
-            overlay.appendChild(bg);
-            setTimeout(function() { bg.style.opacity = '1'; }, 10);
+            var waveImg = document.createElement('img');
+            waveImg.src = 'images/olas.png';
+            waveImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:translateY(-100%);transition:transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94);';
+            overlay.appendChild(waveImg);
+            setTimeout(function() { waveImg.style.transform = 'translateY(0)'; }, 10);
 
-            // Tres capas de olas SVG que suben desde abajo
-            var waveColors = ['#0077b6','#0096c7','#48cae4'];
-            var waveDelays = [0, 150, 300];
-            var waveOffsets = [65, 55, 45]; // % desde arriba donde empieza la cresta
-            waveColors.forEach(function(color, i) {
-                var svgNS = 'http://www.w3.org/2000/svg';
-                var svg = document.createElementNS(svgNS, 'svg');
-                svg.setAttribute('viewBox', '0 0 1440 200');
-                svg.setAttribute('preserveAspectRatio', 'none');
-                svg.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:' + (100 - waveOffsets[i]) + '%;transform:translateY(100%);transition:transform 0.7s ' + waveDelays[i] + 'ms cubic-bezier(0.25,0.46,0.45,0.94);';
-                // Path de ola sinusoidal
-                var d = 'M0 80';
-                for (var x = 0; x <= 1440; x += 20) {
-                    var y = 80 + Math.sin(x * 0.008) * 30 + Math.sin(x * 0.02) * 15;
-                    d += ' L' + x + ' ' + y;
-                }
-                d += ' L1440 200 L0 200 Z';
-                var path = document.createElementNS(svgNS, 'path');
-                path.setAttribute('d', d);
-                path.setAttribute('fill', color);
-                svg.appendChild(path);
-                overlay.appendChild(svg);
-                setTimeout(function(s) { s.style.transform = 'translateY(0)'; }, waveDelays[i] + 10, svg);
-            });
-
-            // Texto centrado
+            // Texto
             var txt = document.createElement('div');
             txt.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);transition:transform 0.4s 0.5s cubic-bezier(.34,1.56,.64,1);color:#fff;font-family:Fraunces,Georgia,serif;font-size:clamp(24px,5vw,52px);font-weight:700;text-transform:uppercase;letter-spacing:3px;text-shadow:0 2px 16px rgba(0,0,80,0.7);white-space:nowrap;z-index:1;';
             txt.textContent = '\uD83C\uDF0A \u00A1Ola gigante!';
@@ -1360,8 +1335,7 @@
             setTimeout(function() { txt.style.transform = 'translate(-50%,-50%) scale(1)'; }, 10);
 
             // Descartar ingredientes
-            var ids = Object.keys(myIngredients);
-            ids.forEach(function(id) {
+            Object.keys(myIngredients).forEach(function(id) {
                 if (currentRoomCode) {
                     connection.invoke('DiscardIngredient', currentRoomCode, id)
                         .catch(function(err) { console.error(err); });
@@ -1421,6 +1395,32 @@
                 }, 60000);
             });
         }
+
+        // ===== Música por nivel =====
+        const LEVEL_MUSIC = {
+            1: 'audio/nivel1.mp4',
+            2: 'audio/nivel2.mp4',
+            3: 'audio/nivel3.mp4',
+            4: 'audio/nivel4.mp4'
+        };
+        let currentMusic = null;
+
+        function playLevelMusic(level) {
+            stopLevelMusic();
+            if (!LEVEL_MUSIC[level]) return;
+            currentMusic = new Audio(LEVEL_MUSIC[level]);
+            currentMusic.loop = true;
+            currentMusic.volume = 0.5;
+            currentMusic.play().catch(function(e) { console.warn('Audio bloqueado:', e); });
+        }
+
+        function stopLevelMusic() {
+            if (!currentMusic) return;
+            currentMusic.pause();
+            currentMusic.currentTime = 0;
+            currentMusic = null;
+        }
+        // ===== Fin música por nivel =====
 
         // ===== Autos nivel 2 =====
         const CARS_CONFIG = [
@@ -2982,6 +2982,7 @@
                 .catch(function (err) { console.error(err.toString()); });
 
             showLevelIntroModal(gameInfo.level, gameInfo.roomCode);
+            playLevelMusic(gameInfo.level);
 
             if (gameInfo.level === 2) {
                 startCars();
@@ -3349,6 +3350,7 @@
             const stars = data.stars || 0;
             document.getElementById("scoreDisplay").textContent = "Puntaje final: " + data.finalScore;
             syncMobileScore(data.finalScore);
+            stopLevelMusic();
             showLevelEndModal(data.finalScore, stars, currentLevel);
         });
 
@@ -3667,11 +3669,13 @@
 
         connection.on('GamePaused', function () {
             isPaused = true;
+            if (currentMusic) currentMusic.pause();
             showPauseModal();
         });
 
         connection.on('GameResumed', function () {
             isPaused = false;
+            if (currentMusic) currentMusic.play().catch(function(e) { console.warn(e); });
             hidePauseModal();
         });
 
