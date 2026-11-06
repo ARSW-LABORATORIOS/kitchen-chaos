@@ -9,24 +9,25 @@
 
     <style>
         :root {
+            --copper: #b2582c;
+            --teal: #276b64;
+            --warm-bg: #2a1a0f;
             color-scheme: dark;
             font-family: system-ui, Arial, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            background: #101019;
+            background: #1e1208;
             color: #fff;
         }
 
         .shell {
             min-height: 100dvh;
             padding: 12px;
-            background: radial-gradient(circle at 50% 0%, #493024, #15151d 60%);
+            background: radial-gradient(circle at 50% 0%, #3d1f0a 0%, #1e1208 65%);
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -42,16 +43,17 @@
         h1 {
             margin: 0;
             font-size: clamp(14px, 2.5vw, 23px);
-            color: #ffcd9b;
+            color: #f4a261;
         }
 
         #connectionStatus {
             font-size: 12px;
             font-weight: 700;
             border-radius: 99px;
-            background: #44342e;
+            background: rgba(178,88,44,0.3);
+            border: 1px solid rgba(178,88,44,0.6);
             padding: 6px 10px;
-            color: #ffcf91;
+            color: #f4a261;
         }
 
         .layout {
@@ -63,8 +65,8 @@
         }
 
         .panel {
-            background: rgba(21, 20, 31, .93);
-            border: 1px solid #514139;
+            background: rgba(42, 26, 15, 0.85);
+            border: 1px solid rgba(178,88,44,0.45);
             border-radius: 18px;
             padding: 12px;
             min-width: 0;
@@ -82,7 +84,7 @@
         h2 {
             margin: 0;
             font-size: clamp(12px, 1.6vw, 17px);
-            color: #ffd1a4;
+            color: #f4a261;
         }
 
         .dpad {
@@ -96,9 +98,9 @@
         .control {
             aspect-ratio: 1;
             padding: 0;
-            border: 2px solid #75718b;
-            background: #373747;
-            color: white;
+            border: 2px solid rgba(178,88,44,0.6);
+            background: rgba(60,30,10,0.9);
+            color: #f4a261;
             border-radius: 15px;
             font-size: clamp(24px, 4vw, 40px);
             font-weight: bold;
@@ -109,28 +111,14 @@
         }
 
         .control.pressed {
-            background: #846447;
+            background: rgba(178,88,44,0.7);
             transform: scale(.96);
         }
 
-        .control.up {
-            grid-column: 2;
-        }
-
-        .control.left {
-            grid-column: 1;
-            grid-row: 2;
-        }
-
-        .control.down {
-            grid-column: 2;
-            grid-row: 2;
-        }
-
-        .control.right {
-            grid-column: 3;
-            grid-row: 2;
-        }
+        .control.up    { grid-column: 2; }
+        .control.left  { grid-column: 1; grid-row: 2; }
+        .control.down  { grid-column: 2; grid-row: 2; }
+        .control.right { grid-column: 3; grid-row: 2; }
 
         .stats {
             display: flex;
@@ -145,9 +133,10 @@
             align-items: center;
             gap: 8px;
             padding: 10px;
-            background: #ddad85;
+            background: rgba(178,88,44,0.25);
+            border: 1px solid rgba(178,88,44,0.5);
             border-radius: 12px;
-            color: #25170f;
+            color: #ffe0c0;
         }
 
         #avatar {
@@ -161,7 +150,8 @@
         .stat-label {
             display: block;
             font-size: 11px;
-            opacity: .8;
+            opacity: .75;
+            color: #f4a261;
         }
 
         .summary strong {
@@ -171,7 +161,9 @@
         .section-heading {
             font-size: 13px;
             font-weight: 800;
-            color: #ffd8aa;
+            color: #f4a261;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         #ingredients {
@@ -184,10 +176,10 @@
         }
 
         .ingredient {
-            border: 2px solid #686473;
+            border: 2px solid rgba(178,88,44,0.5);
             border-radius: 10px;
-            background: #2e2c3b;
-            color: #fff;
+            background: rgba(60,30,10,0.8);
+            color: #ffe0c0;
             padding: 9px;
             min-width: 95px;
             text-align: left;
@@ -195,14 +187,14 @@
         }
 
         .ingredient[aria-pressed="true"] {
-            border-color: #3fd8b4;
-            background: #17594f;
+            border-color: #2a9d8f;
+            background: rgba(39,107,100,0.5);
         }
 
         .ingredient small {
             display: block;
             margin-top: 4px;
-            color: #e9cc9f;
+            color: #f4a261;
         }
 
         #teammates {
@@ -214,18 +206,40 @@
         }
 
         .teammate {
-            background: #30303b;
+            background: rgba(60,30,10,0.7);
+            border: 1px solid rgba(178,88,44,0.35);
             border-radius: 8px;
             padding: 7px 10px;
+        }
+
+        #pauseBtn {
+            width: min(100%, 155px);
+            padding: 12px 0;
+            border-radius: 14px;
+            border: 3px solid rgba(178,88,44,0.8);
+            color: #ffe0c0;
+            background: linear-gradient(145deg, #8b2e10, #5a1a06);
+            font-weight: 900;
+            font-size: clamp(20px, 3vw, 28px);
+            letter-spacing: 2px;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #pauseBtn.active {
+            background: linear-gradient(145deg, #276b64, #1a4a44);
+            border-color: #2a9d8f;
         }
 
         #interact {
             width: min(100%, 155px);
             aspect-ratio: 1;
             border-radius: 50%;
-            border: 5px solid #1ebcaa;
+            border: 5px solid #2a9d8f;
             color: white;
-            background: linear-gradient(145deg, #219c91, #0b756e);
+            background: linear-gradient(145deg, #276b64, #1a4a44);
             font-weight: 900;
             font-size: clamp(15px, 2.6vw, 23px);
             touch-action: none;
@@ -239,36 +253,16 @@
             transform: scale(.96);
         }
 
-        #pauseBtn {
-            width: min(100%, 155px);
-            padding: 12px 0;
-            border-radius: 14px;
-            border: 3px solid #e94560;
-            color: white;
-            background: linear-gradient(145deg, #c0394f, #8b1a2e);
-            font-weight: 900;
-            font-size: clamp(13px, 2vw, 18px);
-            letter-spacing: 1px;
-            cursor: pointer;
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        #pauseBtn.active {
-            background: linear-gradient(145deg, #43a87a, #1e6b4a);
-            border-color: #43e97b;
-        }
-
         .note {
             font-size: 11px;
             opacity: .75;
             text-align: center;
+            color: #f4a261;
         }
 
         #feedback {
             font-size: 11px;
-            color: #d2bca8;
+            color: #f4a261;
             text-align: center;
         }
 
@@ -279,29 +273,32 @@
             flex-wrap: wrap;
             gap: 10px;
             padding: 12px;
-            background: #25212c;
-            border: 1px solid #71533e;
+            background: rgba(42,26,15,0.85);
+            border: 1px solid rgba(178,88,44,0.5);
             border-radius: 14px;
         }
 
         .pairing-panel label {
             font-size: 13px;
             font-weight: 700;
+            color: #f4a261;
         }
 
         #pairingCode {
             width: 160px;
             padding: 10px;
-            border: 1px solid #b78a63;
+            border: 1px solid rgba(178,88,44,0.7);
             border-radius: 8px;
             font-size: 18px;
             text-align: center;
             letter-spacing: 3px;
+            background: rgba(60,30,10,0.8);
+            color: #ffe0c0;
         }
 
         #pairingButton {
             padding: 11px 15px;
-            background: #198e81;
+            background: linear-gradient(135deg, #328a81, #276b64);
             color: white;
             border: 0;
             border-radius: 9px;
@@ -311,7 +308,7 @@
 
         #pairingMessage {
             font-size: 12px;
-            color: #ffd1a4;
+            color: #f4a261;
         }
 
         @media (orientation: portrait) {
@@ -319,10 +316,12 @@
                 content: 'Gira el celular horizontalmente para jugar';
                 display: block;
                 text-align: center;
-                background: #865a2d;
+                background: rgba(178,88,44,0.35);
+                border: 1px solid rgba(178,88,44,0.5);
                 padding: 8px;
                 border-radius: 10px;
                 font-size: 13px;
+                color: #f4a261;
             }
 
             .layout {
@@ -336,48 +335,23 @@
         }
 
         @media (max-height: 420px) {
-            .shell {
-                padding: 7px;
-                gap: 5px;
-            }
-
-            .panel {
-                padding: 8px;
-            }
-
-            .layout {
-                gap: 6px;
-            }
-
-            .summary {
-                padding: 5px;
-            }
-
-            .dpad {
-                width: min(100%, 170px);
-            }
-
-            #interact {
-                width: min(100%, 125px);
-            }
-
-            .pairing-panel {
-                padding: 6px;
-            }
+            .shell { padding: 7px; gap: 5px; }
+            .panel { padding: 8px; }
+            .layout { gap: 6px; }
+            .summary { padding: 5px; }
+            .dpad { width: min(100%, 170px); }
+            #interact { width: min(100%, 125px); }
+            .pairing-panel { padding: 6px; }
         }
-    .control,
-    #interact,
-    .ingredient,
-    .dpad {
+
+    .control, #interact, .ingredient, .dpad {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
         touch-action: none;
     }
 
-    .control,
-    #interact,
-    .ingredient {
+    .control, #interact, .ingredient {
         -webkit-tap-highlight-color: transparent;
     }
 
@@ -458,12 +432,10 @@
             </section>
 
             <section class="panel action-panel">
+                <button id="pauseBtn" aria-label="Pausar o reanudar">⏸</button>
+
                 <button id="interact" aria-label="Agarrar o interactuar">
                     &#x270B;<br>AGARRAR
-                </button>
-
-                <button id="pauseBtn" aria-label="Pausar o reanudar">
-                    &#x23F8; PAUSA
                 </button>
 
                 <h2>INTERACTUAR</h2>
@@ -615,7 +587,7 @@
             linkedRoomCode = null;
             mobilePaused = false;
             pauseBtn.classList.remove('active');
-            pauseBtn.textContent = '\u23F8 PAUSA';
+            pauseBtn.textContent = '\u23F8';
             resetMobileControls();
             connectionStatus.textContent = "Sin vincular";
             connectionStatus.style.color = "#ffcf91";
@@ -805,7 +777,7 @@
             }
             mobilePaused = !mobilePaused;
             pauseBtn.classList.toggle('active', mobilePaused);
-            pauseBtn.textContent = mobilePaused ? '\u25B6 REANUDAR' : '\u23F8 PAUSA';
+            pauseBtn.textContent = mobilePaused ? '\u25B6' : '\u23F8';
             mobileConnection.invoke(mobilePaused ? 'PauseGame' : 'ResumeGame',
                 linkedRoomCode).catch(function (e) { feedback.textContent = e.message; });
         });
@@ -813,13 +785,13 @@
         mobileConnection.on('GamePaused', function () {
             mobilePaused = true;
             pauseBtn.classList.add('active');
-            pauseBtn.textContent = '\u25B6 REANUDAR';
+            pauseBtn.textContent = '\u25B6';
         });
 
         mobileConnection.on('GameResumed', function () {
             mobilePaused = false;
             pauseBtn.classList.remove('active');
-            pauseBtn.textContent = '\u23F8 PAUSA';
+            pauseBtn.textContent = '\u23F8';
         });
 
         window.addEventListener('blur', () => {
