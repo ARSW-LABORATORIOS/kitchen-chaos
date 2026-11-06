@@ -660,6 +660,30 @@
             feedback.textContent = "El control está desconectado.";
         });
 
+        // Si el celular cambió de app o se apagó la pantalla, la conexión pudo cerrarse.
+        // Al volver a esta pestaña se intenta reconectar; después hay que vincular de nuevo.
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState !== "visible" ||
+                mobileConnection.state !== signalR.HubConnectionState.Disconnected) {
+                return;
+            }
+
+            connectionStatus.textContent = "Reconectando";
+
+            mobileConnection.start()
+                .then(function () {
+                    connectionStatus.textContent = "Sin vincular";
+                    connectionStatus.style.color = "#ffcf91";
+                    pairingMessage.textContent = "Genera un nuevo código en el computador e introdúcelo aquí.";
+                    feedback.textContent = "Conexión recuperada. Vincula nuevamente el celular.";
+                })
+                .catch(function (error) {
+                    connectionStatus.textContent = "Desconectado";
+                    pairingMessage.textContent = error.message;
+                });
+        });
+
+
         mobileConnection.start()
             .then(function () {
                 pairingMessage.textContent = "Introduce el código generado en el computador.";

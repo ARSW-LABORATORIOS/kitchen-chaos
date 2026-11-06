@@ -828,7 +828,7 @@
 
             <div class="game-board-wrapper">
                 <div class="game-board level-1">
-                    <img id="levelMap" src="images/niv1.png" class="game-board-image" alt="Nivel 1">
+                    <img id="levelMap" src="images/niv1.webp" class="game-board-image" alt="Nivel 1">
                     <!-- Nivel 1: Arroz con leche -->
                     <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
                         <span class="station-label">Leche</span>
@@ -1032,6 +1032,7 @@
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/gamehub")
+            .withAutomaticReconnect([0, 2000, 5000, 10000, 15000])
             .build();
         
         document.getElementById("generateControlCodeButton")
@@ -1051,7 +1052,7 @@
             document.getElementById("mobileControlCode").textContent = data.code;
             document.getElementById("mobileControlCodeDisplay").style.display = "block";
             document.getElementById("mobileControlStatus").textContent =
-                "Introduce este cdigo en tu celular. Vlido durante 2 minutos.";
+                "En tu celular abre " + location.origin + "/control.html e introduce este código. Válido durante 2 minutos.";
         });
 
         
@@ -1423,10 +1424,10 @@
 
         // ===== Autos nivel 2 =====
         const CARS_CONFIG = [
-            { id: 'car0', x: 42,   y: 105, dir: -1, speed: 35, img: 'images/taxi-espalda.png' },
-            { id: 'car1', x: 42,   y: 140, dir: -1, speed: 28, img: 'images/sitp-espalda.png' },
-            { id: 'car3', x: 48.5, y: -10, dir:  1, speed: 32, img: 'images/taxi-frente.png'  },
-            { id: 'car4', x: 48.5, y: -45, dir:  1, speed: 42, img: 'images/sitp-frente.png'  },
+            { id: 'car0', x: 42,   y: 105, dir: -1, speed: 35, img: 'images/taxi-espalda.webp' },
+            { id: 'car1', x: 42,   y: 140, dir: -1, speed: 28, img: 'images/sitp-espalda.webp' },
+            { id: 'car3', x: 48.5, y: -10, dir:  1, speed: 32, img: 'images/taxi-frente.webp'  },
+            { id: 'car4', x: 48.5, y: -45, dir:  1, speed: 42, img: 'images/sitp-frente.webp'  },
         ];
         let carsState = [];
         let carAnimFrame = null;
@@ -2877,10 +2878,10 @@
             const levelMap = document.getElementById("levelMap");
 
             const maps = {
-                1: "images/niv1.png",
-                2: "images/niv2.png",
-                3: "images/niv3.png",
-                4: "images/niv4.png"
+                1: "images/niv1.webp",
+                2: "images/niv2.webp",
+                3: "images/niv3.webp",
+                4: "images/niv4.webp"
             };
 
             if (!maps[level]) {
@@ -3011,6 +3012,66 @@
             });
 
 
+        // La conexión puede cortarse (un celular que cambia de app, la pantalla que se apaga...).
+        // Se avisa en pantalla y se vuelve a conectar, en vez de seguir diciendo "Servidor conectado".
+        function mostrarEstadoConexion(texto) {
+            document.getElementById("connectionStatus").textContent = texto;
+        }
+
+        function reconectar() {
+            if (connection.state !== signalR.HubConnectionState.Disconnected) return;
+
+            mostrarEstadoConexion("Reconectando con el servidor...");
+
+            connection.start()
+                .then(function () { mostrarEstadoConexion("Servidor conectado"); })
+                .catch(function () { setTimeout(reconectar, 3000); });
+        }
+
+        // Asegura que haya conexión antes de pedirle algo al servidor (crear o unirse a una sala).
+        function asegurarConexion() {
+            if (connection.state === signalR.HubConnectionState.Connected) return Promise.resolve();
+            if (connection.state === signalR.HubConnectionState.Disconnected) return connection.start();
+
+            // Ya está reconectando: se espera hasta 8 segundos a que vuelva la conexión.
+            return new Promise(function (resolve, reject) {
+                var intentos = 0;
+                var espera = setInterval(function () {
+                    intentos++;
+
+                    if (connection.state === signalR.HubConnectionState.Connected) {
+                        clearInterval(espera);
+                        resolve();
+                    } else if (intentos >= 40) {
+                        clearInterval(espera);
+                        reject(new Error("Sin conexión con el servidor"));
+                    }
+                }, 200);
+            });
+        }
+
+        connection.onreconnecting(function () {
+            mostrarEstadoConexion("Reconectando con el servidor...");
+        });
+
+        connection.onreconnected(function () {
+            mostrarEstadoConexion("Servidor conectado");
+        });
+
+        connection.onclose(function () {
+            // Si ya estaba dentro de una sala, el servidor lo sacó al perder la conexión: hay que volver a entrar.
+            if (typeof currentRoomCode !== "undefined" && currentRoomCode) {
+                mostrarEstadoConexion("Se perdió la conexión con la sala. Recarga la página para volver a entrar.");
+            }
+            reconectar();
+        });
+
+        // Al volver a la pestaña (por ejemplo en el celular) se revisa si la conexión sigue viva.
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") reconectar();
+        });
+
+
         // Crear sala
         document.getElementById("createRoomButton")
             .addEventListener("click", function () {
@@ -3032,7 +3093,8 @@
                 // RoomPlayersUpdated puede llegar antes de que esto se asigne.
                 myPlayerName = playerName;
 
-                connection.invoke("CreateRoom", playerName, mySelectedAvatarId)
+                asegurarConexion()
+                    .then(function () { return connection.invoke("CreateRoom", playerName, mySelectedAvatarId); })
                     .then(function (roomCode) {
 
                         // El creador es el host
@@ -3053,7 +3115,7 @@
                         console.error(err.toString());
 
                         document.getElementById("roomErrorDisplay")
-                            .textContent = "No se pudo crear la sala.";
+                            .textContent = "No se pudo crear la sala. Revisa tu conexión e inténtalo otra vez.";
 
                     });
 
@@ -3091,7 +3153,8 @@
                 // AB#81: igual que en crear sala, se guarda antes de invocar al servidor
                 myPlayerName = playerName;
 
-                connection.invoke("JoinRoom", roomCode, playerName, mySelectedAvatarId)
+                asegurarConexion()
+                    .then(function () { return connection.invoke("JoinRoom", roomCode, playerName, mySelectedAvatarId); })
                     .then(function () {
 
                         // El que se une NO es host
@@ -3109,7 +3172,7 @@
                         console.error(err.toString());
 
                         document.getElementById("roomErrorDisplay")
-                            .textContent = "No se pudo unir a la sala.";
+                            .textContent = "No se pudo unir a la sala. Revisa tu conexión e inténtalo otra vez.";
 
                     });
 

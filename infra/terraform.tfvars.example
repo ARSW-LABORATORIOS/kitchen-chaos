@@ -1,0 +1,11 @@
+# Copia este archivo como terraform.tfvars y llena los valores. terraform.tfvars no se sube al repositorio.
+
+# az account show --query id -o tsv
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Regiones permitidas en Azure for Students (según la política de la suscripción):
+# southcentralus, eastus, brazilsouth, canadacentral, chilecentral
+location = "eastus"
+
+# Déjalo vacío en el primer paso. Después de subir la imagen, pon su etiqueta (por ejemplo "v1").
+image_tag = ""
