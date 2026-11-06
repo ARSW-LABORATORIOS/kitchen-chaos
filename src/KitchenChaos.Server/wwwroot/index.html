@@ -1335,7 +1335,7 @@
             document.body.appendChild(overlay);
 
             var waveImg = document.createElement('img');
-            waveImg.src = 'images/olas.png';
+            waveImg.src = 'images/olas.webp';
             waveImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:translateY(-100%);transition:transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94);';
             overlay.appendChild(waveImg);
             setTimeout(function() { waveImg.style.transform = 'translateY(0)'; }, 10);
@@ -1411,10 +1411,10 @@
 
         // ===== Música por nivel =====
         const LEVEL_MUSIC = {
-            1: 'audio/nivel1.mp4',
-            2: 'audio/nivel2.mp4',
-            3: 'audio/nivel3.mp4',
-            4: 'audio/nivel4.mp4'
+            1: 'audio/nivel1.m4a',
+            2: 'audio/nivel2.m4a',
+            3: 'audio/nivel3.m4a',
+            4: 'audio/nivel4.m4a'
         };
         let currentMusic = null;
 
