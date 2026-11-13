@@ -2077,3 +2077,176 @@
     text-shadow: 0 1px 3px #000000, 0 0 4px #000000;
     font-family: Arial, sans-serif;
 }
+
+.desktop-inventory {
+    position: fixed;
+    top: 85px;
+    right: 18px;
+    z-index: 180;
+    width: 290px;
+    max-width: 90vw;
+    max-height: 65vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #b2582c;
+    border-radius: 14px;
+    background: rgba(35, 22, 15, 0.96);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    color: #ffe0c0;
+}
+.desktop-inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #f4a261;
+    font-size: 13px;
+}
+.desktop-inventory-header span {
+    font-size: 10px;
+    color: #d6b49b;
+}
+.desktop-inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    min-height: 0;
+}
+.desktop-inventory-item {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    margin: 0;
+    border: 1px solid #75503a;
+    border-radius: 8px;
+    background: #493024;
+    color: #ffe0c0;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+}
+.desktop-inventory-item.selected {
+    border: 1px solid #2a9d8f;
+    background: #29463d;
+}
+.desktop-inventory-number {
+    font-size: 11px;
+    color: #f4a261;
+    min-width: 12px;
+}
+.desktop-inventory-emoji {
+    font-size: 19px;
+    flex-shrink: 0;
+}
+.desktop-inventory-details {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.desktop-inventory-details strong {
+    font-size: 12px;
+    text-transform: capitalize;
+}
+.desktop-inventory-details small {
+    font-size: 10px;
+    color: #e0b99b;
+}
+.desktop-inventory-indicator {
+    color: #65dbc4;
+    font-size: 14px;
+}
+.desktop-inventory-help,
+.desktop-inventory-empty {
+    font-size: 10px;
+    color: #d6b49b;
+    text-align: center;
+}
+
+.station-ingredient-menu {
+    position: fixed;
+    top: 85px;
+    right: 18px;
+    z-index: 190;
+    width: 290px;
+    max-width: 90vw;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #e9a23b;
+    border-radius: 14px;
+    background: rgba(35, 22, 15, 0.97);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    color: #ffe0c0;
+}
+.station-ingredient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #f4a261;
+    font-size: 13px;
+}
+.station-ingredient-header span {
+    font-size: 10px;
+    color: #d6b49b;
+    white-space: nowrap;
+}
+.station-ingredient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 0;
+    overflow-y: auto;
+}
+.station-ingredient-item {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    margin: 0;
+    border: 1px solid #75503a;
+    border-radius: 8px;
+    background: #493024;
+    color: #ffe0c0;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 12px;
+}
+.station-ingredient-item:hover {
+    background: #29463d;
+    border-color: #2a9d8f;
+}
+.station-ingredient-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.station-ingredient-name {
+    flex: 1;
+    text-transform: capitalize;
+}
+.station-ingredient-state {
+    font-size: 10px;
+    color: #d6b49b;
+}
+.station-ingredient-empty {
+    font-size: 12px;
+    color: #d6b49b;
+    text-align: center;
+    padding: 8px;
+}

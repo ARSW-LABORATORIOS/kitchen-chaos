@@ -16,7 +16,19 @@
             font-family: system-ui, Arial, sans-serif;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #pairingCode {
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+        }
 
         body {
             margin: 0;
@@ -344,15 +356,23 @@
             .pairing-panel { padding: 6px; }
         }
 
-    .control, #interact, .ingredient, .dpad {
+    .control,
+    #interact,
+    .ingredient,
+    .dpad,
+    #pauseBtn,
+    #pairingButton {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
-        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
 
-    .control, #interact, .ingredient {
-        -webkit-tap-highlight-color: transparent;
+    .control,
+    #interact,
+    .dpad {
+        touch-action: none;
     }
 
     </style>
@@ -799,10 +819,18 @@
             interactButton.classList.remove('pressed');
         });
 
-        document.querySelectorAll(".control, #interact, #ingredients").forEach(function (element) {
-            element.addEventListener("contextmenu", function (event) {
+        const controllerSelector = ".control, #interact, #pauseBtn, #pairingButton, #ingredients, .dpad";
+
+        document.addEventListener("contextmenu", function (event) {
+            if (event.target.closest(controllerSelector)) {
                 event.preventDefault();
-            });
+            }
+        });
+
+        document.addEventListener("selectstart", function (event) {
+            if (!event.target.closest("#pairingCode")) {
+                event.preventDefault();
+            }
         });
     </script>
 </body>
