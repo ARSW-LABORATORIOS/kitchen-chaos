@@ -797,6 +797,25 @@
 
         <div id="gameScreen" class="menu game-screen-panel" style="display: none;">
 
+            <div id="desktopInventory" class="desktop-inventory" style="display: none;">
+                <div class="desktop-inventory-header">
+                    <strong>🎒 MI INVENTARIO</strong>
+                    <span>R · Cerrar</span>
+                </div>
+                <div id="desktopInventoryList" class="desktop-inventory-list"></div>
+                <div class="desktop-inventory-help">
+                    Selecciona un ingrediente o utiliza las teclas 1–9.
+                </div>
+            </div>
+
+            <div id="stationIngredientMenu" class="station-ingredient-menu" style="display: none;">
+                <div class="station-ingredient-header">
+                    <strong id="stationIngredientTitle">Preparar ingrediente</strong>
+                    <span>Esc · Cerrar</span>
+                </div>
+                <div id="stationIngredientList" class="station-ingredient-list"></div>
+            </div>
+
             <div class="game-hud-sticky">
 
                 <div class="game-hud">
@@ -1871,7 +1890,13 @@
                 return;
             }
 
-            grabNearestStation();
+            mobileStationInteraction = true;
+
+            try {
+                grabNearestStation();
+            } finally {
+                mobileStationInteraction = false;
+            }
         });
 
         function grabNearestStation() {
@@ -1883,45 +1908,18 @@
                     return h.offsetParent !== null && !h.disabled &&
                         getComputedStyle(h).pointerEvents !== "none";
                 });
-            const ingredientIds = Array.from(selectedIngredientIds);
-            if (ingredientIds.length === 1) {
-                const ingredient = myIngredients[ingredientIds[0]];
-                const canCook = ingredient && ingredient.requiresCook &&
-                    (ingredient.state === "Picado" ||
-                        (ingredient.state === "Crudo" && !ingredient.requiresChop) ||
-                        ingredient.state === "Cocinado");
-                if (canCook) {
-                    let closestCookStation = null;
-                    let closestCookDistance = Infinity;
-                    hotspots.filter(function (h) {
-                        return h.classList.contains("cook-station");
-                    }).forEach(function (station) {
-                        const rect = station.getBoundingClientRect();
-                        const left = (rect.left - boardRect.left) / boardRect.width * 100;
-                        const right = (rect.right - boardRect.left) / boardRect.width * 100;
-                        const top = (rect.top - boardRect.top) / boardRect.height * 100;
-                        const bottom = (rect.bottom - boardRect.top) / boardRect.height * 100;
-                        const dx = Math.max(left - myPosition.x, 0, myPosition.x - right);
-                        const dy = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
-                        const distance = Math.hypot(dx, dy);
-                        if (distance < closestCookDistance) {
-                            closestCookDistance = distance;
-                            closestCookStation = station;
-                        }
-                    });
-                    if (closestCookStation && closestCookDistance <= 5) {
-                        closestCookStation.click();
-                        return;
-                    }
-                }
-            }
+
             let nearest = null;
             let nearestDist = Infinity;
             hotspots.forEach(function (hotspot) {
                 const r = hotspot.getBoundingClientRect();
-                const x = ((r.left + r.width / 2 - boardRect.left) / boardRect.width) * 100;
-                const y = ((r.top + r.height / 2 - boardRect.top) / boardRect.height) * 100;
-                const dist = Math.hypot(x - myPosition.x, y - myPosition.y);
+                const left = ((r.left - boardRect.left) / boardRect.width) * 100;
+                const right = ((r.right - boardRect.left) / boardRect.width) * 100;
+                const top = ((r.top - boardRect.top) / boardRect.height) * 100;
+                const bottom = ((r.bottom - boardRect.top) / boardRect.height) * 100;
+                const dx = Math.max(left - myPosition.x, 0, myPosition.x - right);
+                const dy = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
+                const dist = Math.hypot(dx, dy);
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearest = hotspot;
@@ -1935,6 +1933,50 @@
         window.addEventListener("keydown", function (e) {
             const key = e.key.toLowerCase();
             pressedKeys[key] = true;
+
+            const stationMenu = document.getElementById("stationIngredientMenu");
+
+            if (stationMenu.style.display !== "none") {
+                if (key === "escape" || key === "r") {
+                    e.preventDefault();
+                    pressedKeys[key] = false;
+                    closeStationIngredientMenu();
+                    return;
+                }
+
+                if (key !== "p") {
+                    e.preventDefault();
+                    pressedKeys[key] = false;
+                    return;
+                }
+
+                closeStationIngredientMenu();
+}
+
+            const gameIsVisible =
+                getComputedStyle(document.getElementById("gameScreen")).display !== "none";
+
+            if (gameIsVisible && !isTypingInField() && !e.repeat) {
+                if (key === "r") {
+                    e.preventDefault();
+                    toggleDesktopInventory();
+                    return;
+                }
+
+                if (key === "escape") {
+                    e.preventDefault();
+                    toggleDesktopInventory(true);
+                    return;
+                }
+            }
+
+            if (gameIsVisible &&
+                document.getElementById("desktopInventory").style.display !== "none" &&
+                (MOVEMENT_KEYS.includes(key) || key === " ")) {
+                e.preventDefault();
+                pressedKeys[key] = false;
+                return;
+            }
 
             if (/^[1-9]$/.test(key) && !isTypingInField() && !e.repeat &&
                 getComputedStyle(document.getElementById("gameScreen")).display !== "none") {
@@ -2441,6 +2483,148 @@
             });
         });
 
+        let mobileStationInteraction = false;
+
+        function closeStationIngredientMenu() {
+            document.getElementById("stationIngredientMenu").style.display = "none";
+        }
+
+        function openStationIngredientMenu(station) {
+                if (station.classList.contains("cook-station")) {
+                    const cookedIngredients = Object.entries(myIngredients).filter(function ([id, ingredient]) {
+                        return ingredient.state === "Cocinado";
+                    });
+
+                    if (cookedIngredients.length === 1) {
+                        const ingredientId = cookedIngredients[0][0];
+
+                        selectedIngredientIds.clear();
+                        selectedIngredientIds.add(ingredientId);
+                        renderMyIngredients();
+                        updateMyEmojiHead();
+
+                        lastCookingStation = station;
+                        closeStationIngredientMenu();
+                        useCookStation();
+                        return;
+                    }
+                }
+            const menu = document.getElementById("stationIngredientMenu");
+            const title = document.getElementById("stationIngredientTitle");
+            const list = document.getElementById("stationIngredientList");
+            const isChop = station.classList.contains("chop-station");
+            const isFry = station.classList.contains("fry-station") ||
+                station.classList.contains("fry-station-2");
+            const isBoil = station.classList.contains("boil-station");
+
+            title.textContent = isChop
+                ? "🔪 CORTAR INGREDIENTE"
+                : isFry
+                    ? "🍳 FREÍR INGREDIENTE"
+                    : isBoil
+                        ? "🍲 HERVIR INGREDIENTE"
+                        : "🍳 COCINAR INGREDIENTE";
+
+            list.innerHTML = "";
+
+            const ingredients = Object.entries(myIngredients).filter(function ([id, ingredient]) {
+                if (isChop) {
+                    return ingredient.requiresChop === true &&
+                        ingredient.state === "Crudo";
+                }
+
+                if (ingredient.requiresCook !== true) {
+                    return false;
+                }
+
+                if (isFry && ingredient.cookMethod !== "Freir") {
+                    return false;
+                }
+
+                if (isBoil && ingredient.cookMethod !== "Hervir") {
+                    return false;
+                }
+
+                return ingredient.state === "Picado" ||
+                    (ingredient.state === "Crudo" && !ingredient.requiresChop) ||
+                    ingredient.state === "Cocinado";
+            });
+
+            if (ingredients.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "station-ingredient-empty";
+                empty.textContent = "No tienes ingredientes compatibles con esta estación.";
+                list.appendChild(empty);
+            }
+
+            ingredients.forEach(function ([id, ingredient]) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "station-ingredient-item";
+
+                const emoji = document.createElement("span");
+                emoji.className = "station-ingredient-emoji";
+                emoji.textContent = getIngredientEmoji(ingredient.name);
+
+                const name = document.createElement("span");
+                name.className = "station-ingredient-name";
+                name.textContent = ingredient.name;
+
+                const state = document.createElement("span");
+                state.className = "station-ingredient-state";
+                state.textContent = ingredient.state;
+
+                button.appendChild(emoji);
+                button.appendChild(name);
+                button.appendChild(state);
+
+                button.addEventListener("click", function () {
+                    if (!myIngredients[id]) {
+                        closeStationIngredientMenu();
+                        return;
+                    }
+
+                    selectedIngredientIds.clear();
+                    selectedIngredientIds.add(id);
+                    renderMyIngredients();
+                    updateMyEmojiHead();
+
+                    closeStationIngredientMenu();
+
+                    if (isChop) {
+                        lastChopStation = station;
+                        useChopStation();
+                    } else {
+                        lastCookingStation = station;
+                        useCookStation();
+                    }
+                });
+
+                list.appendChild(button);
+            });
+
+            document.getElementById("desktopInventory").style.display = "none";
+
+            MOVEMENT_KEYS.forEach(function (key) {
+                pressedKeys[key] = false;
+            });
+
+            menu.style.display = "flex";
+        }
+
+        document.querySelector(".game-board").addEventListener("click", function (event) {
+            const station = event.target.closest(".chop-station, .cook-station");
+
+            if (!station || mobileStationInteraction) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            openStationIngredientMenu(station);
+        }, true);
+
         function updatePlateVisual(state) {
             const plateVisual = document.getElementById("plateVisual");
             const plateText = document.getElementById("plateVisualText");
@@ -2580,6 +2764,86 @@
                 .catch(function (error) {
                     console.error("Error al sincronizar inventario mvil:", error);
                 });
+        }
+
+        function renderDesktopInventory() {
+            const container = document.getElementById("desktopInventoryList");
+            const ingredientIds = Object.keys(myIngredients);
+
+            container.innerHTML = "";
+
+            if (ingredientIds.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "desktop-inventory-empty";
+                empty.textContent = "Todavía no tienes ingredientes.";
+                container.appendChild(empty);
+                return;
+            }
+
+            ingredientIds.forEach(function (id, index) {
+                const ingredient = myIngredients[id];
+                const selected = selectedIngredientIds.has(id);
+
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "desktop-inventory-item";
+                button.classList.toggle("selected", selected);
+
+                const number = document.createElement("span");
+                number.className = "desktop-inventory-number";
+                number.textContent = index < 9 ? String(index + 1) : "•";
+
+                const emoji = document.createElement("span");
+                emoji.className = "desktop-inventory-emoji";
+                emoji.textContent = getIngredientEmoji(ingredient.name);
+
+                const details = document.createElement("span");
+                details.className = "desktop-inventory-details";
+
+                const name = document.createElement("strong");
+                name.textContent = ingredient.name;
+
+                const state = document.createElement("small");
+                state.textContent = ingredient.state;
+
+                const indicator = document.createElement("span");
+                indicator.className = "desktop-inventory-indicator";
+                indicator.textContent = selected ? "✓" : "";
+
+                details.appendChild(name);
+                details.appendChild(state);
+
+                button.appendChild(number);
+                button.appendChild(emoji);
+                button.appendChild(details);
+                button.appendChild(indicator);
+
+                button.addEventListener("click", function () {
+                    selectedIngredientIds.clear();
+                    selectedIngredientIds.add(id);
+                    renderMyIngredients();
+                    updateMyEmojiHead();
+                });
+
+                container.appendChild(button);
+            });
+        }
+
+        function toggleDesktopInventory(forceClose = false) {
+            const panel = document.getElementById("desktopInventory");
+            const isOpen = panel.style.display !== "none";
+
+            if (forceClose || isOpen) {
+                panel.style.display = "none";
+                return;
+            }
+
+            renderDesktopInventory();
+            panel.style.display = "flex";
+
+            MOVEMENT_KEYS.forEach(function (key) {
+                pressedKeys[key] = false;
+            });
         }
 
         function renderMyIngredients() {
@@ -2737,6 +3001,7 @@
 
             previousIngredientStates = currentStates;
             syncMobileInventory();
+            renderDesktopInventory();
 
         }
 
