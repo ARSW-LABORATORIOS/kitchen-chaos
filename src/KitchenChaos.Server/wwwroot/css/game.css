@@ -2250,3 +2250,43 @@
     text-align: center;
     padding: 8px;
 }
+
+.station-hotspot.station-targeted {
+    outline: 3px solid #48f5a2;
+    outline-offset: 2px;
+    border-color: #48f5a2;
+    background: rgba(72, 245, 162, 0.18);
+    box-shadow: 0 0 12px rgba(72, 245, 162, 0.9);
+    animation: none;
+}
+.station-hotspot.station-targeted .station-label {
+    opacity: 1;
+    background: rgba(25, 90, 60, 0.95);
+}
+
+.carried-dish-image {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+    image-rendering: pixelated;
+}
+
+#orderIngredients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.order-ingredient-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    font-size: 28px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 2px solid rgba(178, 88, 44, 0.4);
+    border-radius: 12px;
+}

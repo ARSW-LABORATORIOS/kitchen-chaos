@@ -121,13 +121,15 @@ public class GameHub : Hub
 
     public async Task PauseGame(string roomCode)
     {
-        // Puede venir del jugador directo o de su control móvil vinculado
         var callerConnectionId = Context.ConnectionId;
         if (LinkedControls.TryGetValue(callerConnectionId, out var playerConnId))
             callerConnectionId = playerConnId;
 
         var room = _roomService.GetRoom(roomCode);
         if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+
+        _timerService.PauseTimers(roomCode, "manual");
+
         await Clients.Group(roomCode).SendAsync("GamePaused", new { By = callerConnectionId });
     }
 
@@ -139,6 +141,9 @@ public class GameHub : Hub
 
         var room = _roomService.GetRoom(roomCode);
         if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+
+        _timerService.ResumeTimers(roomCode, "manual");
+
         await Clients.Group(roomCode).SendAsync("GameResumed");
     }
 
