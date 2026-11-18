@@ -380,6 +380,9 @@ ASALocalRun/
 *.binlog
 MSBuild_Logs/
 
+# Credenciales locales — nunca subir al repositorio
+appsettings.Development.json
+
 # AWS SAM Build and Temporary Artifacts folder
 .aws-sam
 

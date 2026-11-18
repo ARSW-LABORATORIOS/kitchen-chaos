@@ -1,5 +1,6 @@
 using KitchenChaos.Server.Observability;
 using KitchenChaos.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -9,6 +10,7 @@ namespace KitchenChaos.Server.Hubs;
 /// <summary>
 /// Hub principal de SignalR. Canal de comunicación en tiempo real entre servidor y clientes.
 /// </summary>
+[Authorize]
 public class GameHub : Hub
 {
     private readonly RoomService _roomService;
@@ -180,6 +182,8 @@ public class GameHub : Hub
 
         // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
         _preparationService.ResetStations(roomCode);
+        // Limpia cualquier timer anterior (por si se reinicia el nivel)
+        _timerService.StopLevel(roomCode);
         // El timer arranca cuando todos los clientes confirman haber leído las instrucciones (StartTimer)
 
         var order = _orderService.GenerateOrder(roomCode);

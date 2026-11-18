@@ -50,7 +50,7 @@ public class TimerService
     /// <param name="roomCode">Código de la sala.</param>
     public void StartLevel(string roomCode)
     {
-        if (_states.ContainsKey(roomCode)) return;
+        StopLevel(roomCode);
 
         var state = new RoomTimerState();
         _states[roomCode] = state;
