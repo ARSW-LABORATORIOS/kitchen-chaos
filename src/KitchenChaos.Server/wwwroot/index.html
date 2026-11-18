@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/game.css?v=2">
+    <link rel="stylesheet" href="css/game.css?v=3">
 
     <style>
         :root {
@@ -3833,6 +3833,7 @@
             const sec = s % 60;
             document.getElementById("levelTimerDisplay").textContent =
                 min + ":" + (sec < 10 ? "0" : "") + sec;
+
 
             // Evento especial nivel 3: apagón cada 15 segundos
             if (currentLevel === 3 && s > 0 && s % 15 === 0 && s !== lastBlackoutSecond) {
