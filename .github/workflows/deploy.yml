@@ -1,0 +1,99 @@
+name: Desplegar en Azure
+
+# Cada vez que se mezcla algo en develop: se prueba y, si todo pasa, se despliega en Azure.
+# También se puede lanzar a mano desde la pestaña Actions (botón "Run workflow").
+#
+# El despliegue queda APAGADO hasta que en GitHub (Settings > Secrets and variables > Actions > Variables)
+# exista la variable AZURE_DEPLOY_ENABLED con el valor true. Mientras no exista, solo corren las pruebas.
+# Para apagarlo otra vez: borra la variable o ponle otro valor.
+#
+# Detalles de configuración en infra/README.md (sección "Despliegue automático").
+
+on:
+  push:
+    branches: [develop]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "infra/**"
+      - "observability/**"
+  workflow_dispatch:
+
+# Un solo despliegue a la vez: si llegan dos cambios seguidos, el segundo espera al primero.
+concurrency:
+  group: despliegue-azure
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # para iniciar sesión en Azure sin guardar contraseñas (OIDC)
+
+jobs:
+  probar:
+    name: Pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pruebas de colisiones
+        run: node --test tests/colisiones/colisiones.test.js
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compilar el servidor
+        run: dotnet build src/KitchenChaos.Server/KitchenChaos.Server.csproj -c Release
+
+  desplegar:
+    name: Desplegar
+    needs: probar
+    if: vars.AZURE_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      REGISTRO: ${{ vars.AZURE_ACR_NAME }}
+      APP: ${{ vars.AZURE_APP_NAME }}
+      GRUPO: ${{ vars.AZURE_RESOURCE_GROUP }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Iniciar sesión en Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Construir y subir la imagen
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          SERVIDOR="$(az acr show --name "$REGISTRO" --query loginServer -o tsv)"
+          az acr login --name "$REGISTRO"
+          docker build -t "$SERVIDOR/kitchen-chaos:$TAG" .
+          docker push "$SERVIDOR/kitchen-chaos:$TAG"
+          echo "IMAGEN=$SERVIDOR/kitchen-chaos:$TAG" >> "$GITHUB_ENV"
+
+      # La app usa una sola revisión activa: si la nueva no pasa la sonda /ready, Azure NO le pasa el
+      # tráfico y la versión anterior sigue funcionando. En ese caso este paso falla y se ve en rojo.
+      - name: Actualizar la Container App
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az containerapp update --name "$APP" --resource-group "$GRUPO" --image "$IMAGEN"
+
+      - name: Comprobar que el juego responde
+        run: |
+          FQDN="$(az containerapp show --name "$APP" --resource-group "$GRUPO" --query properties.configuration.ingress.fqdn -o tsv)"
+          for i in $(seq 1 24); do
+            if curl -fsS "https://$FQDN/ready" > /dev/null; then
+              echo "El juego responde en https://$FQDN (imagen $IMAGEN)"
+              exit 0
+            fi
+            echo "Todavía no responde ($i/24), espero 5 s..."
+            sleep 5
+          done
+          echo "El juego no respondió a tiempo" >&2
+          exit 1

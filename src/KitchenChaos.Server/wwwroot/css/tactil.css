@@ -324,6 +324,17 @@ body.tactil:not(.in-game) .container {
         height: 20px;
     }
 
+    .hud-barra .kc-sonido-juego {
+        width: 30px;
+        height: 30px;
+        border-width: 2px;
+    }
+
+    .hud-barra .kc-sonido-juego svg {
+        width: 16px;
+        height: 16px;
+    }
+
     .game-hud-sticky .hud-order {
         padding: 3px 10px;
         gap: 2px;

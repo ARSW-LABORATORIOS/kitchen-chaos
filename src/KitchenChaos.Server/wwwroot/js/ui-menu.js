@@ -35,27 +35,30 @@
         } catch (e) { }
     }
 
-    var btnSonido = document.getElementById('kcBtnSonido');
+    // Hay dos botones de sonido (el del menú y el de la barra de la partida): comparten el mismo estado.
+    var botonesSonido = Array.prototype.slice.call(document.querySelectorAll('.kc-btn-sonido'));
     var btnAjustes = document.getElementById('kcBtnAjustes');
     var panel = document.getElementById('kcPanelAjustes');
     var slider = document.getElementById('kcVolumen');
 
     function pintarSonido() {
-        if (!btnSonido) return;
-        btnSonido.classList.toggle('silenciado', estado.muted);
-        btnSonido.setAttribute('aria-pressed', String(estado.muted));
-        btnSonido.setAttribute('aria-label', estado.muted ? 'Activar música' : 'Silenciar música');
+        botonesSonido.forEach(function (b) {
+            b.classList.toggle('silenciado', estado.muted);
+            b.setAttribute('aria-pressed', String(estado.muted));
+            b.setAttribute('aria-label', estado.muted ? 'Activar música' : 'Silenciar música');
+            b.setAttribute('title', estado.muted ? 'Activar música' : 'Silenciar música');
+        });
     }
 
-    if (btnSonido) {
-        btnSonido.addEventListener('click', function () {
+    botonesSonido.forEach(function (b) {
+        b.addEventListener('click', function () {
             estado.muted = !estado.muted;
             pintarSonido();
             aplicarAMusica();
             guardar();
-            btnSonido.blur(); // para que la barra espaciadora no lo vuelva a activar en el juego
+            b.blur(); // para que la barra espaciadora no lo vuelva a activar en el juego
         });
-    }
+    });
 
     if (slider) {
         slider.value = String(Math.round(estado.volume * 100));

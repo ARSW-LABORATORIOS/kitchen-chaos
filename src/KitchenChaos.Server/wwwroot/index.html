@@ -651,8 +651,9 @@
         }
     </style>
     <!-- Va al final del head para ganarle a los estilos de arriba (mismo peso, gana el ultimo) -->
-    <link rel="stylesheet" href="css/tema.css?v=5">
-    <link rel="stylesheet" href="css/tactil.css?v=4">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/tema.css?v=6">
+    <link rel="stylesheet" href="css/tactil.css?v=5">
 </head>
 
 <body>
@@ -693,7 +694,7 @@
 
     <!-- Sonido y ajustes (js/ui-menu.js) -->
     <div class="kc-ajustes" id="kcAjustes">
-        <button type="button" class="kc-icon-btn" id="kcBtnSonido" aria-label="Silenciar música" aria-pressed="false" title="Sonido">
+        <button type="button" class="kc-icon-btn kc-btn-sonido" id="kcBtnSonido" aria-label="Silenciar música" aria-pressed="false" title="Sonido">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
                 <g class="kc-ondas"><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></g>
@@ -923,6 +924,13 @@
                         <span class="hud-label">Tiempo</span>
                         <div class="level-timer" id="levelTimerDisplay">4:00</div>
                     </div>
+                    <button type="button" class="kc-icon-btn kc-btn-sonido kc-sonido-juego" id="kcBtnSonidoJuego" aria-label="Silenciar música" aria-pressed="false" title="Silenciar música">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
+                            <g class="kc-ondas"><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></g>
+                            <g class="kc-tachado"><path d="M16 9.5l5 5" /><path d="M21 9.5l-5 5" /></g>
+                        </svg>
+                    </button>
                 </div>
 
             </div>
@@ -4374,7 +4382,7 @@
 
     </script>
 
-    <script src="js/ui-menu.js?v=1"></script>
+    <script src="js/ui-menu.js?v=2"></script>
     <script src="js/controles-tactiles.js?v=3"></script>
 
     <!-- Modo depuracion de colisiones: solo se descarga si la URL lleva ?debug=1 -->

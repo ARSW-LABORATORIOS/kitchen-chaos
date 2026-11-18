@@ -9,3 +9,8 @@ location = "eastus"
 
 # Déjalo vacío en el primer paso. Después de subir la imagen, pon su etiqueta (por ejemplo "v1").
 image_tag = ""
+
+# Login con Google (Google Cloud Console > Credenciales). Sin estos dos la app nueva no arranca.
+# No subas este archivo con valores reales: terraform.tfvars está en el .gitignore.
+google_client_id     = ""
+google_client_secret = ""

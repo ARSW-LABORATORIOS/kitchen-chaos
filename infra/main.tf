@@ -17,6 +17,12 @@ resource "random_password" "metrics_token" {
   special = false
 }
 
+# Clave con la que el juego firma los JWT. Fija, para que no cambie en cada reinicio.
+resource "random_password" "jwt_key" {
+  length  = 48
+  special = false
+}
+
 resource "azurerm_resource_group" "main" {
   name     = "rg-${var.prefix}"
   location = var.location
@@ -96,6 +102,20 @@ resource "azurerm_container_app" "game" {
     value = random_password.metrics_token.result
   }
 
+  secret {
+    name  = "jwt-key"
+    value = random_password.jwt_key.result
+  }
+
+  # El secreto de Google solo se crea si se pasó en terraform.tfvars.
+  dynamic "secret" {
+    for_each = var.google_client_secret == "" ? [] : [1]
+    content {
+      name  = "google-client-secret"
+      value = var.google_client_secret
+    }
+  }
+
   ingress {
     external_enabled = true
     target_port      = 8080
@@ -123,6 +143,34 @@ resource "azurerm_container_app" "game" {
         secret_name = "metrics-token"
       }
 
+      env {
+        name        = "Jwt__Key"
+        secret_name = "jwt-key"
+      }
+
+      # Detrás del proxy de Azure la app ve http; con esto respeta X-Forwarded-Proto/Host
+      # y arma bien la dirección de regreso del login de Google (https).
+      env {
+        name  = "ASPNETCORE_FORWARDEDHEADERS_ENABLED"
+        value = "true"
+      }
+
+      dynamic "env" {
+        for_each = var.google_client_id == "" ? [] : [1]
+        content {
+          name  = "Google__ClientId"
+          value = var.google_client_id
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.google_client_secret == "" ? [] : [1]
+        content {
+          name        = "Google__ClientSecret"
+          secret_name = "google-client-secret"
+        }
+      }
+
       startup_probe {
         transport = "HTTP"
         port      = 8080
@@ -135,6 +183,12 @@ resource "azurerm_container_app" "game" {
         path      = "/ready"
       }
     }
+  }
+
+  # La imagen la actualiza GitHub Actions (az containerapp update) en cada despliegue automático.
+  # Sin esto, el siguiente terraform apply la devolvería a la etiqueta de terraform.tfvars.
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
   }
 
   depends_on = [time_sleep.esperar_permisos]
