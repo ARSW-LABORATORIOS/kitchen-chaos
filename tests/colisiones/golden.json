@@ -1,0 +1,101 @@
+{
+  "constantes": {
+    "GRID_COLS": 40,
+    "GRID_ROWS": 40,
+    "PLAYER_SPEED": 28,
+    "PLAYER_HALF_W": 0.7,
+    "PLAYER_HALF_H": 0.7,
+    "PLAYER_BODY_HALF_W": 1.8,
+    "PLAYER_BODY_HALF_H": 2.5
+  },
+  "niveles": {
+    "1": {
+      "celdasCaminables": 230,
+      "sha1": "cdf7cc7b24220c3f70d7cc0308317c553bb7ecc3",
+      "spawns": [
+        {
+          "x": 33,
+          "y": 39
+        },
+        {
+          "x": 45,
+          "y": 39
+        },
+        {
+          "x": 35,
+          "y": 61
+        },
+        {
+          "x": 60,
+          "y": 61
+        }
+      ]
+    },
+    "2": {
+      "celdasCaminables": 428,
+      "sha1": "112dc1ab9282ef2ea0483ae3191cbcf970b0c84e",
+      "spawns": [
+        {
+          "x": 35,
+          "y": 39
+        },
+        {
+          "x": 75,
+          "y": 39
+        },
+        {
+          "x": 36,
+          "y": 61
+        },
+        {
+          "x": 52,
+          "y": 61
+        }
+      ]
+    },
+    "3": {
+      "celdasCaminables": 338,
+      "sha1": "046a6fc7084fed03afa31abe2c36b57436d3707d",
+      "spawns": [
+        {
+          "x": 22,
+          "y": 39
+        },
+        {
+          "x": 75,
+          "y": 39
+        },
+        {
+          "x": 22,
+          "y": 61
+        },
+        {
+          "x": 75,
+          "y": 61
+        }
+      ]
+    },
+    "4": {
+      "celdasCaminables": 318,
+      "sha1": "ff32f6fc942d769684cc1cafc7c604f3b529d07d",
+      "spawns": [
+        {
+          "x": 27,
+          "y": 32
+        },
+        {
+          "x": 72,
+          "y": 32
+        },
+        {
+          "x": 27,
+          "y": 59
+        },
+        {
+          "x": 72,
+          "y": 61
+        }
+      ]
+    }
+  }
+}

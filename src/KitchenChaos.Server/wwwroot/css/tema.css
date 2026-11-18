@@ -1,0 +1,615 @@
+/*
+ * Tema visual "pergamino" (diseño nuevo de Kitchen Chaos).
+ *
+ * Se carga DESPUÉS de game.css y solo redefine colores, bordes y sombras de las cajas del HUD
+ * (nivel, pedido actual, puntaje y tiempo). No cambia tamaños, posiciones ni nada de .game-board,
+ * así que no afecta al movimiento ni a las colisiones.
+ *
+ * Para volver al estilo anterior basta con quitar el <link> de tema.css en index.html.
+ */
+
+:root {
+    --kc-pergamino-claro: #fbecc8;
+    --kc-pergamino-oscuro: #efd09a;
+    --kc-madera: #8a5527;
+    --kc-madera-oscura: #5e3716;
+    --kc-tinta: #4a2a12;
+    --kc-tinta-suave: #7a4b25;
+    --kc-naranja: #b8591a;
+}
+
+/* ======================================================================
+   HUD DE LA PARTIDA: una sola barra arriba (Nivel + Puntos | Pedido actual | Tiempo)
+   ====================================================================== */
+
+/* Cajas de pergamino */
+.game-hud-sticky .hud-section,
+.game-hud-sticky .hud-order {
+    background: linear-gradient(180deg, var(--kc-pergamino-claro) 0%, var(--kc-pergamino-oscuro) 100%);
+    border: 3px solid var(--kc-madera);
+    border-radius: 14px;
+    box-shadow:
+        0 4px 0 var(--kc-madera-oscura),
+        0 8px 16px rgba(60, 30, 10, 0.35),
+        inset 0 0 0 2px rgba(255, 244, 214, 0.75);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+/* Barra: izquierda (nivel y puntos), centro (pedido), derecha (tiempo) */
+body.in-game #gameScreen .game-hud-sticky.hud-barra {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin: 0 0 10px;
+}
+
+.hud-barra .hud-grupo-izq {
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.hud-barra .game-hud {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.game-hud-sticky .hud-level {
+    width: auto;
+    min-width: 88px;
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.game-hud-sticky .hud-level h2 {
+    margin: 2px 0 0;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--kc-tinta);
+}
+
+.game-hud-sticky .hud-score,
+.game-hud-sticky .hud-time {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 128px;
+    padding: 8px 16px;
+    text-align: center;
+}
+
+.hud-barra .hud-ico {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    color: var(--kc-tinta);
+}
+
+.hud-barra .hud-ico-estrella {
+    fill: #f7b928;
+    stroke: #b9740b;
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+}
+
+.hud-barra .hud-texto {
+    text-align: center;
+}
+
+/* Etiquetas pequeñas (NIVEL, PUNTOS, TIEMPO) */
+.game-hud-sticky .hud-label,
+.game-hud-sticky .hud-level .hud-label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--kc-tinta-suave);
+    letter-spacing: 0.06em;
+}
+
+.game-hud-sticky #scoreDisplay,
+.game-hud-sticky .level-timer {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--kc-tinta);
+}
+
+/* Tarjeta del pedido actual */
+.game-hud-sticky .hud-order {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1 1 auto;
+    width: auto;
+    max-width: 520px;
+    min-width: 0;
+    gap: 6px;
+    padding: 8px 14px;
+}
+
+.game-hud-sticky .hud-order-info {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "titulo ingredientes"
+        "plato  ingredientes";
+    align-items: center;
+    column-gap: 12px;
+    width: 100%;
+    text-align: left;
+}
+
+.game-hud-sticky .hud-order-info strong {
+    grid-area: titulo;
+    font-size: 12px;
+    color: var(--kc-naranja);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.game-hud-sticky #orderDish {
+    grid-area: plato;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--kc-tinta);
+}
+
+.game-hud-sticky #orderIngredients {
+    grid-area: ingredientes;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    margin: 0;
+}
+
+.game-hud-sticky .order-ingredient-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+    background: #fff8e6;
+    border: 2px solid #c99a5b;
+    box-shadow: 0 2px 0 rgba(138, 85, 39, 0.35);
+}
+
+/* Tiempo del pedido: "Tiempo: 45s" y la barra en una sola fila */
+.game-hud-sticky .hud-order-timer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--kc-tinta);
+}
+
+.game-hud-sticky .hud-order-timer > span {
+    white-space: nowrap;
+}
+
+/* La pista de la barra es café oscuro; el color de la barra (verde, naranja, rojo)
+   lo sigue poniendo el juego según el tiempo que queda. */
+.game-hud-sticky .order-timer-bar-bg {
+    flex: 1 1 auto;
+    margin: 0;
+    height: 12px;
+    background: var(--kc-tinta);
+    border: 1px solid var(--kc-madera-oscura);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Sin la fila inferior el tablero puede crecer: se reserva solo el alto de la barra.
+   OJO: solo cambia el ancho máximo; la proporción 3:2 y todo lo demás del tablero siguen igual. */
+body.in-game #gameScreen .game-board {
+    width: min(100%, calc((100dvh - 124px) * 1.5));
+}
+
+/* Pantallas angostas: la tarjeta del pedido baja a una segunda fila */
+@media (max-width: 760px) {
+    body.in-game #gameScreen .game-hud-sticky.hud-barra {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hud-barra .hud-grupo-izq {
+        flex: 1 1 auto;
+    }
+
+    .game-hud-sticky .hud-order {
+        order: 3;
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .game-hud-sticky .hud-score,
+    .game-hud-sticky .hud-time {
+        min-width: 0;
+        padding: 6px 10px;
+    }
+
+    .game-hud-sticky #scoreDisplay,
+    .game-hud-sticky .level-timer {
+        font-size: 22px;
+    }
+
+    .game-hud-sticky .hud-level {
+        min-width: 64px;
+        padding: 6px 10px;
+    }
+
+    .game-hud-sticky .hud-level h2 {
+        font-size: 24px;
+    }
+
+    .hud-barra .hud-ico {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+/* ======================================================================
+   PANTALLA DE INICIO Y SALA DE ESPERA (menú en pergamino)
+   ====================================================================== */
+
+/* Columna del menú un poco más angosta, como en el diseño */
+.container {
+    max-width: 500px;
+    /* El div #gameContainer (login) envuelve al juego y dejo de centrarlo: se centra de nuevo */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Cartel de madera con el título (reemplaza al subtítulo de antes; el juego lo oculta al empezar) */
+.subtitle.cartel-madera {
+    position: relative;
+    width: min(100%, 440px);
+    margin: 4px auto 18px;
+    padding: 14px 22px 12px;
+    color: #ffe9b8;
+    text-shadow: none;
+    background:
+        radial-gradient(circle at 12px 12px, #4a2a12 0 3px, transparent 3.5px),
+        radial-gradient(circle at calc(100% - 12px) 12px, #4a2a12 0 3px, transparent 3.5px),
+        radial-gradient(circle at 12px calc(100% - 12px), #4a2a12 0 3px, transparent 3.5px),
+        radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), #4a2a12 0 3px, transparent 3.5px),
+        repeating-linear-gradient(90deg, rgba(60, 28, 8, 0.10) 0 2px, transparent 2px 11px),
+        linear-gradient(180deg, #c07a3c 0%, #a2622b 100%);
+    border: 4px solid #5e3716;
+    border-radius: 12px;
+    box-shadow: 0 5px 0 #3e220c, 0 12px 22px rgba(0, 0, 0, 0.4);
+    transform: rotate(-1deg);
+}
+
+.cartel-madera strong {
+    display: block;
+    font-family: var(--font-title);
+    font-size: clamp(24px, 6vw, 34px);
+    font-weight: 700;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ffe9b8;
+    text-shadow: 0 2px 0 #5e3716, 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+.cartel-madera span {
+    display: block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    font-size: clamp(13px, 3.4vw, 15px);
+    font-weight: 600;
+    color: #5a3a1a;
+    background: #f3dfb1;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 3px rgba(94, 55, 22, 0.3);
+}
+
+/* Tarjetas (menú, sala de espera, cómo jugar): pergamino con borde de madera */
+.menu,
+.waiting-room,
+.instructions {
+    background: linear-gradient(180deg, #fbefd0 0%, #f1d9a8 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 4px solid #8a5527;
+    border-radius: 22px;
+    box-shadow:
+        0 5px 0 #5e3716,
+        0 14px 26px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 2px rgba(255, 246, 220, 0.8);
+}
+
+.waiting-room h2,
+.instructions h2 {
+    color: var(--kc-tinta);
+    text-shadow: none;
+}
+
+.instructions h2 {
+    color: var(--kc-naranja);
+}
+
+/* La pantalla de la partida usa las clases .menu y .game-screen-panel: NO debe verse como tarjeta */
+.menu.game-screen-panel {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Campos de texto */
+.menu input,
+.waiting-room input {
+    background: #fff7e2;
+    border: 2px solid #e0c590;
+    box-shadow: inset 0 2px 4px rgba(120, 80, 30, 0.14);
+    color: var(--kc-tinta);
+}
+
+.menu input::placeholder {
+    color: #8b6a43;
+    opacity: 1;
+}
+
+.menu input:focus,
+.waiting-room input:focus {
+    background: #fffdf3;
+    border-color: #d9791f;
+    box-shadow: inset 0 2px 4px rgba(120, 80, 30, 0.10), 0 0 0 3px rgba(217, 121, 31, 0.28);
+}
+
+.menu .input-icon {
+    color: #a67c45;
+}
+
+/* Elige tu personaje */
+.avatar-picker-label {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--kc-tinta);
+}
+
+.avatar-option {
+    background: #fff7e2;
+    border: 2.5px solid #dfc08a;
+    box-shadow: 0 2px 0 rgba(138, 85, 39, 0.35);
+}
+
+.avatar-option.selected {
+    background: #fffdf3;
+    border-color: #e0701a;
+    box-shadow: 0 0 0 3px rgba(224, 112, 26, 0.35), 0 2px 0 rgba(138, 85, 39, 0.35);
+}
+
+/* Botones principales con volumen (sombra inferior) */
+#createRoomButton {
+    background: linear-gradient(180deg, #f09a3e 0%, #d36a1c 100%);
+    box-shadow: 0 4px 0 #8f430f, 0 8px 14px rgba(0, 0, 0, 0.25);
+    justify-content: center;
+}
+
+#joinRoomButton,
+#startGameButton {
+    background: linear-gradient(180deg, #3d9684 0%, #28695f 100%);
+    box-shadow: 0 4px 0 #1b4a43, 0 8px 14px rgba(0, 0, 0, 0.25);
+    justify-content: center;
+}
+
+#createRoomButton .btn-chevron,
+#joinRoomButton .btn-chevron {
+    position: absolute;
+    right: 20px;
+}
+
+#createRoomButton,
+#joinRoomButton {
+    position: relative;
+}
+
+#createRoomButton:active,
+#joinRoomButton:active,
+#startGameButton:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #3e220c, 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+#createRoomButton:disabled,
+#joinRoomButton:disabled,
+#startGameButton:disabled {
+    background: #cdbf9f;
+    color: #8a7b5c;
+    box-shadow: 0 4px 0 #a99b7c;
+}
+
+/* "¿Cómo jugar?" y "Salir de la sala": píldora crema */
+#howToPlayButton,
+#leaveRoomButton {
+    background: linear-gradient(180deg, #fff3d3 0%, #f0d6a0 100%);
+    color: #6b4219;
+    border: 2px solid #d3ae6f;
+    box-shadow: 0 3px 0 #b88f55;
+    font-weight: 700;
+}
+
+#howToPlayButton {
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 28px;
+    padding-right: 28px;
+}
+
+#howToPlayButton .btn-chevron {
+    display: none;
+}
+
+/* Sala de espera */
+#playersList li {
+    background: #fff7e2;
+    border: 1px solid #e0c590;
+}
+
+#roomCodeDisplay {
+    background: #fff7e2;
+}
+
+/* Botones redondos de sonido y ajustes (arriba a la derecha) */
+.kc-ajustes {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 60;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.kc-icon-btn {
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    color: #ffe9b8;
+    background: linear-gradient(180deg, #a2622b 0%, #7a4519 100%);
+    border: 3px solid #5e3716;
+    box-shadow: 0 3px 0 #3e220c, 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.kc-icon-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.kc-icon-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #3e220c;
+}
+
+.kc-icon-btn .kc-tachado {
+    display: none;
+}
+
+.kc-icon-btn.silenciado .kc-ondas {
+    display: none;
+}
+
+.kc-icon-btn.silenciado .kc-tachado {
+    display: inline;
+}
+
+.kc-panel-ajustes {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    width: 220px;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #fbefd0 0%, #f1d9a8 100%);
+    border: 3px solid #8a5527;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #5e3716, 0 10px 20px rgba(0, 0, 0, 0.35);
+    text-align: left;
+}
+
+.kc-panel-ajustes[hidden] {
+    display: none;
+}
+
+.kc-panel-ajustes label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kc-tinta);
+}
+
+.kc-panel-ajustes input[type="range"] {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    accent-color: #d36a1c;
+}
+
+/* Dentro de la partida se ocultan (el HUD ocupa esas esquinas) */
+body.in-game .kc-ajustes {
+    display: none;
+}
+
+/* Indicador de conexión: píldora oscura con puntito de color, abajo a la izquierda */
+#connectionStatus {
+    position: fixed;
+    left: 14px;
+    bottom: 12px;
+    z-index: 50;
+    margin: 0;
+    padding: 6px 14px 6px 30px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(38, 26, 16, 0.8);
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+#connectionStatus::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: #f5b942;
+}
+
+#connectionStatus[data-estado="ok"]::before {
+    background: #3ddc6b;
+    box-shadow: 0 0 6px #3ddc6b;
+}
+
+#connectionStatus[data-estado="error"]::before {
+    background: #ef5a4c;
+    box-shadow: 0 0 6px #ef5a4c;
+}
+
+/* En la partida solo se muestra si hay un problema de conexión */
+body.in-game #connectionStatus[data-estado="ok"] {
+    display: none;
+}
+
+@media (max-width: 520px) {
+    .menu,
+    .waiting-room,
+    .instructions {
+        padding: 24px 18px;
+    }
+
+    .kc-icon-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .subtitle.cartel-madera {
+        margin-bottom: 14px;
+    }
+}
