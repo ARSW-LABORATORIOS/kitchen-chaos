@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/game.css?v=2">
+    <link rel="stylesheet" href="css/game.css?v=3">
 
     <style>
         :root {
@@ -862,11 +862,11 @@
                         <span id="choppingProgressTime">2.0s</span>
                     </div>
                     <!-- Nivel 1: Arroz con leche -->
-                    <button class="station-hotspot ingredient-station station-1" data-ingredient="leche">
-                        <span class="station-label">Leche</span>
-                    </button>
-                    <button class="station-hotspot ingredient-station station-2" data-ingredient="arroz">
+                    <button class="station-hotspot ingredient-station station-1" data-ingredient="arroz">
                         <span class="station-label">Arroz</span>
+                    </button>
+                    <button class="station-hotspot ingredient-station station-2" data-ingredient="leche">
+                        <span class="station-label">Leche</span>
                     </button>
                     <button class="station-hotspot ingredient-station station-3" data-ingredient="leche condensada">
                         <span class="station-label">Leche condensada</span>
@@ -1113,7 +1113,7 @@
             "tomate": "🍅", "lechuga": "🥬", "cebolla": "🧅", "pepino": "🥒",
             "salchicha": "🌭", "papa": "🥔", "pollo": "🍗", "queso": "🧀",
             "salsa roja": "🍅", "salsa blanca": "🫙",
-            "frijol": "🫘", "carne": "🥩", "platano": "🍌", "aguacate": "🥑",
+            "frijoles": "🫘", "carne": "🥩", "platano": "🍌", "aguacate": "🥑",
             "chicharron": "🥓", "huevo": "🥚"
         };
 
@@ -1122,31 +1122,11 @@
         }
 
         function updateMyEmojiHead() {
-            const board = document.querySelector(".game-board");
-            if (!board) return;
+            const bubble = document.getElementById("myEmojiHead");
 
-            let bubble = document.getElementById("myEmojiHead");
-            const keys = Object.keys(myIngredients);
-
-            if (keys.length === 0) {
-                if (bubble) bubble.style.display = "none";
-                return;
+            if (bubble) {
+                bubble.remove();
             }
-
-            if (!bubble) {
-                bubble = document.createElement("div");
-                bubble.id = "myEmojiHead";
-                bubble.className = "ingredient-emoji-bubble";
-                board.appendChild(bubble);
-            }
-
-            const firstIngredient = myIngredients[keys[0]];
-            const emoji = getIngredientEmoji(firstIngredient.name);
-            const extra = keys.length > 1 ? " +" + (keys.length - 1) : "";
-            bubble.textContent = emoji + extra;
-            bubble.style.display = "block";
-            bubble.style.left = myPosition.x + "%";
-            bubble.style.top = (myPosition.y - 9) + "%";
         }
 
 
@@ -1238,6 +1218,17 @@
         let myPlayerIndex = 0;
         let myIngredients = {};
         let currentLevel = 1;
+
+        const plateFoodImagesByLevel = {
+            1: "images/arroz-con-leche.png",
+            2: "images/ensalada.png",
+            3: "images/salchipapa.png",
+            4: "images/bandeja-paisa.png"
+        };
+
+        function getFoodPlateImageByLevel(level) {
+            return plateFoodImagesByLevel[level] || null;
+        }
 
         // Evento especial nivel 1: controles invertidos
         let controlsInverted = false;
@@ -1829,6 +1820,7 @@
 
         let myPosition = { x: 27, y: 39 };
         let myFacingLeft = false;
+        let myFacingDirection = "down";
         let pressedKeys = {};
         let mobilePressedKeys = {};
 
@@ -1881,7 +1873,7 @@
         // AB#81 - Espacio = agarrar/usar lo que est ms cerca, al estilo Overcooked.
         // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
         // exactamente la misma lgica que ya existe, no se duplica nada).
-        const GRAB_REACH = 13; // % del tablero, qu tan cerca hay que estar para poder agarrar
+        const GRAB_REACH = 3; // % del tablero, qu tan cerca hay que estar para poder agarrar
 
         connection.on("MobileInteractionReceived", function () {
             const gameScreen = document.getElementById("gameScreen");
@@ -1899,34 +1891,88 @@
             }
         });
 
-        function grabNearestStation() {
+        function getTargetedStation() {
             const board = document.querySelector(".game-board");
-            if (!board) return;
-            const boardRect = board.getBoundingClientRect();
-            const hotspots = Array.from(board.querySelectorAll(".station-hotspot"))
-                .filter(function (h) {
-                    return h.offsetParent !== null && !h.disabled &&
-                        getComputedStyle(h).pointerEvents !== "none";
-                });
+            if (!board) return null;
 
-            let nearest = null;
-            let nearestDist = Infinity;
+            const boardRect = board.getBoundingClientRect();
+            const directions = {
+                up: { x: 0, y: -1 },
+                down: { x: 0, y: 1 },
+                left: { x: -1, y: 0 },
+                right: { x: 1, y: 0 }
+            };
+            const facing = directions[myFacingDirection] || directions.down;
+            let selected = null;
+            let bestScore = Infinity;
+
+            const hotspots = board.querySelectorAll(".station-hotspot");
+
             hotspots.forEach(function (hotspot) {
-                const r = hotspot.getBoundingClientRect();
-                const left = ((r.left - boardRect.left) / boardRect.width) * 100;
-                const right = ((r.right - boardRect.left) / boardRect.width) * 100;
-                const top = ((r.top - boardRect.top) / boardRect.height) * 100;
-                const bottom = ((r.bottom - boardRect.top) / boardRect.height) * 100;
-                const dx = Math.max(left - myPosition.x, 0, myPosition.x - right);
-                const dy = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
-                const dist = Math.hypot(dx, dy);
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearest = hotspot;
+                if (hotspot.offsetParent === null ||
+                    hotspot.disabled ||
+                    getComputedStyle(hotspot).pointerEvents === "none") {
+                    return;
+                }
+
+                const rect = hotspot.getBoundingClientRect();
+                const left = (rect.left - boardRect.left) / boardRect.width * 100;
+                const right = (rect.right - boardRect.left) / boardRect.width * 100;
+                const top = (rect.top - boardRect.top) / boardRect.height * 100;
+                const bottom = (rect.bottom - boardRect.top) / boardRect.height * 100;
+
+                let forwardDistance = Infinity;
+                let lateralDistance = Infinity;
+
+                if (facing.x > 0 && right >= myPosition.x && left >= myPosition.x - 0.5) {
+                    forwardDistance = Math.max(0, left - myPosition.x);
+                    lateralDistance = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
+                } else if (facing.x < 0 && left <= myPosition.x && right <= myPosition.x + 0.5) {
+                    forwardDistance = Math.max(0, myPosition.x - right);
+                    lateralDistance = Math.max(top - myPosition.y, 0, myPosition.y - bottom);
+                } else if (facing.y > 0 && bottom >= myPosition.y && top >= myPosition.y - 0.5) {
+                    forwardDistance = Math.max(0, top - myPosition.y);
+                    lateralDistance = Math.max(left - myPosition.x, 0, myPosition.x - right);
+                } else if (facing.y < 0 && top <= myPosition.y && bottom <= myPosition.y + 0.5) {
+                    forwardDistance = Math.max(0, myPosition.y - bottom);
+                    lateralDistance = Math.max(left - myPosition.x, 0, myPosition.x - right);
+                }
+
+                const isIngredient = hotspot.classList.contains("ingredient-station");
+                const reach = isIngredient ? 5 : 5;
+                const lateralLimit = isIngredient ? 2 : 3;
+
+                const isInside =
+                    myPosition.x >= left &&
+                    myPosition.x <= right &&
+                    myPosition.y >= top &&
+                    myPosition.y <= bottom;
+
+                if (isInside) {
+                    forwardDistance = 0;
+                    lateralDistance = 0;
+                }
+
+                if (forwardDistance > reach || lateralDistance > lateralLimit) {
+                    return;
+                }
+
+                const score = forwardDistance + lateralDistance * 3;
+
+                if (score < bestScore) {
+                    bestScore = score;
+                    selected = hotspot;
                 }
             });
-            if (nearest && nearestDist <= GRAB_REACH) {
-                nearest.click();
+
+            return selected;
+        }
+
+        function grabNearestStation() {
+            const station = getTargetedStation();
+
+            if (station) {
+                station.click();
             }
         }
 
@@ -2139,11 +2185,14 @@
             plate.style.display = state === null ? "none" : "block";
 
             if (state === "clean") {
-                plate.textContent = "";
+                plate.textContent = "🍽️";
             } else if (state === "food") {
-                plate.textContent = "";
+                const imagePath = getFoodPlateImageByLevel(currentLevel);
+                plate.innerHTML = imagePath
+                    ? `<img src="${imagePath}" alt="Plato preparado" class="carried-dish-image">`
+                    : "🍲";
             } else if (state === "dirty") {
-                plate.textContent = "";
+                plate.textContent = "🍽️";
             }
 
             renderMyPlayerPosition();
@@ -2225,9 +2274,16 @@
                 document.querySelector(".game-board").appendChild(plate);
             }
 
-            plate.textContent =
-                plateState === "food" ? "" :
-                plateState === "dirty" ? "" : "";
+            if (plateState === "food") {
+                const imagePath = getFoodPlateImageByLevel(currentLevel);
+                plate.innerHTML = imagePath
+                    ? `<img src="${imagePath}" alt="Plato preparado" class="carried-dish-image">`
+                    : "🍲";
+            } else if (plateState === "clean" || plateState === "dirty") {
+                plate.textContent = "🍽️";
+            } else {
+                plate.textContent = "";
+            }
 
             plate.style.display = "block";
             plate.style.left = pos.x + "%";
@@ -2274,6 +2330,12 @@
                 }
 
                 if (dx !== 0 || dy !== 0) {
+
+                    if (Math.abs(dx) >= Math.abs(dy)) {
+                        myFacingDirection = dx < 0 ? "left" : "right";
+                    } else {
+                        myFacingDirection = dy < 0 ? "up" : "down";
+                    }
 
                     // Normaliza para que caminar en diagonal no sea ms rpido
                     const length = Math.sqrt(dx * dx + dy * dy);
@@ -2327,6 +2389,21 @@
                     lastMoveSentAt = timestamp;
                     connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
                         .catch(function (err) { console.error(err.toString()); });
+                }
+            }
+
+            if (gameScreenVisible) {
+                const targetedStation = getTargetedStation();
+
+                document.querySelectorAll(".station-hotspot.station-targeted")
+                    .forEach(function (station) {
+                        if (station !== targetedStation) {
+                            station.classList.remove("station-targeted");
+                        }
+                    });
+
+                if (targetedStation) {
+                    targetedStation.classList.add("station-targeted");
                 }
             }
 
@@ -3189,12 +3266,19 @@
 
         // AB#18 - Ingredientes requeridos del pedido actual
         connection.on("OrderUpdated", function (order) {
+            document.getElementById("orderDish").textContent = order.dishName;
 
-            document.getElementById("orderDish").textContent = "Plato: " + order.dishName;
+            const container = document.getElementById("orderIngredients");
+            container.replaceChildren();
 
-            document.getElementById("orderIngredients").textContent =
-                "Ingredientes necesarios: " + order.requiredIngredients.join(", ");
-
+            order.requiredIngredients.forEach(function (name) {
+                const item = document.createElement("span");
+                item.className = "order-ingredient-icon";
+                item.textContent = getIngredientEmoji(name);
+                item.title = name;
+                item.setAttribute("aria-label", name);
+                container.appendChild(item);
+            });
         });
 
 
@@ -3735,6 +3819,12 @@
 
         });
 
+        connection.on("SpecialEventAnnouncement", function () {
+            if (currentLevel === 1) {
+                triggerSpecialEvent();
+            }
+        });
+
         connection.on("LevelTimerTick", function (data) {
 
             const total = 240;
@@ -3744,10 +3834,6 @@
             document.getElementById("levelTimerDisplay").textContent =
                 min + ":" + (sec < 10 ? "0" : "") + sec;
 
-            // Evento especial nivel 1: se dispara cuando queda 1 minuto transcurrido (s === 180 de 240 total)
-            if (currentLevel === 1 && s === 180) {
-                triggerSpecialEvent();
-            }
 
             // Evento especial nivel 3: apagón cada 15 segundos
             if (currentLevel === 3 && s > 0 && s % 15 === 0 && s !== lastBlackoutSecond) {

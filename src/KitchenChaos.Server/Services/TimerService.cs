@@ -26,6 +26,7 @@ public class TimerService
         public int      OrderSecondsLeft  { get; set; } = OrderDurationSeconds;
         public int      Score             { get; set; } = 0;
         public bool     LevelEnded        { get; set; } = false;
+        public HashSet<string> PauseReasons { get; } = new();
     }
 
     // ConcurrentDictionary: varias salas corren temporizadores en paralelo desde hilos distintos.
@@ -58,8 +59,8 @@ public class TimerService
         state.LevelTimer = new Timer(
             async _ => await OnLevelTickAsync(roomCode),
             null,
-            TimeSpan.FromSeconds(1),
-            TimeSpan.FromSeconds(1)
+            state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1),
+            state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1)
         );
 
         StartOrderTimer(roomCode, state);
@@ -94,6 +95,41 @@ public class TimerService
         state.OrderTimer?.Dispose();
     }
 
+    public void PauseTimers(string roomCode, string reason)
+    {
+        if (!_states.TryGetValue(roomCode, out var state)) return;
+
+        lock (state)
+        {
+            if (state.LevelEnded || !state.PauseReasons.Add(reason)) return;
+
+            state.LevelTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            state.OrderTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+    }
+
+    public void ResumeTimers(string roomCode, string reason)
+    {
+        if (!_states.TryGetValue(roomCode, out var state)) return;
+
+        lock (state)
+        {
+            if (!state.PauseReasons.Remove(reason) ||
+                state.LevelEnded ||
+                state.PauseReasons.Count > 0) return;
+
+            state.LevelTimer?.Change(
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(1)
+            );
+
+            state.OrderTimer?.Change(
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(1)
+            );
+        }
+    }
+
     // ── Privados ────────────────────────────────────────────────────────────
 
     private void StartOrderTimer(string roomCode, RoomTimerState state)
@@ -118,6 +154,9 @@ public class TimerService
         int remaining;
         lock (state)
         {
+            if (state.LevelEnded || state.PauseReasons.Count > 0)
+                return;
+
             state.SecondsRemaining--;
             remaining = state.SecondsRemaining;
         }
@@ -129,7 +168,29 @@ public class TimerService
         });
 
         if (remaining <= 0)
+        {
             await EndLevelAsync(roomCode, state);
+            return;
+        }
+
+        var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
+
+        if (level == 1 && remaining == 180)
+        {
+            PauseTimers(roomCode, "special");
+
+            try
+            {
+                await _hub.Clients.Group(roomCode)
+                    .SendAsync("SpecialEventAnnouncement");
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+            finally
+            {
+                ResumeTimers(roomCode, "special");
+            }
+        }
     }
 
     private async Task OnOrderTickAsync(string roomCode)
@@ -139,6 +200,9 @@ public class TimerService
         int remaining;
         lock (state)
         {
+            if (state.LevelEnded || state.PauseReasons.Count > 0)
+                return;
+
             state.OrderSecondsLeft--;
             remaining = state.OrderSecondsLeft;
         }

@@ -2250,3 +2250,186 @@
     text-align: center;
     padding: 8px;
 }
+
+.station-hotspot.station-targeted {
+    outline: 3px solid #48f5a2;
+    outline-offset: 2px;
+    border-color: #48f5a2;
+    background: rgba(72, 245, 162, 0.18);
+    box-shadow: 0 0 12px rgba(72, 245, 162, 0.9);
+    animation: none;
+}
+.station-hotspot.station-targeted .station-label {
+    opacity: 1;
+    background: rgba(25, 90, 60, 0.95);
+}
+
+.carried-dish-image {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+    image-rendering: pixelated;
+}
+
+#orderIngredients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.order-ingredient-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    font-size: 28px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 2px solid rgba(178, 88, 44, 0.4);
+    border-radius: 12px;
+}
+
+.game-screen-panel {
+    height: 100dvh;
+    padding: 8px 3vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.game-hud-sticky {
+    margin-bottom: 8px;
+}
+
+.game-board-wrapper {
+    padding: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+.game-board {
+    width: min(100%, calc((100dvh - 260px) * 3 / 2));
+    max-width: 1400px;
+    aspect-ratio: 3 / 2;
+    margin: 0 auto;
+}
+
+.game-hud-bottom {
+    margin: 8px auto 4px;
+    align-items: center;
+}
+
+.game-hud-sticky .hud-level,
+.game-hud-sticky .hud-order,
+.game-hud-bottom .hud-section {
+    background: rgba(35, 27, 21, 0.9);
+    border: 2px solid rgba(244, 162, 97, 0.85);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.game-hud-sticky .hud-level .hud-label,
+.game-hud-bottom .hud-label {
+    color: #f4cfa8;
+}
+
+.game-hud-sticky .hud-level h2,
+.game-hud-sticky #orderDish,
+.game-hud-sticky .hud-order-timer,
+.game-hud-bottom #scoreDisplay,
+.game-hud-bottom .level-timer {
+    color: #ffffff;
+}
+
+.game-hud-sticky .hud-order-info strong {
+    color: #ffb36b;
+}
+
+.game-hud-sticky .hud-order {
+    padding: 10px 14px;
+    gap: 5px;
+}
+
+#orderIngredients {
+    margin-top: 6px;
+    gap: 7px;
+}
+
+.order-ingredient-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+}
+
+.game-hud-bottom .hud-section {
+    padding: 8px 16px;
+}
+
+.game-hud-bottom {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    margin: 4px auto;
+}
+
+.game-hud-bottom .hud-section {
+    flex: 1;
+}
+
+.game-hud-sticky {
+    flex-shrink: 0;
+}
+
+#gameScreen[style*="display: block"] {
+    display: flex !important;
+}
+
+body.in-game .container {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+}
+
+body.in-game #gameScreen[style*="display: block"] {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    margin: 0;
+    padding: 8px 3vw !important;
+    overflow: hidden;
+}
+
+body.in-game #gameScreen .game-hud-sticky,
+body.in-game #gameScreen .game-hud-bottom {
+    flex: 0 0 auto;
+}
+
+body.in-game #gameScreen .game-board-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.in-game #gameScreen .game-board {
+    width: min(100%, calc((100dvh - 235px) * 1.5));
+    max-width: 1400px;
+    flex-shrink: 1;
+    margin: 0 auto;
+}
+
+body.in-game #gameScreen .game-hud-bottom {
+    width: 100%;
+    margin: 4px 0;
+}
