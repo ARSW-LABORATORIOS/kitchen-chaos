@@ -475,8 +475,25 @@
         const interactButton = document.getElementById('interact');
         const feedback = document.getElementById('feedback');
 
+        // El hub exige sesion (Google): sin ella se manda a iniciar sesion y se vuelve a esta pagina.
+        // El token se pide ANTES de conectar, igual que en index.html.
+        window._kcTokenReady = fetch('/api/auth/token', { method: 'POST' })
+            .then(function (r) {
+                if (r.status === 401) {
+                    location.href = '/auth/login?returnUrl=' + encodeURIComponent('/control.html');
+                    return null;
+                }
+                return r.json();
+            })
+            .then(function (data) { window._kcToken = data ? data.token : ''; })
+            .catch(function () { window._kcToken = ''; });
+
         const mobileConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/gamehub")
+            .withUrl("/gamehub", {
+                accessTokenFactory: function () {
+                    return window._kcTokenReady.then(function () { return window._kcToken || ''; });
+                }
+            })
             .withAutomaticReconnect()
             .build();
 

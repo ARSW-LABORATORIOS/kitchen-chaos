@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <title>Kitchen Chaos</title>
 
@@ -650,6 +650,10 @@
             font-family: var(--font-mono); display: block;
         }
     </style>
+    <!-- Va al final del head para ganarle a los estilos de arriba (mismo peso, gana el ultimo) -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/tema.css?v=6">
+    <link rel="stylesheet" href="css/tactil.css?v=5">
 </head>
 
 <body>
@@ -688,17 +692,37 @@
     <!-- Contenido del juego -->
     <div id="gameContainer" style="display:none; width:100%;">
 
+    <!-- Sonido y ajustes (js/ui-menu.js) -->
+    <div class="kc-ajustes" id="kcAjustes">
+        <button type="button" class="kc-icon-btn kc-btn-sonido" id="kcBtnSonido" aria-label="Silenciar música" aria-pressed="false" title="Sonido">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
+                <g class="kc-ondas"><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></g>
+                <g class="kc-tachado"><path d="M16 9.5l5 5" /><path d="M21 9.5l-5 5" /></g>
+            </svg>
+        </button>
+        <button type="button" class="kc-icon-btn" id="kcBtnAjustes" aria-label="Ajustes" aria-expanded="false" title="Ajustes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3.2" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z" />
+            </svg>
+        </button>
+        <div class="kc-panel-ajustes" id="kcPanelAjustes" hidden>
+            <label for="kcVolumen">Volumen de la música</label>
+            <input type="range" id="kcVolumen" min="0" max="100" value="50" />
+        </div>
+    </div>
+
     <div class="container">
 
         <img src="images/logo.webp" alt="Kitchen Chaos" class="logo">
 
-        <p class="subtitle">
-            Crea una sala o únete con tus amigos.
-        </p>
+        <div class="subtitle cartel-madera">
+            <strong>¡Que empiece el caos!</strong>
+            <span>Prepara tu cocina y reúne a tu equipo.</span>
+        </div>
 
         <div class="menu">
-
-            <h2>¡Que empiece el caos!</h2>
 
             <div class="input-wrap">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -715,8 +739,8 @@
             <button id="createRoomButton">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 13a4 4 0 0 1 .84-7.92 4 4 0 0 1 7.5-1.65A4 4 0 0 1 19.5 7 4 4 0 0 1 18 13" />
-                    <path d="M6 13h12v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z" />
+                    <path d="M3 11.5 12 4l9 7.5" />
+                    <path d="M5 10.5V20h5v-5.5h4V20h5v-9.5" />
                 </svg>
                 <span>Crear sala</span>
                 <svg class="btn-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -850,13 +874,27 @@
                 <div id="stationIngredientList" class="station-ingredient-list"></div>
             </div>
 
-            <div class="game-hud-sticky">
+            <div class="game-hud-sticky hud-barra">
 
-                <div class="game-hud">
-                    <div class="hud-section hud-level">
-                        <span class="hud-label">Nivel</span>
-                        <h2>Nivel 1</h2>
+                <div class="hud-grupo-izq">
+
+                    <div class="game-hud">
+                        <div class="hud-section hud-level">
+                            <span class="hud-label">Nivel</span>
+                            <h2>1</h2>
+                        </div>
                     </div>
+
+                    <div class="hud-section hud-score">
+                        <svg class="hud-ico hud-ico-estrella" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z" />
+                        </svg>
+                        <div class="hud-texto">
+                            <span class="hud-label">Puntos</span>
+                            <div id="scoreDisplay">0</div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="hud-order">
@@ -875,6 +913,24 @@
                         </div>
                     </div>
 
+                </div>
+
+                <div class="hud-section hud-time">
+                    <svg class="hud-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <circle cx="12" cy="13" r="8" />
+                        <path d="M12 8.5V13l3 2M9.5 2.8h5" />
+                    </svg>
+                    <div class="hud-texto">
+                        <span class="hud-label">Tiempo</span>
+                        <div class="level-timer" id="levelTimerDisplay">4:00</div>
+                    </div>
+                    <button type="button" class="kc-icon-btn kc-btn-sonido kc-sonido-juego" id="kcBtnSonidoJuego" aria-label="Silenciar música" aria-pressed="false" title="Silenciar música">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
+                            <g class="kc-ondas"><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></g>
+                            <g class="kc-tachado"><path d="M16 9.5l5 5" /><path d="M21 9.5l-5 5" /></g>
+                        </svg>
+                    </button>
                 </div>
 
             </div>
@@ -1012,18 +1068,6 @@
                 </div>
             </div>
 
-            <div class="game-hud-bottom">
-                <div class="hud-section hud-score">
-                    <span class="hud-label">Puntaje</span>
-                    <div id="scoreDisplay">Puntaje: 0</div>
-                </div>
-
-                <div class="hud-section hud-time">
-                    <span class="hud-label">Tiempo restante</span>
-                    <div class="level-timer" id="levelTimerDisplay">4:00</div>
-                </div>
-            </div>
-
             <div class="stations-box" style="display:none">
                 <h3>Estaciones</h3>
                 <div id="stationsList"></div>
@@ -1101,7 +1145,7 @@
         // Pide el JWT antes de conectar SignalR.
         // Si el usuario no está autenticado con Google, /api/auth/token devuelve 401
         // y se muestra la pantalla de login en vez del juego.
-        fetch('/api/auth/token', { method: 'POST' })
+        window._kcTokenReady = fetch('/api/auth/token', { method: 'POST' })
             .then(function(r) {
                 if (r.status === 401) {
                     showGoogleLogin();
@@ -1131,7 +1175,10 @@
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/gamehub", {
-                accessTokenFactory: function() { return window._kcToken || ''; }
+                // Espera a que llegue el token: connection.start() corre al cargar la página, antes de que el fetch termine
+                accessTokenFactory: function() {
+                    return window._kcTokenReady.then(function() { return window._kcToken || ''; });
+                }
             })
             .withAutomaticReconnect([0, 2000, 5000, 10000, 15000])
             .build();
@@ -1502,7 +1549,8 @@
             if (!LEVEL_MUSIC[level]) return;
             currentMusic = new Audio(LEVEL_MUSIC[level]);
             currentMusic.loop = true;
-            currentMusic.volume = 0.5;
+            currentMusic.volume = window.kcAudio ? window.kcAudio.volume : 0.5;
+            currentMusic.muted = !!(window.kcAudio && window.kcAudio.muted);
             currentMusic.play().catch(function(e) { console.warn('Audio bloqueado:', e); });
         }
 
@@ -1553,7 +1601,7 @@
                 if (dx < 4 && dy < 7) {
                     const push = car.x < 50 ? 7 : -7;
                     const newX = Math.max(2, Math.min(98, myPosition.x + push));
-                    // Solo mover si la nueva posicion no es una pared
+                    // Solo mover si la nueva posición no es una pared
                     if (!wouldCollide(newX, myPosition.y)) {
                         myPosition.x = newX;
                     } else {
@@ -1597,7 +1645,7 @@
         }
         // ===== Fin autos nivel 2 =====
 
-        // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el men
+        // AB#81: ids de los 8 personajes disponibles; el jugador elige el suyo en el menú
         // y el servidor lo reparte a todos, para que nadie vea un avatar distinto al elegido.
         const AVATAR_IDS = ["vaca", "nutria", "pinguino", "gato", "panda", "perro", "aguila", "dragon"];
 
@@ -1641,17 +1689,17 @@
             document.getElementById("mobileControlPanel").style.display = "block";
         }
 
-        // ===================== AB#81 - Movimiento, colisin y personajes =====================
+        // ===================== AB#81 - Movimiento, colisión y personajes =====================
 
-        // AB#81 - Colisin por matriz: el tablero se parte en una cuadrcula de celdas,
+        // AB#81 - Colisión por matriz: el tablero se parte en una cuadrícula de celdas,
         // cada una marcada como pared (1) o piso (0). Coordenadas de Nivel 1 calcadas
-        // a mano sobre niv1.png con una cuadrcula de referencia (24 columnas x 14 filas).
+        // a mano sobre niv1.png con una cuadrícula de referencia (24 columnas x 14 filas).
         // Mismo formato que va a usar la herramienta de pintar paredes para Vera.
         const GRID_COLS = 40;
         const GRID_ROWS = 40;
 
         // Formato: [fila, colDesde, colHasta] para piso caminable,
-        // [filaDesde, filaHasta, colDesde, colHasta] para obstculos (tienen prioridad sobre el piso).
+        // [filaDesde, filaHasta, colDesde, colHasta] para obstáculos (tienen prioridad sobre el piso).
         const WALKABLE_CELLS = {
             // Nivel 1  pegar dentro de WALKABLE_CELLS en index.html (17 tramo(s))
             1: [
@@ -1841,12 +1889,12 @@
         const PLAYER_SPEED = 28; // % del ancho del tablero por segundo
 
         // Hitbox contra paredes: los pies del personaje. Tiene que ser menor a media celda para
-        // no quedar ms grande que un hueco de 1 celda (si no, el jugador se "encierra").
+        // no quedar más grande que un hueco de 1 celda (si no, el jugador se "encierra").
         // Celda X: 100/24 = 4.16% -> mitad = 2.08%. Celda Y: 100/14 = 7.14% -> mitad = 3.57%.
         const PLAYER_HALF_W = 0.7;
         const PLAYER_HALF_H = 0.7;
 
-        // Cuerpo contra otros jugadores: ms grande que los pies, porque el sprite mide ~7% de
+        // Cuerpo contra otros jugadores: más grande que los pies, porque el sprite mide ~7% de
         // ancho y con el hitbox de pies dos personajes se veran encimados.
         const PLAYER_BODY_HALF_W = 1.8;
         const PLAYER_BODY_HALF_H = 2.5;
@@ -1876,7 +1924,7 @@
             4: [
                 { x: 27, y: 32 },
                 { x: 72, y: 32 },
-                { x: 27, y: 61 },
+                { x: 27, y: 59 }, // era y: 61, que cae dentro de una pared del nivel 4 y dejaba al jugador 3 sin poder moverse
                 { x: 72, y: 61 }
             ]
         };
@@ -1897,7 +1945,7 @@
         connection.on("MobileControlDisconnected", function () {
             mobilePressedKeys = {};
             document.getElementById("mobileControlStatus").textContent =
-                " El celular se desconect. Puedes seguir jugando con el teclado.";
+                " El celular se desconectó. Puedes seguir jugando con el teclado.";
             document.getElementById("mobileControlCodeDisplay").style.display = "none";
         });
 
@@ -1939,10 +1987,10 @@
             return tag === "INPUT" || tag === "TEXTAREA";
         }
 
-        // AB#81 - Espacio = agarrar/usar lo que est ms cerca, al estilo Overcooked.
+        // AB#81 - Espacio = agarrar/usar lo que está más cerca, al estilo Overcooked.
         // Reutiliza los mismos botones invisibles de las estaciones (.click() dispara
-        // exactamente la misma lgica que ya existe, no se duplica nada).
-        const GRAB_REACH = 3; // % del tablero, qu tan cerca hay que estar para poder agarrar
+        // exactamente la misma lógica que ya existe, no se duplica nada).
+        const GRAB_REACH = 3; // % del tablero, qué tan cerca hay que estar para poder agarrar
 
         connection.on("MobileInteractionReceived", function () {
             const gameScreen = document.getElementById("gameScreen");
@@ -2117,8 +2165,8 @@
                 }
             }
 
-            // Evita que las flechas/WASD hagan scroll de la pgina mientras se juega,
-            // pero nunca cuando se est escribiendo en un input (nombre, cdigo de sala).
+            // Evita que las flechas/WASD hagan scroll de la página mientras se juega,
+            // pero nunca cuando se está escribiendo en un input (nombre, código de sala).
             if (MOVEMENT_KEYS.includes(key) && !isTypingInField()) {
                 e.preventDefault();
             }
@@ -2177,11 +2225,11 @@
             );
         }
 
-        // AB#81 - Colisin entre jugadores: cada otro jugador es un obstculo slido. Se compara
-        // contra la ltima posicin conocida (la que lleg por SignalR), que es todo lo que un
-        // cliente sabe de los dems sin que el servidor valide movimiento.
-        // Dos cuerpos chocan si sus centros estn ms cerca que la suma de sus mitades. La
-        // "separacin" normaliza ese tope a 1 en cada eje (>= 1 en algn eje = no se tocan).
+        // AB#81 - Colisión entre jugadores: cada otro jugador es un obstáculo sólido. Se compara
+        // contra la última posición conocida (la que llegó por SignalR), que es todo lo que un
+        // cliente sabe de los demás sin que el servidor valide movimiento.
+        // Dos cuerpos chocan si sus centros están más cerca que la suma de sus mitades. La
+        // "separación" normaliza ese tope a 1 en cada eje (>= 1 en algún eje = no se tocan).
         function bodySeparation(x1, y1, x2, y2) {
             return Math.max(
                 Math.abs(x1 - x2) / (2 * PLAYER_BODY_HALF_W),
@@ -2195,7 +2243,7 @@
                 const after = bodySeparation(x, y, p.x, p.y);
                 if (after >= 1) return false;
 
-                // Si ya estbamos encimados (por ejemplo, alguien reapareci sobre uno), se deja
+                // Si ya estábamos encimados (por ejemplo, alguien reapareció sobre uno), se deja
                 // pasar el paso que los aleja; si no, los dos quedaran trabados para siempre.
                 const before = bodySeparation(myPosition.x, myPosition.y, p.x, p.y);
                 return !(before < 1 && after > before);
@@ -2237,7 +2285,7 @@
                 connection.state === signalR.HubConnectionState.Connected) {
                 connection.invoke("SyncMobilePlate", state)
                     .catch(function (error) {
-                        console.error("Error al sincronizar el plato mvil:", error);
+                        console.error("Error al sincronizar el plato móvil:", error);
                     });
             }
 
@@ -2406,7 +2454,7 @@
                         myFacingDirection = dy < 0 ? "up" : "down";
                     }
 
-                    // Normaliza para que caminar en diagonal no sea ms rpido
+                    // Normaliza para que caminar en diagonal no sea más rápido
                     const length = Math.sqrt(dx * dx + dy * dy);
                     const moveX = (dx / length) * PLAYER_SPEED * deltaSeconds;
                     const moveY = (dy / length) * PLAYER_SPEED * deltaSeconds;
@@ -2441,9 +2489,9 @@
 
                 } else if (wasMovingLastFrame) {
 
-                    // Se solt la tecla: manda la posicin final exacta de una vez,
-                    // sin esperar el siguiente turno del lmite de frecuencia  as
-                    // nadie se queda vindote unos pasos atrs de donde en verdad ests.
+                    // Se soltó la tecla: manda la posición final exacta de una vez,
+                    // sin esperar el siguiente turno del límite de frecuencia  así
+                    // nadie se queda viéndote unos pasos atrás de donde en verdad estás.
                     wasMovingLastFrame = false;
 
                     if (currentRoomCode) {
@@ -2452,8 +2500,8 @@
                     }
                 }
 
-                // Latido de respaldo: si por lo que sea nadie se enter de tu ltima
-                // posicin (un mensaje que no lleg), esto lo corrige solo en mximo 1 segundo.
+                // Latido de respaldo: si por lo que sea nadie se enteró de tu última
+                // posición (un mensaje que no llegó), esto lo corrige solo en máximo 1 segundo.
                 if (currentRoomCode && timestamp - lastMoveSentAt > 1000) {
                     lastMoveSentAt = timestamp;
                     connection.invoke("MovePlayer", currentRoomCode, myPosition.x, myPosition.y, myFacingLeft)
@@ -2491,8 +2539,8 @@
             renderOtherPlayer(data.connectionId);
         });
 
-        // AB#81 - si no se limpia, la ltima posicin de quien se desconect queda
-        // bloqueando el tablero como un obstculo fantasma para siempre.
+        // AB#81 - si no se limpia, la última posición de quien se desconectó queda
+        // bloqueando el tablero como un obstáculo fantasma para siempre.
         connection.on("PlayerLeft", function (data) {
             delete otherPlayers[data.connectionId];
             const sprite = document.getElementById("player-" + data.connectionId);
@@ -2583,7 +2631,7 @@
 
             if (ingredient.state === "Cocinando") {
                 document.getElementById("preparationError").textContent =
-                    "El ingrediente todava se est cocinando.";
+                    "El ingrediente todavía se está cocinando.";
                 return;
             }
 
@@ -2858,11 +2906,11 @@
         }
 
 
-        // Guarda el estado del render anterior para saber qu ingrediente es nuevo
-        // y cul solo cambi de estado, y as animar nicamente lo que cambi.
+        // Guarda el estado del render anterior para saber qué ingrediente es nuevo
+        // y cuál solo cambió de estado, y así animar únicamente lo que cambió.
         let previousIngredientStates = {};
 
-        // AB#82 - picar/hervir/frer: el botn de la estufa dice hervir o frer segn el ingrediente.
+        // AB#82 - picar/hervir/frer: el botón de la estufa dice hervir o freír según el ingrediente.
         function cookLabelFor(cookMethod) {
             return cookMethod === "Freir" ? "FRE\u00CDR" : "Hervir";
         }
@@ -2875,7 +2923,7 @@
             }
             connection.invoke("SyncMobileTeammates", mobileTeammates)
                 .catch(function (error) {
-                    console.error("Error al sincronizar compaeros mviles:", error);
+                    console.error("Error al sincronizar compañeros móviles:", error);
                 });
         }
         
@@ -2886,7 +2934,7 @@
             }
             connection.invoke("SyncMobileScore", score)
                 .catch(function (error) {
-                    console.error("Error al sincronizar el puntaje mvil:", error);
+                    console.error("Error al sincronizar el puntaje móvil:", error);
                 });
         }
 
@@ -2908,7 +2956,7 @@
 
             connection.invoke("SyncMobileInventory", ingredients)
                 .catch(function (error) {
-                    console.error("Error al sincronizar inventario mvil:", error);
+                    console.error("Error al sincronizar inventario móvil:", error);
                 });
         }
 
@@ -3158,7 +3206,7 @@
         });
 
 
-        // AB#19 - Confirmacin de que tom un ingrediente
+        // AB#19 - Confirmación de que tomó un ingrediente
         connection.on("IngredientTaken", function (ingredient) {
 
             myIngredients[ingredient.id] = {
@@ -3360,7 +3408,7 @@
             const startButton = document.getElementById("startGameButton");
             const levelSelectorContainer = document.getElementById("levelSelectorContainer");
 
-            // AB#81: mi posicin en la sala (para el punto de spawn) y el avatar real
+            // AB#81: mi posición en la sala (para el punto de spawn) y el avatar real
             // de cada quien (elegido por ellos, no adivinado por hash)
             const myIndex = players.findIndex(function (p) { return p.name === myPlayerName; });
             if (myIndex !== -1) myPlayerIndex = myIndex;
@@ -3400,7 +3448,7 @@
                 li.appendChild(avatar);
                 li.appendChild(nameSpan);
 
-                // El primer jugador de la lista siempre es quien cre la sala (el host)
+                // El primer jugador de la lista siempre es quien creó la sala (el host)
                 if (index === 0) {
                     const badge = document.createElement("span");
                     badge.className = "player-host-badge";
@@ -3412,13 +3460,13 @@
 
             });
 
-            // Solo el host ve el botn de iniciar
+            // Solo el host ve el botón de iniciar
             if (isHost) {
 
                 startButton.style.display = "block";
                 levelSelectorContainer.style.display = "block";
 
-                // Se necesitan mnimo 2 jugadores
+                // Se necesitan mínimo 2 jugadores
                 startButton.disabled =
                     players.length < 2 || players.length > 4;
 
@@ -3430,7 +3478,7 @@
                 } else {
 
                     document.getElementById("startGameMessage").textContent =
-                        "La partida est lista para iniciar.";
+                        "La partida está lista para iniciar.";
 
                 }
 
@@ -3459,13 +3507,13 @@
 
         });
 
-        // Qu ingrediente va en cada hotspot (station-N) segn el nivel. Los nombres tienen que
-        // ser idnticos a los del servidor (sin tildes); el hotspot que no aparece aqu se oculta.
+        // Qué ingrediente va en cada hotspot (station-N) según el nivel. Los nombres tienen que
+        // ser idénticos a los del servidor (sin tildes); el hotspot que no aparece aquí se oculta.
         const INGREDIENT_SLOTS_BY_LEVEL = {
             1: { 1: ["leche", "Leche"], 2: ["arroz", "Arroz"], 3: ["leche condensada", "Leche condensada"], 4: ["uvas pasas", "Uvas pasas"] },
             2: { 1: ["tomate", "Tomate"], 2: ["lechuga", "Lechuga"], 3: ["cebolla", "Cebolla"], 4: ["pepino", "Pepino"] },
             3: { 1: ["salchicha", "Salchicha"], 2: ["papa", "Papa"], 3: ["pollo", "Pollo"], 4: ["queso", "Queso"], 5: ["salsa roja", "Salsa roja"], 6: ["salsa blanca", "Salsa blanca"] },
-            4: { 1: ["frijol", "Frijol"], 2: ["carne", "Carne"], 3: ["arroz", "Arroz"], 4: ["platano", "Pltano"], 7: ["aguacate", "Aguacate"], 8: ["chicharron", "Chicharrn"], 9: ["huevo", "Huevo"] }
+            4: { 1: ["frijol", "Frijol"], 2: ["carne", "Carne"], 3: ["arroz", "Arroz"], 4: ["platano", "Plátano"], 7: ["aguacate", "Aguacate"], 8: ["chicharron", "Chicharrón"], 9: ["huevo", "Huevo"] }
         };
 
         function assignIngredientSlots(level) {
@@ -3519,7 +3567,7 @@
 
             document.querySelector(".instructions").style.display = "none";
 
-            // AB#80: durante la partida el tablero ocupa toda la pantalla, no hace falta el logo/subttulo del men
+            // AB#80: durante la partida el tablero ocupa toda la pantalla, no hace falta el logo/subttulo del menú
             document.querySelector(".logo").style.display = "none";
 
             document.querySelector(".subtitle").style.display = "none";
@@ -3532,7 +3580,7 @@
 
             document.getElementById("gameScreen")
                 .querySelector("h2")
-                .textContent = "Nivel " + gameInfo.level;
+                .textContent = String(gameInfo.level);
 
             loadLevelMap(gameInfo.level);
 
@@ -3542,9 +3590,9 @@
             connection.invoke("GetCurrentOrder", gameInfo.roomCode)
                 .catch(function (err) { console.error(err.toString()); });
 
-            // AB#81: posicin inicial en el piso abierto del mapa (distinta por jugador,
+            // AB#81: posición inicial en el piso abierto del mapa (distinta por jugador,
             // para que nadie spawnee encima de otro), y arranca limpio
-            // (por si se reinicia una partida en la misma sesin del navegador)
+            // (por si se reinicia una partida en la misma sesión del navegador)
             currentLevel = gameInfo.level;
             currentLevelWalls = WALLS_BY_LEVEL[gameInfo.level] || WALLS_BY_LEVEL[1];
             isPaused = false;
@@ -3582,8 +3630,8 @@
             ensureMyPlayerSprite();
             renderMyPlayerPosition();
 
-            // AB#81: avisa la posicin inicial de una vez, sin esperar a que te muevas,
-            // para que los dems te vean aparecer desde el primer momento.
+            // AB#81: avisa la posición inicial de una vez, sin esperar a que te muevas,
+            // para que los demás te vean aparecer desde el primer momento.
             connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
 
@@ -3599,7 +3647,7 @@
         });
 
 
-        // Iniciar conexin con SignalR
+        // Iniciar conexión con SignalR
         connection.start()
             .then(function () {
 
@@ -3709,7 +3757,7 @@
                         isHost = true;
 
                         document.getElementById("roomCodeDisplay")
-                            .textContent = "Cdigo de tu sala: " + roomCode;
+                            .textContent = "Código de tu sala: " + roomCode;
 
                         document.getElementById("roomCodeInput")
                             .value = roomCode;
@@ -3750,7 +3798,7 @@
                 if (roomCode === "") {
 
                     document.getElementById("roomErrorDisplay")
-                        .textContent = "Ingresa el cdigo de la sala.";
+                        .textContent = "Ingresa el código de la sala.";
 
                     return;
                 }
@@ -3786,8 +3834,8 @@
             });
 
 
-        // Salir de la sala: recargar simplemente cierra esta conexin y el servidor
-        // limpia al jugador de la sala en OnDisconnectedAsync, sin necesitar un mtodo nuevo en el hub
+        // Salir de la sala: recargar simplemente cierra esta conexión y el servidor
+        // limpia al jugador de la sala en OnDisconnectedAsync, sin necesitar un método nuevo en el hub
         document.getElementById("leaveRoomButton")
             .addEventListener("click", function () {
                 location.reload();
@@ -3949,14 +3997,14 @@
             document.getElementById("orderTimerSeconds").textContent = "0";
             document.getElementById("orderTimerBar").style.width = "0%";
             document.getElementById("scoreDisplay").textContent =
-                "Puntaje: " + data.score;
+                String(data.score);
             syncMobileScore(data.score);
         });
 
         connection.on("LevelEnded", function (data) {
             document.getElementById("levelTimerDisplay").textContent = "0:00";
             const stars = data.stars || 0;
-            document.getElementById("scoreDisplay").textContent = "Puntaje final: " + data.finalScore;
+            document.getElementById("scoreDisplay").textContent = String(data.finalScore);
             syncMobileScore(data.finalScore);
             stopLevelMusic();
             showLevelEndModal(data.finalScore, stars, currentLevel);
@@ -4003,13 +4051,13 @@
             } else {
 
                 document.getElementById("plateStatus").textContent =
-                    "Pedido incorrecto. Se aplic una penalizacin.";
+                    "Pedido incorrecto. Se aplicó una penalización.";
 
             }
 
             if (result.score !== undefined) {
                 document.getElementById("scoreDisplay").textContent =
-                    "Puntaje: " + result.score;
+                    String(result.score);
                 syncMobileScore(result.score);
             }
 
@@ -4220,16 +4268,16 @@
             'Pausa activada. El caldo sigue hirviendo sin ti.',
             'Los tacos no se hacen solos, chef!',
             'El que pausa primero... tiene hambre.',
-            'Modo pausa: porque la cocina tambien necesita respirar.',
-            'Pausa epica activada. El queso ya se derritio sin ti.',
+            'Modo pausa: porque la cocina también necesita respirar.',
+            'Pausa épica activada. El queso ya se derritió sin ti.',
             'Alto al fuego! Literalmente, apaga la estufa.',
-            'Pausa: el ingrediente secreto que ningun recetario menciona.',
+            'Pausa: el ingrediente secreto que ningún recetario menciona.',
             'El arroz no espera, pero tu si.',
             'Segun los expertos, pausar es el 90% de la cocina.',
             'Pausa activada. Ya lavaste los platos de ayer?',
             'Un chef que no pausa es un chef que quema todo.',
             'Pausa: porque hasta el microondas tiene boton de stop.',
-            'La sazon perfecta requiere paciencia... y pausa.',
+            'La sazón perfecta requiere paciencia... y pausa.',
             'Pausa activada. El sous-chef esta llorando con la cebolla.',
             'Segun Confucio: el que pausa, no quema la bandeja paisa.',
             'Pausa! Alguien apago la freidora? Pregunto por un amigo.',
@@ -4293,7 +4341,7 @@
 
             const isLast = level >= MAX_LEVEL;
             const messages = [
-                'Sigue practicando, lo haras mejor!',
+                'Sigue practicando, lo harás mejor!',
                 'Buen trabajo, casi lo logras!',
                 'Excelente! Eres todo un chef!',
                 'Perfecto! Dominas la cocina!'
@@ -4332,6 +4380,18 @@
             }
         }
 
+    </script>
+
+    <script src="js/ui-menu.js?v=2"></script>
+    <script src="js/controles-tactiles.js?v=3"></script>
+
+    <!-- Modo depuracion de colisiones: solo se descarga si la URL lleva ?debug=1 -->
+    <script>
+        if (/[?&]debug=1/.test(location.search)) {
+            var debugScript = document.createElement('script');
+            debugScript.src = 'js/debug-colisiones.js';
+            document.body.appendChild(debugScript);
+        }
     </script>
 
 </body>

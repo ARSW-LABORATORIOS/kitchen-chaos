@@ -30,3 +30,16 @@ variable "image_tag" {
   type        = string
   default     = ""
 }
+
+variable "google_client_id" {
+  description = "Client ID de Google OAuth (login del juego). Vacío = no se configura el login (la app no arranca sin él)."
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "Client secret de Google OAuth. Se guarda como secreto de la Container App, nunca en el repositorio."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
