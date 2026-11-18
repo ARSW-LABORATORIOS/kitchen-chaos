@@ -1,0 +1,27 @@
+# Prometheus lee las métricas del juego y de la sonda cada 5 segundos.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # El juego (dotnet run): métricas propias kc_*, HTTP, CPU y memoria de .NET.
+  - job_name: app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:5129"]
+
+  # Sonda de disponibilidad: el blackbox exporter consulta /ready del juego.
+  # up{job="probe"} dice si la sonda corre; probe_success dice si el juego respondió bien.
+  - job_name: probe
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://host.docker.internal:5129/ready"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

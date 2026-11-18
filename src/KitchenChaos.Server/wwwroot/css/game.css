@@ -49,6 +49,98 @@
 
 }
 
+/* Autos nivel 2 */
+.road-car {
+    position: absolute;
+    width: 5%;
+    height: auto;
+    z-index: 9;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+    will-change: top;
+    image-rendering: auto;
+}
+
+/* Apagón nivel 3: los sprites suben por encima del overlay negro durante el apagón */
+.blackout-active .player-sprite,
+.blackout-active .carried-plate,
+.blackout-active .ingredient-emoji-bubble {
+    z-index: 55;
+}
+
+/* Ola nivel 4 */
+#waveOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    border-radius: 18px;
+    overflow: hidden;
+    pointer-events: none;
+    display: none;
+}
+
+.wave-active .player-sprite,
+.wave-active .carried-plate,
+.wave-active .ingredient-emoji-bubble {
+    z-index: 55;
+}
+
+.wave-svg {
+    position: absolute;
+    width: 300%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    animation: waveSweep 1.8s ease-in-out forwards;
+}
+
+@keyframes waveSweep {
+    0%   { transform: translateX(-66%); }
+    60%  { transform: translateX(0%); }
+    100% { transform: translateX(0%); }
+}
+
+.wave-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(20px, 4vw, 42px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 12px rgba(0,0,80,0.7);
+    white-space: nowrap;
+    animation: waveTextPop 0.4s 0.5s cubic-bezier(.34,1.56,.64,1) both;
+    z-index: 56;
+}
+
+@keyframes waveTextPop {
+    from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+/* Círculo de luz: decorativo, da el halo cálido alrededor del personaje */
+.player-light {
+    position: absolute;
+    width: 32%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 55;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+        circle,
+        rgba(255, 220, 100, 0.35) 0%,
+        rgba(255, 180, 40, 0.18) 50%,
+        transparent 75%
+    );
+    transition: left 0.08s linear, top 0.08s linear;
+    display: none;
+}
+
 
 
 .game-board-image {
@@ -77,11 +169,11 @@
 
     cursor: pointer;
 
-    border: 2px solid red;
+    border: 2px solid rgba(255, 255, 255, 0.55);
 
     border-radius: 6px;
 
-    background: rgba(255, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.08);
 
     z-index: 20;
 
@@ -351,7 +443,7 @@
 
     font-size: 13px;
 
-    color: #666;
+    color: #1a1a1a;
 
 }
 
@@ -1845,7 +1937,7 @@
     gap: 16px;
     width: 100%;
     max-width: 100%;
-    margin: 10px auto 16px;
+    margin: 4px auto 16px;
     padding: 0;
     background: transparent;
     border: none;
@@ -1912,4 +2004,432 @@
     .game-hud-bottom .level-timer {
         font-size: 20px;
     }
+}
+
+.cooking-progress-panel {
+    position: absolute;
+    z-index: 25;
+    width: 110px;
+    max-width: 30%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.cooking-progress-track {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(20, 20, 20, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.cooking-progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: #2a9d8f;
+}
+#cookingProgressTime {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 1px 3px #000000, 0 0 4px #000000;
+    font-family: Arial, sans-serif;
+}
+
+.chopping-progress-panel {
+    position: absolute;
+    z-index: 25;
+    width: 110px;
+    max-width: 30%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.chopping-progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: #e9a23b;
+}
+#choppingProgressTime {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 1px 3px #000000, 0 0 4px #000000;
+    font-family: Arial, sans-serif;
+}
+
+.desktop-inventory {
+    position: fixed;
+    top: 85px;
+    right: 18px;
+    z-index: 180;
+    width: 290px;
+    max-width: 90vw;
+    max-height: 65vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #b2582c;
+    border-radius: 14px;
+    background: rgba(35, 22, 15, 0.96);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    color: #ffe0c0;
+}
+.desktop-inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #f4a261;
+    font-size: 13px;
+}
+.desktop-inventory-header span {
+    font-size: 10px;
+    color: #d6b49b;
+}
+.desktop-inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    min-height: 0;
+}
+.desktop-inventory-item {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    margin: 0;
+    border: 1px solid #75503a;
+    border-radius: 8px;
+    background: #493024;
+    color: #ffe0c0;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+}
+.desktop-inventory-item.selected {
+    border: 1px solid #2a9d8f;
+    background: #29463d;
+}
+.desktop-inventory-number {
+    font-size: 11px;
+    color: #f4a261;
+    min-width: 12px;
+}
+.desktop-inventory-emoji {
+    font-size: 19px;
+    flex-shrink: 0;
+}
+.desktop-inventory-details {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.desktop-inventory-details strong {
+    font-size: 12px;
+    text-transform: capitalize;
+}
+.desktop-inventory-details small {
+    font-size: 10px;
+    color: #e0b99b;
+}
+.desktop-inventory-indicator {
+    color: #65dbc4;
+    font-size: 14px;
+}
+.desktop-inventory-help,
+.desktop-inventory-empty {
+    font-size: 10px;
+    color: #d6b49b;
+    text-align: center;
+}
+
+.station-ingredient-menu {
+    position: fixed;
+    top: 85px;
+    right: 18px;
+    z-index: 190;
+    width: 290px;
+    max-width: 90vw;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #e9a23b;
+    border-radius: 14px;
+    background: rgba(35, 22, 15, 0.97);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    color: #ffe0c0;
+}
+.station-ingredient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #f4a261;
+    font-size: 13px;
+}
+.station-ingredient-header span {
+    font-size: 10px;
+    color: #d6b49b;
+    white-space: nowrap;
+}
+.station-ingredient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 0;
+    overflow-y: auto;
+}
+.station-ingredient-item {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    margin: 0;
+    border: 1px solid #75503a;
+    border-radius: 8px;
+    background: #493024;
+    color: #ffe0c0;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 12px;
+}
+.station-ingredient-item:hover {
+    background: #29463d;
+    border-color: #2a9d8f;
+}
+.station-ingredient-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.station-ingredient-name {
+    flex: 1;
+    text-transform: capitalize;
+}
+.station-ingredient-state {
+    font-size: 10px;
+    color: #d6b49b;
+}
+.station-ingredient-empty {
+    font-size: 12px;
+    color: #d6b49b;
+    text-align: center;
+    padding: 8px;
+}
+
+.station-hotspot.station-targeted {
+    outline: 3px solid #48f5a2;
+    outline-offset: 2px;
+    border-color: #48f5a2;
+    background: rgba(72, 245, 162, 0.18);
+    box-shadow: 0 0 12px rgba(72, 245, 162, 0.9);
+    animation: none;
+}
+.station-hotspot.station-targeted .station-label {
+    opacity: 1;
+    background: rgba(25, 90, 60, 0.95);
+}
+
+.carried-dish-image {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+    image-rendering: pixelated;
+}
+
+#orderIngredients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.order-ingredient-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    font-size: 28px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 2px solid rgba(178, 88, 44, 0.4);
+    border-radius: 12px;
+}
+
+.game-screen-panel {
+    height: 100dvh;
+    padding: 8px 3vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.game-hud-sticky {
+    margin-bottom: 8px;
+}
+
+.game-board-wrapper {
+    padding: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+.game-board {
+    width: min(100%, calc((100dvh - 260px) * 3 / 2));
+    max-width: 1400px;
+    aspect-ratio: 3 / 2;
+    margin: 0 auto;
+}
+
+.game-hud-bottom {
+    margin: 8px auto 4px;
+    align-items: center;
+}
+
+.game-hud-sticky .hud-level,
+.game-hud-sticky .hud-order,
+.game-hud-bottom .hud-section {
+    background: rgba(35, 27, 21, 0.9);
+    border: 2px solid rgba(244, 162, 97, 0.85);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.game-hud-sticky .hud-level .hud-label,
+.game-hud-bottom .hud-label {
+    color: #f4cfa8;
+}
+
+.game-hud-sticky .hud-level h2,
+.game-hud-sticky #orderDish,
+.game-hud-sticky .hud-order-timer,
+.game-hud-bottom #scoreDisplay,
+.game-hud-bottom .level-timer {
+    color: #ffffff;
+}
+
+.game-hud-sticky .hud-order-info strong {
+    color: #ffb36b;
+}
+
+.game-hud-sticky .hud-order {
+    padding: 10px 14px;
+    gap: 5px;
+}
+
+#orderIngredients {
+    margin-top: 6px;
+    gap: 7px;
+}
+
+.order-ingredient-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+}
+
+.game-hud-bottom .hud-section {
+    padding: 8px 16px;
+}
+
+.game-hud-bottom {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    margin: 4px auto;
+}
+
+.game-hud-bottom .hud-section {
+    flex: 1;
+}
+
+.game-hud-sticky {
+    flex-shrink: 0;
+}
+
+#gameScreen[style*="display: block"] {
+    display: flex !important;
+}
+
+body.in-game .container {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+}
+
+body.in-game #gameScreen[style*="display: block"] {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    margin: 0;
+    padding: 8px 3vw !important;
+    overflow: hidden;
+}
+
+body.in-game #gameScreen .game-hud-sticky,
+body.in-game #gameScreen .game-hud-bottom {
+    flex: 0 0 auto;
+}
+
+body.in-game #gameScreen .game-board-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.in-game #gameScreen .game-board {
+    width: min(100%, calc((100dvh - 235px) * 1.5));
+    max-width: 1400px;
+    flex-shrink: 1;
+    margin: 0 auto;
+}
+
+body.in-game #gameScreen .game-hud-bottom {
+    width: 100%;
+    margin: 4px 0;
 }

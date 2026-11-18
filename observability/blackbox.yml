@@ -1,0 +1,12 @@
+# Módulo de la sonda: una petición HTTP GET que debe responder 2xx dentro de 3 segundos.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 3s
+    http:
+      method: GET
+      valid_status_codes: []        # vacío = cualquier 2xx
+      # Docker Desktop resuelve host.docker.internal también por IPv6, pero esa ruta no llega
+      # al computador; con IPv4 sí.
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false

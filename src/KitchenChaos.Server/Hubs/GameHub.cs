@@ -1,4 +1,6 @@
+using KitchenChaos.Server.Observability;
 using KitchenChaos.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -8,6 +10,7 @@ namespace KitchenChaos.Server.Hubs;
 /// <summary>
 /// Hub principal de SignalR. Canal de comunicación en tiempo real entre servidor y clientes.
 /// </summary>
+[Authorize]
 public class GameHub : Hub
 {
     private readonly RoomService _roomService;
@@ -105,7 +108,7 @@ public class GameHub : Hub
 
         room.Level = nextLevel;
         _preparationService.ResetStations(roomCode);
-        _timerService.StartLevel(roomCode);
+        // El timer arranca cuando el cliente confirma haber leído las instrucciones (StartTimer)
 
         await Clients.Group(roomCode).SendAsync("GameStarted", new { RoomCode = roomCode, Level = nextLevel });
 
@@ -120,13 +123,15 @@ public class GameHub : Hub
 
     public async Task PauseGame(string roomCode)
     {
-        // Puede venir del jugador directo o de su control móvil vinculado
         var callerConnectionId = Context.ConnectionId;
         if (LinkedControls.TryGetValue(callerConnectionId, out var playerConnId))
             callerConnectionId = playerConnId;
 
         var room = _roomService.GetRoom(roomCode);
         if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+
+        _timerService.PauseTimers(roomCode, "manual");
+
         await Clients.Group(roomCode).SendAsync("GamePaused", new { By = callerConnectionId });
     }
 
@@ -138,6 +143,9 @@ public class GameHub : Hub
 
         var room = _roomService.GetRoom(roomCode);
         if (room is null || !room.Players.Any(p => p.ConnectionId == callerConnectionId)) return;
+
+        _timerService.ResumeTimers(roomCode, "manual");
+
         await Clients.Group(roomCode).SendAsync("GameResumed");
     }
 
@@ -160,6 +168,8 @@ public class GameHub : Hub
             return;
         }
 
+        GameMetrics.GamesStarted.WithLabels(level.ToString()).Inc();
+
         // Todos los jugadores de la sala reciben el mismo evento
         await Clients.Group(roomCode).SendAsync(
             "GameStarted",
@@ -170,11 +180,11 @@ public class GameHub : Hub
             }
         );
 
-        // AB#79: arranca temporizadores de nivel y pedido controlados por el servidor
-        _timerService.StartLevel(roomCode);
-
         // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
         _preparationService.ResetStations(roomCode);
+        // Limpia cualquier timer anterior (por si se reinicia el nivel)
+        _timerService.StopLevel(roomCode);
+        // El timer arranca cuando todos los clientes confirman haber leído las instrucciones (StartTimer)
 
         var order = _orderService.GenerateOrder(roomCode);
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
@@ -232,14 +242,16 @@ public class GameHub : Hub
     public async Task ChopIngredient(string roomCode, string ingredientId)
     {
         var result = _preparationService.ChopIngredient(roomCode, ingredientId, Context.ConnectionId);
-
         if (!result.Success)
         {
             await Clients.Caller.SendAsync("ChopIngredientError", result.Error);
             return;
         }
-
-        await Clients.Caller.SendAsync("IngredientUpdated", new { Id = ingredientId, State = "Picado" });
+        await Clients.Caller.SendAsync("IngredientUpdated", new
+        {
+            Id = ingredientId,
+            State = "Picando"
+        });
     }
 
     // AB#21 - Cocinar un ingrediente picado (avanza solo con el tiempo)
@@ -633,6 +645,14 @@ public class GameHub : Hub
         }
     }
 
+    /// <summary>El host confirma que leyó las instrucciones del nivel y arranca el timer.</summary>
+    public async Task StartTimer(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || room.HostConnectionId != Context.ConnectionId) return;
+        _timerService.StartLevel(roomCode);
+    }
+
     public async Task GetCurrentOrder(string roomCode)
     {
         var order = _orderService.GetOrCreateActiveOrder(roomCode);
@@ -751,7 +771,13 @@ public class GameHub : Hub
         {
             await Clients.Group(room.Code)
                 .SendAsync("PlayerLeft", new { ConnectionId = connectionId });
-            if (room.Players.Count > 0)
+            if (room.Players.Count == 0)
+            {
+                // La sala ya no existe: sin esto sus temporizadores siguen corriendo hasta 4 min
+                // y generan pedidos vencidos de una sala fantasma.
+                _timerService.StopLevel(room.Code);
+            }
+            else
             {
                 var players = room.Players.Select(p => new
                 {

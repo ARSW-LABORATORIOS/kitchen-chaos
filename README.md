@@ -17,10 +17,12 @@ Juego cooperativo de cocina 2D en tiempo real — proyecto de ARSW enfocado en c
 4. [Arquitectura](#arquitectura)
 5. [Tecnologías](#tecnologías)
 6. [Instalación y ejecución](#instalación-y-ejecución)
-7. [Estructura del repositorio](#estructura-del-repositorio)
-8. [Organización del trabajo](#organización-del-trabajo)
-9. [Equipo](#equipo)
-10. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
+7. [Observabilidad y pruebas de carga](#observabilidad-y-pruebas-de-carga)
+8. [Despliegue en Azure](#despliegue-en-azure)
+9. [Estructura del repositorio](#estructura-del-repositorio)
+10. [Organización del trabajo](#organización-del-trabajo)
+11. [Equipo](#equipo)
+12. [Uso de herramientas de IA](#uso-de-herramientas-de-ia)
 
 ---
 
@@ -83,7 +85,7 @@ Cada nivel dura **300 segundos** y el servidor calcula las estrellas según el p
 - Todos los niveles se pueden elegir desde el inicio (el desbloqueo por estrellas queda pendiente).
 - El perfil de jugador existe en el servidor (Cosmos DB), pero la pantalla del juego todavía no lo usa.
 - Si un jugador pierde la conexión, al volver entra como jugador nuevo y no recupera su lugar.
-- El juego corre en local; el despliegue en Azure no está incluido.
+- El despliegue en Azure se hace con Terraform (ver [Despliegue en Azure](#despliegue-en-azure)); es una versión mínima del diseño objetivo, sin Front Door, Application Gateway ni Azure Cache.
 - No hay pruebas automatizadas todavía.
 
 **Release 2 (Sprint 7, del 19 al 25 de octubre)**: despliegue en Azure, reconexión con estado, perfil de jugador en la pantalla, bloqueo con Azure Cache, pruebas de concurrencia y de carga, CI, nivel 5, y activar los obstáculos y la pausa real en el servidor.
@@ -193,7 +195,7 @@ Alrededor: **Azure Cache** toma los locks de estación (para que dos jugadores n
 | App Configuration y Key Vault | `appsettings.json` | Historia #10 |
 | Front Door, Application Gateway y red virtual | No | Historias #8 y #68 |
 | Azure Monitor | No | Historia #67 |
-| Terraform y pipeline de CI | No | Historias #66 y #68 |
+| Terraform y pipeline de CI | Terraform en `infra/` (Container Apps y Container Registry); sin pipeline de CI | Historias #66 y #68 |
 | Cosmos DB | Servidor listo; la pantalla aún no lo usa | Historias #12 y #13 |
 
 ### Flujo del juego
@@ -215,6 +217,8 @@ El proceso de una partida entre los jugadores, el servidor y el entorno de la co
 | Frontend | HTML, CSS y JavaScript | Sin framework: una página para jugar (`index.html`) y otra para el control móvil (`control.html`) |
 | Datos | Azure Cosmos DB | Perfiles de jugador (SDK `Microsoft.Azure.Cosmos` 3.38.1); emulador local en Docker |
 | Contenedores | Docker | `Dockerfile` en dos etapas y `docker-compose.yml` para el emulador de Cosmos |
+| Observabilidad | prometheus-net, Prometheus y Grafana | El juego expone `/metrics`; Prometheus las guarda y Grafana las dibuja en un tablero ya configurado |
+| Pruebas de carga | k6 | Simula salas de dos jugadores por SignalR (carga, estrés, pico y duración) |
 | Código | Git y GitHub | Ramas `feature/*`, pull requests a `develop` y commits con el número de historia |
 | Gestión | Azure DevOps | Boards (épicas, features e historias), sprints semanales y Wiki |
 | Tipografías | Google Fonts | Fraunces, Source Sans 3 e IBM Plex Mono |
@@ -289,6 +293,99 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 
 ---
 
+## Observabilidad y pruebas de carga
+
+El servidor expone sus métricas en `/metrics` (formato Prometheus) y una ruta `/ready` para saber si responde. Prometheus las lee cada 5 segundos, Grafana las dibuja y k6 genera carga para ver cómo reacciona el juego.
+
+### Qué se mide
+
+- **Servicio:** si Prometheus lee el juego, si responde `/ready` (sonda de disponibilidad) y el porcentaje de disponibilidad en 5 minutos.
+- **Rendimiento:** promedio y P95 de cada llamada al `GameHub`, llamadas por segundo, porcentaje de errores y CPU del proceso. Todas las llamadas al hub se miden solas con un filtro de SignalR (`MetricsHubFilter`).
+- **Concurrencia:** `kc_station_takes_total{result="conflict"}` cuenta las veces que dos jugadores quisieron la misma estación y el `lock` dejó pasar solo a uno. Algo parecido se mide con `kc_room_joins_total{result="full"}` para el cupo de la sala.
+- **Juego:** jugadores conectados, salas activas, partidas iniciadas, pedidos entregados y vencidos, pasos de cocina y platos emplatados.
+
+Las métricas propias están todas en `src/KitchenChaos.Server/Observability/GameMetrics.cs`. Si agregas una acción nueva al juego, el hub la mide sola; si quieres una métrica propia, súmala ahí.
+
+### Levantar Prometheus y Grafana
+
+Con Docker Desktop abierto y el juego corriendo (`dotnet run`, puerto 5129):
+
+```bash
+cd observability
+docker compose up -d
+```
+
+- Grafana: `http://localhost:3000` (usuario `admin`, contraseña `admin`). El tablero **Kitchen Chaos Observabilidad** ya aparece configurado.
+- Prometheus: `http://localhost:9090`.
+- Para apagar: `docker compose down` (el tablero no se pierde, está guardado como archivo).
+
+Si cambias el tablero desde Grafana, expórtalo (`Share → Export → JSON`) y reemplaza `observability/grafana/dashboards/kitchen-chaos.json`; si no, el cambio se pierde al recargarlo.
+
+### Con el juego también en Docker
+
+Para medir sin pasar por la red de Docker Desktop hacia tu computador, el juego puede correr dentro de Docker, en la misma red que Prometheus y k6:
+
+```bash
+cd observability
+docker compose -f docker-compose.yml -f docker-compose.game.yml up -d --build
+```
+
+El juego queda en `http://localhost:5130` y Grafana en `http://localhost:3000`.
+
+### Pruebas de carga con k6
+
+El script está en `tests/load/kitchen-chaos.js` y tiene cinco escenarios: `humo`, `carga`, `estres`, `pico` y `duracion`. Cada iteración simula una sala de dos jugadores que piden **la misma estación a la vez**, y la prueba exige que gane exactamente uno. Los umbrales son p95 menor a 500 ms, errores menores al 1 % y un solo ganador por estación.
+
+Los comandos de cada escenario, con el juego en tu computador o en Docker, están en [tests/load/README.md](tests/load/README.md).
+
+### Resultados de las pruebas
+
+| Escenario | Resultado |
+|---|---|
+| `carga` (2 salas por segundo, 1 min) | 118 salas, 0 errores, p95 de 31 ms, un solo ganador en todas |
+| `pico` (hasta 25 salas por segundo, juego en el computador) | 378 salas, 0 errores del hub, p95 de 20 ms, un solo ganador en todas; 2 conexiones expiraron y k6 no alcanzó a iniciar 47 salas |
+| `estres` (hasta 12 salas por segundo, juego en Docker) | 929 salas, 0 fallos, p95 de 4 ms, un solo ganador en todas |
+
+Con el juego corriendo en el computador y k6 en Docker, el estrés ya fallaba con 12 salas por segundo (33 de unas 915 salas, por `handshake` sin respuesta). El servidor no registró errores y, con el juego y k6 en la misma red de Docker, esos fallos desaparecieron, así que el límite estaba en la red de Docker Desktop hacia el computador y no en el juego.
+
+Las pruebas también encontraron un error real: al quedar una sala vacía, el servidor no paraba sus temporizadores y seguían generando pedidos vencidos de una sala que ya no existía (hasta unos 2000 por minuto bajo carga). Ya está corregido en `GameHub.OnDisconnectedAsync`.
+
+---
+
+## Despliegue en Azure
+
+El juego corre en **Azure Container Apps** con una sola réplica. Todo se crea con Terraform desde la carpeta `infra/`:
+
+| Recurso | Para qué |
+|---|---|
+| Grupo de recursos | Agrupa todo; borrarlo borra todo |
+| Container Registry (Basic) | Guarda la imagen del juego (`Dockerfile`) |
+| Identidad con permiso `AcrPull` | La Container App baja la imagen sin contraseñas |
+| Log Analytics (tope de 0,5 GB al día) | Logs de la Container App |
+| Entorno y Container App | El juego, con 0,25 vCPU y 0,5 GiB, HTTPS y WebSocket |
+
+Los pasos (crear la base, subir la imagen, crear la Container App, actualizar y apagar) están en [infra/README.md](infra/README.md). Se aplica en dos pasos porque la Container App necesita que la imagen ya exista en el registro.
+
+### Decisiones
+
+- **Una sola réplica:** las salas y los locks viven en memoria, con dos réplicas no se compartirían. Cada despliegue nuevo corta las partidas en curso.
+- **`/metrics` con token:** si existe la variable `Metrics__Token`, `/metrics` exige `Authorization: Bearer <token>`. Terraform genera el token. Sin token (en local) sigue abierto.
+- **Certificado de Cosmos:** solo se acepta cualquier certificado cuando el endpoint es local (emulador). Con una cuenta real se valida normalmente.
+- **Carga más rápida:** los mapas y los autos pasaron de PNG a WebP (de 10 MB a 1,2 MB), el HTML se comprime (de 145 KB a 38 KB) y las imágenes se guardan un día en el navegador.
+- **Reconexión:** la pantalla del juego y el control del celular se reconectan si la conexión se cae (por ejemplo, un celular que cambia de aplicación). Esto permite crear o unirse a una sala sin recargar, pero no devuelve al jugador a una partida en curso.
+
+### Costo y límites
+
+- La suscripción es Azure for Students (sin tarjeta). Solo permite unas pocas regiones; esta cuenta usa `eastus`.
+- Un presupuesto mensual con alertas por correo avisa del gasto, pero **no apaga nada**. Para dejar de gastar: `terraform destroy` dentro de `infra/`.
+- Cada petición a Azure tarda cerca de 0,6 s más que en local, aunque el juego responde en menos de 1 ms. Por eso se redujeron los bytes y las peticiones.
+
+### Lo que no incluye
+
+Front Door, Application Gateway, Azure SignalR Service, Azure Cache, Key Vault, Azure Monitor y un pipeline de CI/CD. Siguen siendo parte del diseño objetivo.
+
+---
+
 ## Estructura del repositorio
 
 ```
@@ -299,6 +396,7 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 │   ├── Models/                    sala, jugador, ingrediente, pedido, plato, receta, perfil
 │   ├── Services/                  lógica del juego (8 servicios)
 │   ├── Repositories/              acceso a Cosmos DB
+│   ├── Observability/             métricas del juego (GameMetrics) y filtro que mide el hub
 │   ├── wwwroot/
 │   │   ├── index.html             pantalla del juego
 │   │   ├── control.html           control desde el celular
@@ -306,6 +404,9 @@ Para el Release 1 el camino recomendado y probado es `dotnet run`.
 │   │   └── images/                mapas de los niveles, personajes y logo
 │   ├── Program.cs                 configuración del servidor
 │   └── appsettings.json
+├── infra/                         Terraform del despliegue en Azure (Container Apps)
+├── observability/                 Prometheus, Grafana, sonda de disponibilidad y tablero (JSON)
+├── tests/load/                    pruebas de carga con k6
 ├── tools/wall-painter.html        herramienta para pintar paredes de los mapas
 ├── Dockerfile
 ├── docker-compose.yml             emulador de Cosmos DB

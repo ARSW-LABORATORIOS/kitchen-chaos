@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using KitchenChaos.Server.Models;
+using KitchenChaos.Server.Observability;
 
 namespace KitchenChaos.Server.Services;
 
@@ -50,6 +51,8 @@ public class DeliveryService
         var correct = _orderService.ValidateDelivery(
             roomCode,
             new List<string>(plate.Ingredients));
+
+        GameMetrics.OrdersDelivered.WithLabels(correct ? "correct" : "incorrect").Inc();
 
         var score = _scoresByRoom.AddOrUpdate(
             roomCode,

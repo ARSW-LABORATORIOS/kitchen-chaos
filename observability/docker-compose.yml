@@ -1,0 +1,58 @@
+# Observabilidad de Kitchen Chaos: Prometheus + Grafana + sonda de disponibilidad.
+#
+# Uso (con Docker Desktop abierto):
+#   1. En otra terminal, corre el juego:   cd src/KitchenChaos.Server && dotnet run
+#   2. Desde esta carpeta:                 docker compose up -d
+#   3. Grafana:     http://localhost:3000   (usuario admin, contraseña admin)
+#      Prometheus:  http://localhost:9090
+#   4. Para apagar:                        docker compose down
+#
+# El juego corre en tu computador (no en Docker), por eso Prometheus lo busca en
+# host.docker.internal:5129. Si corres el juego en otro puerto, cambia prometheus.yml.
+
+# Nombre propio del proyecto: si no, Docker usa el de la carpeta ("observability") y
+# puede pisar contenedores de otros proyectos que tengan el mismo nombre.
+name: kitchen-chaos-observability
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.7.0
+    container_name: kc-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - blackbox
+
+  # Sonda de disponibilidad: consulta /ready del juego cada 5 s y publica probe_success (1 o 0).
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: kc-blackbox
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: kc-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      # Origen de datos (Prometheus, uid "prometheus") y carpeta de tableros ya configurados.
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      # Los tableros guardados como .json en esta carpeta aparecen solos en Grafana.
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus

@@ -61,10 +61,23 @@ public class OrderService
             .Distinct()
             .ToList();
 
-    private Recipe PickRecipe(string roomCode)
+    private Recipe PickRecipe(string roomCode, Order? previousOrder = null)
     {
         var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
         var recipesForLevel = Recipes.Where(r => r.Level == level).ToList();
+
+        if (previousOrder != null)
+        {
+            var alternatives = recipesForLevel.Where(recipe =>
+                !recipe.Ingredients.OrderBy(i => i)
+                    .SequenceEqual(previousOrder.RequiredIngredients.OrderBy(i => i))
+            ).ToList();
+
+            if (alternatives.Count > 0)
+            {
+                recipesForLevel = alternatives;
+            }
+        }
 
         return recipesForLevel[Random.Shared.Next(recipesForLevel.Count)];
     }
@@ -78,7 +91,9 @@ public class OrderService
     /// <returns>El pedido generado.</returns>
     public Order GenerateOrder(string roomCode)
     {
-        var recipe = PickRecipe(roomCode);
+        var previousOrder = GetActiveOrder(roomCode);
+        var recipe = PickRecipe(roomCode, previousOrder);
+
         var order = new Order
         {
             DishName = recipe.DishName,
@@ -132,7 +147,6 @@ public class OrderService
             return false;
 
         // Pedido correcto: se elimina para que el siguiente pueda generarse
-        _activeOrders.TryRemove(roomCode, out _);
         return true;
     }
 }

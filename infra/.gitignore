@@ -1,0 +1,7 @@
+# El estado de Terraform guarda secretos (como el token de /metrics): nunca se sube.
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+*.tfvars
+!terraform.tfvars.example

@@ -3,6 +3,7 @@ namespace KitchenChaos.Server.Models;
 public enum IngredientState
 {
     Crudo,
+    Picando,
     Picado,
     Cocinando,
     Cocinado,

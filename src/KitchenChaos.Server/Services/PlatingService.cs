@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using KitchenChaos.Server.Models;
+using KitchenChaos.Server.Observability;
 
 namespace KitchenChaos.Server.Services;
 
@@ -113,6 +114,7 @@ public class PlatingService
         }
 
         if (ingredients.Any(i => i.State == IngredientState.Crudo ||
+                                 i.State == IngredientState.Picando ||
                                  i.State == IngredientState.Cocinando ||
                                  i.State == IngredientState.Quemado))
         {
@@ -173,6 +175,7 @@ public class PlatingService
             plate.DishName = order.DishName;
             plate.Ingredients = selectedNames;
 
+            GameMetrics.DishesPlated.Inc();
             return new PlateResult
             {
                 Success = true,

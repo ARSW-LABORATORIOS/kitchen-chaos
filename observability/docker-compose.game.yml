@@ -1,0 +1,27 @@
+# Variante: el juego corre dentro de Docker, en la misma red que Prometheus y k6.
+# Así las pruebas de carga no pasan por la ruta de red de Docker Desktop hacia el computador.
+#
+# Uso (desde esta carpeta, con Docker Desktop abierto):
+#   docker compose -f docker-compose.yml -f docker-compose.game.yml up -d --build
+#   Juego:     http://localhost:5130
+#   Grafana:   http://localhost:3000
+#   k6:        ver tests/load/README.md (sección "Con el juego en Docker")
+#   Apagar:    docker compose -f docker-compose.yml -f docker-compose.game.yml down
+#
+# Es un complemento de docker-compose.yml: no se usa solo.
+
+services:
+  game:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: kc-game
+    ports:
+      - "5130:8080"          # 5129 queda libre para el juego con `dotnet run`
+
+  # Misma configuración, pero Prometheus busca el juego en la red de Docker.
+  prometheus:
+    volumes:
+      - ./prometheus.docker.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - game
