@@ -12,7 +12,7 @@ namespace KitchenChaos.Server.Services;
 /// </summary>
 public class TimerService
 {
-    private const int LevelDurationSeconds  = 240;
+    private const int LevelDurationSeconds  = 300;
     private const int OrderDurationSeconds  = 45;
     private const int OrderExpiredPenalty   = 20;
     private const int OrderDeliveredPoints  = 100;
@@ -139,8 +139,8 @@ public class TimerService
         state.OrderTimer = new Timer(
             async _ => await OnOrderTickAsync(roomCode),
             null,
-            TimeSpan.FromSeconds(1),
-            TimeSpan.FromSeconds(1)
+            state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1),
+            state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1)
         );
     }
 
@@ -175,7 +175,7 @@ public class TimerService
 
         var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
 
-        if (level == 1 && remaining == 180)
+        if (level == 1 && remaining == 240)
         {
             PauseTimers(roomCode, "special");
 
