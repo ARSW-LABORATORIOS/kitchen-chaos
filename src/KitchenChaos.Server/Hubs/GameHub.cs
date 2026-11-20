@@ -645,6 +645,26 @@ public class GameHub : Hub
         }
     }
 
+    public Task<string[]> LoseWaveIngredients(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+
+        if (room is null ||
+            !room.HasStarted ||
+            room.Level != 4 ||
+            !room.Players.Any(p => p.ConnectionId == Context.ConnectionId))
+        {
+            throw new HubException("No puedes aplicar el evento de ola en esta partida.");
+        }
+
+        var ids = _preparationService.RemovePlayerIngredientsByWave(
+            roomCode,
+            Context.ConnectionId
+        );
+
+        return Task.FromResult(ids);
+    }
+
     /// <summary>El host confirma que leyó las instrucciones del nivel y arranca el timer.</summary>
     public async Task StartTimer(string roomCode)
     {

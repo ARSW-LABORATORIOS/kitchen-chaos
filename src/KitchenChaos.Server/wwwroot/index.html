@@ -922,7 +922,7 @@
                     </svg>
                     <div class="hud-texto">
                         <span class="hud-label">Tiempo</span>
-                        <div class="level-timer" id="levelTimerDisplay">4:00</div>
+                        <div class="level-timer" id="levelTimerDisplay">5:00</div>
                     </div>
                     <button type="button" class="kc-icon-btn kc-btn-sonido kc-sonido-juego" id="kcBtnSonidoJuego" aria-label="Silenciar música" aria-pressed="false" title="Silenciar música">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1223,6 +1223,33 @@
             syncMobileScore(scoreMatch ? Number(scoreMatch[0]) : 0);
         });
 
+        const INGREDIENT_IMAGES = {
+            "salchicha": "images/salchicha.webp",
+            "papa": "images/papa.webp",
+            "pollo": "images/pollo.webp",
+            "queso": "images/queso.webp",
+            "salsa roja": "images/salsa-roja.webp",
+            "salsa blanca": "images/salsa-blanca.webp",
+            "platano": "images/platano.webp",
+            "chicharron": "images/chicharron.webp",
+            "huevo": "images/huevo.webp"
+        };
+
+        function setIngredientVisual(element, name) {
+            const key = (name || "").toLowerCase();
+            const imagePath = INGREDIENT_IMAGES[key];
+
+            if (!imagePath) {
+                element.textContent = getIngredientEmoji(name);
+                return;
+            }
+
+            const image = document.createElement("img");
+            image.src = imagePath;
+            image.alt = "";
+            image.className = "custom-ingredient-image";
+            element.replaceChildren(image);
+        }
 
         const INGREDIENT_EMOJIS = {
             "leche": "🥛", "arroz": "🍚", "leche condensada": "🍯", "uvas pasas": "🍇",
@@ -1294,6 +1321,80 @@
             }
         };
 
+        function showLevelTutorial(level, onFinish) {
+            const images = [
+                "images/01_controles_sin_fondo.png",
+                "images/02_jugabilidad_sin_fondo.png"
+            ];
+
+            const eventImages = {
+                1: "images/03_evento_nivel1_sin_fondo.png",
+                2: "images/03_evento_nivel2_sin_fondo.png",
+                3: "images/03_evento_nivel3_sin_fondo.png",
+                4: "images/03_evento_nivel4_sin_fondo.png"
+            };
+
+            if (eventImages[level]) {
+                images.push(eventImages[level]);
+            }
+
+            let currentSlide = 0;
+
+            document.getElementById("levelTutorialOverlay")?.remove();
+
+            const overlay = document.createElement("div");
+            overlay.id = "levelTutorialOverlay";
+
+            overlay.innerHTML = `
+                <div class="level-tutorial-content">
+                    <img id="levelTutorialImage" src="${images[0]}" alt="Cómo jugar: controles">
+                    <div class="level-tutorial-navigation">
+                        <button type="button" id="tutorialPrevious">❮ Anterior</button>
+                        <span id="tutorialCounter"></span>
+                        <button type="button" id="tutorialNext">Siguiente ❯</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const image = document.getElementById("levelTutorialImage");
+            const previous = document.getElementById("tutorialPrevious");
+            const next = document.getElementById("tutorialNext");
+            const counter = document.getElementById("tutorialCounter");
+
+            function updateTutorial() {
+                image.src = images[currentSlide];
+                image.alt = "Instrucciones " + (currentSlide + 1);
+                counter.textContent = (currentSlide + 1) + " / " + images.length;
+                previous.disabled = currentSlide === 0;
+                next.textContent = currentSlide === images.length - 1
+                    ? (level == null ? "Cerrar ❯" : "Continuar ❯")
+                    : "Siguiente ❯";
+            }
+
+            previous.addEventListener("click", function() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateTutorial();
+                }
+            });
+
+            next.addEventListener("click", function() {
+                if (currentSlide < images.length - 1) {
+                    currentSlide++;
+                    updateTutorial();
+                } else {
+                    overlay.remove();
+                    if (typeof onFinish === "function") {
+                        onFinish();
+                    }
+                }
+            });
+
+            updateTutorial();
+        }
+
         function showLevelIntroModal(level, roomCode) {
             const existing = document.getElementById('levelIntroOverlay');
             if (existing) existing.remove();
@@ -1309,7 +1410,12 @@
             overlay.className = 'level-intro-overlay';
 
             const items = info.ingredients.map(function(ing) {
-                return '<li>' + ing.emoji + ' <strong>' + ing.name + '</strong> — ' + ing.action + '</li>';
+                const imagePath = INGREDIENT_IMAGES[ing.name.toLowerCase()];
+                const visual = imagePath
+                    ? '<img src="' + imagePath + '" class="custom-ingredient-image" alt="">'
+                    : ing.emoji;
+
+                return '<li>' + visual + ' <strong>' + ing.name + '</strong> — ' + ing.action + '</li>';
             }).join('');
 
             overlay.innerHTML =
@@ -1457,40 +1563,96 @@
             // Imagen entra desde arriba hacia abajo, 90% opacidad para ver el mapa
             var overlay = document.createElement('div');
             overlay.id = 'waveOverlay';
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:260;overflow:hidden;pointer-events:none;opacity:0.9;';
-            document.body.appendChild(overlay);
+
+            var board = document.querySelector('.game-board');
+            var mapImage = document.getElementById('levelMap');
+
+            if (getComputedStyle(board).position === 'static') {
+                board.style.position = 'relative';
+            }
+
+            var mapRect = mapImage.getBoundingClientRect();
+            var boardRect = board.getBoundingClientRect();
+
+            overlay.style.cssText = 'position:absolute;z-index:500;overflow:hidden;pointer-events:none;opacity:1;background:rgba(0,90,180,0.35);visibility:visible;display:block;';
+
+            overlay.style.left = ((mapRect.left - boardRect.left + mapRect.width * 0.32) / boardRect.width * 100) + '%';
+            overlay.style.top = ((mapRect.top - boardRect.top + mapRect.height * 0.16) / boardRect.height * 100) + '%';
+            overlay.style.width = (mapRect.width * 0.31 / boardRect.width * 100) + '%';
+            overlay.style.height = (mapRect.height * 0.54 / boardRect.height * 100) + '%';
+
+            overlay.style.borderRadius = '0';
+            overlay.style.clipPath = 'polygon(0 0,100% 0,100% 79%,94% 86%,86% 82%,77% 94%,66% 87%,55% 98%,44% 90%,34% 97%,23% 84%,12% 91%,0 80%)';
+
+            board.appendChild(overlay);
 
             var waveImg = document.createElement('img');
             waveImg.src = 'images/olas.webp';
-            waveImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:translateY(-100%);transition:transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94);';
+            waveImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;transform:translateY(-100%);transition:transform 1.2s ease-out;';
             overlay.appendChild(waveImg);
-            setTimeout(function() { waveImg.style.transform = 'translateY(0)'; }, 10);
-
-            // Texto
-            var txt = document.createElement('div');
-            txt.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);transition:transform 0.4s 0.5s cubic-bezier(.34,1.56,.64,1);color:#fff;font-family:Fraunces,Georgia,serif;font-size:clamp(24px,5vw,52px);font-weight:700;text-transform:uppercase;letter-spacing:3px;text-shadow:0 2px 16px rgba(0,0,80,0.7);white-space:nowrap;z-index:1;';
-            txt.textContent = '\uD83C\uDF0A \u00A1Ola gigante!';
-            overlay.appendChild(txt);
-            setTimeout(function() { txt.style.transform = 'translate(-50%,-50%) scale(1)'; }, 10);
+            var splash = document.createElement('div');
+            splash.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity 0.35s ease-out;background:radial-gradient(ellipse 18% 9% at 8% 80%,rgba(255,255,255,0.95) 0%,transparent 100%),radial-gradient(ellipse 25% 10% at 32% 88%,rgba(255,255,255,0.9) 0%,transparent 100%),radial-gradient(ellipse 23% 12% at 57% 90%,rgba(255,255,255,0.95) 0%,transparent 100%),radial-gradient(ellipse 20% 11% at 84% 83%,rgba(255,255,255,0.9) 0%,transparent 100%);';
+            overlay.appendChild(splash);
+            setTimeout(function() {
+                splash.style.opacity = '1';
+            }, 900);
+            setTimeout(function() {
+                waveImg.style.transform = 'translateY(0)';
+            }, 10);
 
             // Descartar ingredientes
-            Object.keys(myIngredients).forEach(function(id) {
-                if (currentRoomCode) {
-                    connection.invoke('DiscardIngredient', currentRoomCode, id)
-                        .catch(function(err) { console.error(err); });
+            setTimeout(async function() {
+                if (currentLevel !== 4 || !overlay.isConnected || !currentRoomCode) return;
+
+                const boardRect = board.getBoundingClientRect();
+                const waveRect = overlay.getBoundingClientRect();
+
+                const sprite = document.getElementById("myPlayerSprite");
+                if (!sprite) return;
+
+                const playerRect = sprite.getBoundingClientRect();
+                const playerX = playerRect.left + playerRect.width / 2;
+                const playerY = playerRect.top + playerRect.height * 0.7;
+
+                const hit =
+                    playerX >= waveRect.left &&
+                    playerX <= waveRect.right &&
+                    playerY >= waveRect.top &&
+                    playerY <= waveRect.bottom;
+
+                console.log("Impacto de ola:", {
+                    hit,
+                    playerX,
+                    playerY,
+                    waveLeft: waveRect.left,
+                    waveRight: waveRect.right,
+                    waveTop: waveRect.top,
+                    waveBottom: waveRect.bottom
+                });
+
+                if (!hit) return;
+
+                try {
+                    const removedIds = await connection.invoke("LoseWaveIngredients", currentRoomCode);
+
+                    removedIds.forEach(function(id) {
+                        delete myIngredients[id];
+                        selectedIngredientIds.delete(id);
+                    });
+
+                    renderMyIngredients();
+                    updateMyEmojiHead();
+                } catch (error) {
+                    console.error("Error al aplicar la penalización de la ola:", error);
                 }
-            });
-            myIngredients = {};
-            selectedIngredientIds.clear();
-            renderMyIngredients();
-            updateMyEmojiHead();
+            }, 1200);
 
             // Fade out y eliminar
             setTimeout(function() {
                 overlay.style.transition = 'opacity 0.5s';
                 overlay.style.opacity = '0';
                 setTimeout(function() { overlay.remove(); }, 500);
-            }, 2500);
+            }, 4000);
         }
 
         function showSpecialEventModal(onDone) {
@@ -2309,7 +2471,7 @@
                     ? `<img src="${imagePath}" alt="Plato preparado" class="carried-dish-image">`
                     : "🍲";
             } else if (state === "dirty") {
-                plate.textContent = "🍽️";
+                plate.innerHTML = '<img src="images/plato-sucio.webp" alt="Plato sucio" class="carried-dish-image">';
             }
 
             renderMyPlayerPosition();
@@ -2396,8 +2558,10 @@
                 plate.innerHTML = imagePath
                     ? `<img src="${imagePath}" alt="Plato preparado" class="carried-dish-image">`
                     : "🍲";
-            } else if (plateState === "clean" || plateState === "dirty") {
+            } else if (plateState === "clean") {
                 plate.textContent = "🍽️";
+            } else if (plateState === "dirty") {
+                plate.innerHTML = '<img src="images/plato-sucio.webp" alt="Plato sucio" class="carried-dish-image">';
             } else {
                 plate.textContent = "";
             }
@@ -2560,8 +2724,7 @@
 
         document.getElementById("howToPlayButton")
             .addEventListener("click", function () {
-                const box = document.querySelector(".instructions");
-                box.style.display = box.style.display === "none" ? "block" : "none";
+                showLevelTutorial(null, function () {});
             });
         let selectedIngredientIds = new Set();
 
@@ -2758,7 +2921,7 @@
 
                 const emoji = document.createElement("span");
                 emoji.className = "station-ingredient-emoji";
-                emoji.textContent = getIngredientEmoji(ingredient.name);
+                setIngredientVisual(emoji, ingredient.name);
 
                 const name = document.createElement("span");
                 name.className = "station-ingredient-name";
@@ -2806,8 +2969,127 @@
             menu.style.display = "flex";
         }
 
+        function openMultiIngredientStationMenu(station) {
+            const isTrash = station.classList.contains("trash-station");
+            const menu = document.getElementById("stationIngredientMenu");
+            const title = document.getElementById("stationIngredientTitle");
+            const list = document.getElementById("stationIngredientList");
+            const selected = new Set();
+
+            title.textContent = isTrash
+                ? "🗑️ TIRAR INGREDIENTES"
+                : "🍽️ EMPLATAR INGREDIENTES";
+
+            list.replaceChildren();
+
+            const ingredients = Object.entries(myIngredients).filter(function ([id, ingredient]) {
+                return !isTrash || ingredient.state === "Quemado";
+            });
+
+            if (ingredients.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "station-ingredient-empty";
+                empty.textContent = isTrash
+                    ? "No tienes ingredientes quemados."
+                    : "No tienes ingredientes en el inventario.";
+                list.appendChild(empty);
+            }
+
+            ingredients.forEach(function ([id, ingredient]) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "station-ingredient-item";
+
+                const emoji = document.createElement("span");
+                emoji.className = "station-ingredient-emoji";
+                setIngredientVisual(emoji, ingredient.name);
+
+                const name = document.createElement("span");
+                name.className = "station-ingredient-name";
+                name.textContent = ingredient.name;
+
+                const state = document.createElement("span");
+                state.className = "station-ingredient-state";
+                state.textContent = ingredient.state;
+
+                const mark = document.createElement("span");
+                mark.textContent = "☐";
+
+                button.append(emoji, name, state, mark);
+
+                button.addEventListener("click", function () {
+                    if (selected.has(id)) {
+                        selected.delete(id);
+                        mark.textContent = "☐";
+                        button.classList.remove("selected");
+                    } else {
+                        selected.add(id);
+                        mark.textContent = "☑";
+                        button.classList.add("selected");
+                    }
+                });
+
+                list.appendChild(button);
+            });
+
+            const confirm = document.createElement("button");
+            confirm.type = "button";
+            confirm.className = "station-ingredient-item";
+            confirm.style.justifyContent = "center";
+            confirm.style.background = "#2a9d8f";
+            confirm.style.color = "white";
+            confirm.textContent = isTrash
+                ? "🗑️ TIRAR SELECCIONADOS"
+                : "🍽️ CONFIRMAR EMPLATADO";
+
+            confirm.addEventListener("click", async function () {
+                const ids = Array.from(selected).filter(function (id) {
+                    return Object.prototype.hasOwnProperty.call(myIngredients, id);
+                });
+
+                if (ids.length === 0) {
+                    document.getElementById("preparationError").textContent =
+                        "Selecciona al menos un ingrediente.";
+                    return;
+                }
+
+                confirm.disabled = true;
+
+                try {
+                    if (isTrash) {
+                        for (const id of ids) {
+                            await connection.invoke("DiscardIngredient", currentRoomCode, id);
+                        }
+                    } else {
+                        selectedIngredientIds.clear();
+                        ids.forEach(function (id) {
+                            selectedIngredientIds.add(id);
+                        });
+                        await connection.invoke("PlateDish", currentRoomCode, ids);
+                    }
+
+                    closeStationIngredientMenu();
+                } catch (error) {
+                    document.getElementById("preparationError").textContent = error.message;
+                    confirm.disabled = false;
+                }
+            });
+
+            list.appendChild(confirm);
+
+            document.getElementById("desktopInventory").style.display = "none";
+
+            MOVEMENT_KEYS.forEach(function (key) {
+                pressedKeys[key] = false;
+            });
+
+            menu.style.display = "flex";
+        }
+
         document.querySelector(".game-board").addEventListener("click", function (event) {
-            const station = event.target.closest(".chop-station, .cook-station");
+            const station = event.target.closest(
+                ".chop-station, .cook-station, .plate-station, .trash-station"
+            );
 
             if (!station || mobileStationInteraction) {
                 return;
@@ -2816,7 +3098,11 @@
             event.preventDefault();
             event.stopImmediatePropagation();
 
-            openStationIngredientMenu(station);
+            if (station.matches(".plate-station, .trash-station")) {
+                openMultiIngredientStationMenu(station);
+            } else {
+                openStationIngredientMenu(station);
+            }
         }, true);
 
         function updatePlateVisual(state) {
@@ -2989,7 +3275,7 @@
 
                 const emoji = document.createElement("span");
                 emoji.className = "desktop-inventory-emoji";
-                emoji.textContent = getIngredientEmoji(ingredient.name);
+                setIngredientVisual(emoji, ingredient.name);
 
                 const details = document.createElement("span");
                 details.className = "desktop-inventory-details";
@@ -3391,7 +3677,7 @@
             order.requiredIngredients.forEach(function (name) {
                 const item = document.createElement("span");
                 item.className = "order-ingredient-icon";
-                item.textContent = getIngredientEmoji(name);
+                setIngredientVisual(item, name);
                 item.title = name;
                 item.setAttribute("aria-label", name);
                 container.appendChild(item);
@@ -3635,7 +3921,9 @@
             connection.invoke("MovePlayer", gameInfo.roomCode, myPosition.x, myPosition.y, myFacingLeft)
                 .catch(function (err) { console.error(err.toString()); });
 
-            showLevelIntroModal(gameInfo.level, gameInfo.roomCode);
+            showLevelTutorial(gameInfo.level, function() {
+                showLevelIntroModal(gameInfo.level, gameInfo.roomCode);
+            });
             playLevelMusic(gameInfo.level);
 
             if (gameInfo.level === 2) {
@@ -3944,7 +4232,7 @@
 
         connection.on("LevelTimerTick", function (data) {
 
-            const total = 240;
+            const total = 300;
             const s = data.secondsRemaining;
             const min = Math.floor(s / 60);
             const sec = s % 60;
@@ -3959,10 +4247,12 @@
             }
 
             // Evento especial nivel 4: ola cada 45 segundos
-            if (currentLevel === 4 && s > 0 && s % 45 === 0) {
-                const waveMinute = Math.floor(s / 45);
-                if (waveMinute !== lastWaveMinute) {
-                    lastWaveMinute = waveMinute;
+            if (currentLevel === 4 && s > 0) {
+                const elapsed = 300 - s;
+                const waveNumber = Math.floor(elapsed / 45);
+                if (waveNumber > 0 && waveNumber > lastWaveMinute) {
+                    lastWaveMinute = waveNumber;
+                    console.log("Ola activada:", waveNumber, "Tiempo restante:", s);
                     triggerWave();
                 }
             }

@@ -262,6 +262,26 @@ public class PreparationService
         return new IngredientActionResult { Success = true };
     }
 
+    public string[] RemovePlayerIngredientsByWave(string roomCode, string connectionId)
+    {
+        if (!_ingredientsByRoom.TryGetValue(roomCode, out var ingredients))
+            return Array.Empty<string>();
+
+        lock (ingredients)
+        {
+            var selected = ingredients
+                .Where(i => i.HeldByConnectionId == connectionId)
+                .ToList();
+
+            var ids = selected.Select(i => i.Id).ToArray();
+
+            foreach (var ingredient in selected)
+                ingredients.Remove(ingredient);
+
+            return ids;
+        }
+    }
+
     private async Task RestockStationAsync(string roomCode, Station station)
     {
         await Task.Delay(TimeSpan.FromSeconds(RestockSeconds));
