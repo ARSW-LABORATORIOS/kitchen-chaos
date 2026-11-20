@@ -106,19 +106,8 @@ public class GameHub : Hub
             return;
         }
 
-        room.Level = nextLevel;
-        _preparationService.ResetStations(roomCode);
-        // El timer arranca cuando el cliente confirma haber leído las instrucciones (StartTimer)
-
-        await Clients.Group(roomCode).SendAsync("GameStarted", new { RoomCode = roomCode, Level = nextLevel });
-
-        var order = _orderService.GenerateOrder(roomCode);
-        await Clients.Group(roomCode).SendAsync("OrderUpdated", new
-        {
-            order.Id,
-            order.DishName,
-            order.RequiredIngredients
-        });
+        _roomService.ResetForNextLevel(roomCode, nextLevel);
+        await PrepareLevelAsync(roomCode, nextLevel);
     }
 
     public async Task PauseGame(string roomCode)
@@ -164,29 +153,40 @@ public class GameHub : Hub
                 "StartGameError",
                 result.Error
             );
-
             return;
         }
 
         GameMetrics.GamesStarted.WithLabels(level.ToString()).Inc();
+        await PrepareLevelAsync(roomCode, level);
+    }
 
-        // Todos los jugadores de la sala reciben el mismo evento
-        await Clients.Group(roomCode).SendAsync(
-            "GameStarted",
-            new
-            {
-                RoomCode = roomCode,
-                Level = level
-            }
-        );
+    public async Task RestartLevel(string roomCode)
+    {
+        var room = _roomService.GetRoom(roomCode);
+        if (room is null || room.HostConnectionId != Context.ConnectionId || !room.HasStarted)
+        {
+            throw new HubException("Solo el host puede reiniciar una partida activa.");
+        }
 
-        // Limpia estaciones cacheadas para que se regeneren con el nivel correcto
-        _preparationService.ResetStations(roomCode);
-        // Limpia cualquier timer anterior (por si se reinicia el nivel)
+        await PrepareLevelAsync(roomCode, room.Level);
+    }
+
+    private async Task PrepareLevelAsync(string roomCode, int level)
+    {
         _timerService.StopLevel(roomCode);
-        // El timer arranca cuando todos los clientes confirman haber leído las instrucciones (StartTimer)
+        _preparationService.ResetStations(roomCode);
+        _platingService.ResetRoom(roomCode);
+        _deliveryService.ResetRoom(roomCode);
+        _orderService.ResetRoom(roomCode);
 
         var order = _orderService.GenerateOrder(roomCode);
+
+        await Clients.Group(roomCode).SendAsync("GameStarted", new
+        {
+            RoomCode = roomCode,
+            Level = level
+        });
+
         await Clients.Group(roomCode).SendAsync("OrderUpdated", new
         {
             order.Id,

@@ -124,6 +124,9 @@ public class OrderService
         });
     }
 
+    public void ResetRoom(string roomCode) =>
+       _activeOrders.TryRemove(roomCode, out _);
+
     public Order? GetActiveOrder(string roomCode) =>
         _activeOrders.TryGetValue(roomCode, out var order) ? order : null;
 
