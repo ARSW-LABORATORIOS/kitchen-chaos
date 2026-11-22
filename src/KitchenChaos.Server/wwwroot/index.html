@@ -3847,6 +3847,8 @@
         // Todos reciben este evento cuando el host inicia
         connection.on("GameStarted", function (gameInfo) {
 
+            hideLevelCompletedModal();
+
             document.querySelector(".menu").style.display = "none";
 
             document.querySelector(".waiting-room").style.display = "none";
@@ -4604,13 +4606,21 @@
             if (currentRoomCode) connection.invoke('ResumeGame', currentRoomCode).catch(console.error);
         }
 
+        function hideLevelCompletedModal() {
+            document.getElementById("levelEndOverlay")?.remove();
+        }
+
         function restartLevel() {
-            hidePauseModal();
-            isPaused = false;
-            if (!currentRoomCode) { location.reload(); return; }
-            if (isHost) {
-                connection.invoke('StartGame', currentRoomCode, currentLevel).catch(console.error);
-            }
+            if (!currentRoomCode || !isHost) return;
+
+            connection.invoke("RestartLevel", currentRoomCode)
+                .then(function() {
+                    hideLevelCompletedModal();
+                })
+                .catch(function(error) {
+                    console.error(error);
+                    alert("No se pudo reiniciar el nivel: " + error.message);
+                });
         }
 
         connection.on('GamePaused', function () {
@@ -4655,6 +4665,7 @@
             if (!isLast) {
                 html += '<button class="btn-end btn-next-level" onclick="nextLevel()">Siguiente nivel</button>';
             }
+            html += '<button class="btn-end btn-restart" onclick="restartLevel()">Reiniciar nivel</button>';
             html += '<button class="btn-end btn-home" onclick="location.reload()">Volver al inicio</button>';
             html += '</div>';
 

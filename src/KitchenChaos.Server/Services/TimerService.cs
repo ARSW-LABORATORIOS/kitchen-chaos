@@ -57,7 +57,7 @@ public class TimerService
 
         // Tick cada segundo para notificar el tiempo restante del nivel
         state.LevelTimer = new Timer(
-            async _ => await OnLevelTickAsync(roomCode),
+            async _ => await OnLevelTickAsync(roomCode, state),
             null,
             state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1),
             state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1)
@@ -91,8 +91,13 @@ public class TimerService
     public void StopLevel(string roomCode)
     {
         if (!_states.TryRemove(roomCode, out var state)) return;
-        state.LevelTimer?.Dispose();
-        state.OrderTimer?.Dispose();
+
+        lock (state)
+        {
+            state.LevelEnded = true;
+            state.LevelTimer?.Dispose();
+            state.OrderTimer?.Dispose();
+        }
     }
 
     public void PauseTimers(string roomCode, string reason)
@@ -137,7 +142,7 @@ public class TimerService
         state.OrderSecondsLeft = OrderDurationSeconds;
         state.OrderTimer?.Dispose();
         state.OrderTimer = new Timer(
-            async _ => await OnOrderTickAsync(roomCode),
+            async _ => await OnOrderTickAsync(roomCode, state),
             null,
             state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1),
             state.PauseReasons.Count > 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(1)
@@ -147,9 +152,9 @@ public class TimerService
     private void ResetOrderTimer(string roomCode, RoomTimerState state) =>
         StartOrderTimer(roomCode, state);
 
-    private async Task OnLevelTickAsync(string roomCode)
-    {
-        if (!_states.TryGetValue(roomCode, out var state)) return;
+    private async Task OnLevelTickAsync(string roomCode, RoomTimerState state)
+{
+    if (!_states.TryGetValue(roomCode, out var current) || !ReferenceEquals(current, state)) return;
 
         int remaining;
         lock (state)
@@ -160,6 +165,8 @@ public class TimerService
             state.SecondsRemaining--;
             remaining = state.SecondsRemaining;
         }
+
+        if (!_states.TryGetValue(roomCode, out current) || !ReferenceEquals(current, state)) return;
 
         // Notifica el tiempo de nivel a todos los jugadores de la sala
         await _hub.Clients.Group(roomCode).SendAsync("LevelTimerTick", new
@@ -188,14 +195,17 @@ public class TimerService
             }
             finally
             {
-                ResumeTimers(roomCode, "special");
+                if (_states.TryGetValue(roomCode, out var activeState) && ReferenceEquals(activeState, state))
+                {
+                    ResumeTimers(roomCode, "special");
+                }
             }
         }
     }
 
-    private async Task OnOrderTickAsync(string roomCode)
-    {
-        if (!_states.TryGetValue(roomCode, out var state) || state.LevelEnded) return;
+    private async Task OnOrderTickAsync(string roomCode, RoomTimerState state)
+{
+    if (!_states.TryGetValue(roomCode, out var current) || !ReferenceEquals(current, state) || state.LevelEnded) return;
 
         int remaining;
         lock (state)
@@ -206,6 +216,8 @@ public class TimerService
             state.OrderSecondsLeft--;
             remaining = state.OrderSecondsLeft;
         }
+
+        if (!_states.TryGetValue(roomCode, out current) || !ReferenceEquals(current, state)) return;
 
         // Notifica el tiempo del pedido activo a todos los jugadores
         await _hub.Clients.Group(roomCode).SendAsync("OrderTimerTick", new
@@ -225,6 +237,8 @@ public class TimerService
             state.Score -= OrderExpiredPenalty;
             ResetOrderTimer(roomCode, state);
         }
+
+        if (!_states.TryGetValue(roomCode, out var current) || !ReferenceEquals(current, state)) return;
 
         GameMetrics.OrdersExpired.Inc();
 
@@ -274,6 +288,8 @@ public class TimerService
 
         state.LevelTimer?.Dispose();
         state.OrderTimer?.Dispose();
+
+        if (!_states.TryGetValue(roomCode, out var current) || !ReferenceEquals(current, state)) return;
 
         var level = _roomService.GetRoom(roomCode)?.Level ?? 1;
         var stars = CalculateStars(state.Score, level);

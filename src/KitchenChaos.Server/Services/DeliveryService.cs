@@ -70,6 +70,9 @@ public class DeliveryService
         };
     }
 
+    public void ResetRoom(string roomCode) =>
+        _scoresByRoom.TryRemove(roomCode, out _);
+
     public int GetScore(string roomCode)
     {
         return _scoresByRoom.TryGetValue(roomCode, out var score)

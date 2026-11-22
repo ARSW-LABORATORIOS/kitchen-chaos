@@ -26,6 +26,9 @@ public class PlatingService
         _orderService = orderService;
     }
 
+    public void ResetRoom(string roomCode) =>
+        _platesByRoom.TryRemove(roomCode, out _);
+
     public PlateResult TakePlate(string roomCode, string connectionId)
     {
         var plates = _platesByRoom.GetOrAdd(
